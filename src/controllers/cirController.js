@@ -110,6 +110,22 @@ async function getOperations(req, res) {
   }
 }
 
+async function getFleet(req, res) {
+  try {
+    const fleet = await cirService.getFleet();
+    return res.json({
+      success: true,
+      data: fleet,
+    });
+  } catch (err) {
+    console.error('Error fetching fleet, loading fallback:', err.message);
+    return res.json({
+      success: false,
+      error: err.message,
+    });
+  }
+}
+
 async function checkHealth(req, res) {
   try {
     let connected = false;
@@ -180,6 +196,7 @@ module.exports = {
   getFinancialAnalytics,
   getContainers,
   getMasters,
+  getFleet,
   getOperations,
   checkHealth,
   exportExcel,
