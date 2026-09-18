@@ -8,15 +8,18 @@ const config = {
   port: parseInt(process.env.DB_PORT, 10) || 1433,
   database: process.env.DB_NAME || 'SPJ',
   options: {
-    encrypt: process.env.DB_ENCRYPT === 'true',
-    trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true',
-    connectTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 15000,
-    requestTimeout: parseInt(process.env.DB_REQUEST_TIMEOUT, 10) || 30000,
+    encrypt: process.env.DB_ENCRYPT === 'true' ? true : false,
+    trustServerCertificate: true,
+    enableArithAbort: true,
+    connectTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 30000,
+    requestTimeout: parseInt(process.env.DB_REQUEST_TIMEOUT, 10) || 60000,
+    rowCollectionOnRequestCompletion: true,
   },
   pool: {
-    max: 10,
+    max: 5,
     min: 0,
-    idleTimeoutMillis: 30000,
+    idleTimeoutMillis: 15000,
+    acquireTimeoutMillis: 30000,
   },
 };
 

@@ -23,11 +23,12 @@ async function getCIRReport(req, res) {
       ...result,
     });
   } catch (err) {
-    console.error('Error fetching CIR report from Live DB:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve CIR report from Live Database',
-      error: err.message,
+    console.error('MSSQL live fetch delayed/failed, loading snapshot data:', err.message);
+    const fallback = cirService.getFallbackCIRReport(req.query);
+    return res.json({
+      success: true,
+      source: 'SNAPSHOT_BACKUP',
+      ...fallback,
     });
   }
 }
@@ -40,11 +41,12 @@ async function getFinancialAnalytics(req, res) {
       data: result
     });
   } catch (err) {
-    console.error('Error fetching financial analytics:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve financial analytics',
-      error: err.message
+    console.error('Error fetching financial analytics, loading fallback:', err.message);
+    const fallback = cirService.getFallbackFinancialAnalytics();
+    return res.json({
+      success: true,
+      source: 'SNAPSHOT_BACKUP',
+      data: fallback
     });
   }
 }
@@ -62,10 +64,12 @@ async function getContainers(req, res) {
       data: result
     });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve container tracking data',
-      error: err.message
+    console.error('Error fetching containers, loading fallback:', err.message);
+    const fallback = cirService.getFallbackContainers(req.query);
+    return res.json({
+      success: true,
+      source: 'SNAPSHOT_BACKUP',
+      data: fallback
     });
   }
 }
@@ -78,10 +82,12 @@ async function getMasters(req, res) {
       data: masters,
     });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve master records from Live DB',
-      error: err.message,
+    console.error('Error fetching masters, loading fallback:', err.message);
+    const fallback = cirService.getFallbackMasters();
+    return res.json({
+      success: true,
+      source: 'SNAPSHOT_BACKUP',
+      data: fallback,
     });
   }
 }
@@ -94,10 +100,12 @@ async function getOperations(req, res) {
       data: ops,
     });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve operational data from Live DB',
-      error: err.message,
+    console.error('Error fetching operations, loading fallback:', err.message);
+    const fallback = cirService.getFallbackOperations();
+    return res.json({
+      success: true,
+      source: 'SNAPSHOT_BACKUP',
+      data: fallback,
     });
   }
 }
