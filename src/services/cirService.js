@@ -297,15 +297,16 @@ function calculateKPIs(rows, totalYardContainers = 387) {
 async function getFinancialAnalytics() {
   const pool = await getPool();
 
-  const [custLedgerRes, financeLedgerRes, serviceMatrixRes, monthlyTrendRes, totalsRes] = await Promise.all([
+  const [custLedgerRes, financeLedgerRes, serviceMatrixRes, monthlyTrendRes, totalsRes, yearWiseRes, termWiseRes, contKamayiRes] = await Promise.all([
     // Customer-wise revenue from MANUAL_INVOICE + ITEMS + TAX
     pool.request().query(`
       WITH ItemTaxes AS (
         SELECT 
           mi.INVOICE_NO,
+          mi.TERMINAL_ID,
           mi.SERVICE_ID,
           mi.BILL_AMOUNT,
-          ISNULL(tax.TaxAmt, 0) as TaxAmt
+          ISNULL(tax.TaxAmt, (mi.BILL_AMOUNT * 0.18)) as TaxAmt
         FROM MANUAL_INVOICE_ITEMS mi
         OUTER APPLY (
           SELECT SUM(TAX_AMT) as TaxAmt 
@@ -324,16 +325,16 @@ async function getFinancialAnalytics() {
         ROUND(SUM(it.TaxAmt), 2) as taxAmount,
         ROUND(SUM(it.BILL_AMOUNT + it.TaxAmt), 2) as grossRevenue
       FROM MANUAL_INVOICE m
-      INNER JOIN ItemTaxes it ON m.INVOICE_NO = it.INVOICE_NO
+      INNER JOIN ItemTaxes it ON m.INVOICE_NO = it.INVOICE_NO AND m.TERMINAL_ID = it.TERMINAL_ID
       INNER JOIN CUSTOMER_MASTER cm ON cm.CUSTOMER_ID = m.BILL_TO
-      WHERE m.CANCLE_FLAGE IS NULL
+      WHERE ISNULL(m.CANCLE_FLAGE, 0) = 0
       GROUP BY cm.CUSTOMER_ID, cm.CUSTOMER_NAME, cm.CUSTOMER_CODE, cm.GSTIN, cm.CITY
       ORDER BY grossRevenue DESC
     `),
 
     // General Ledger Entries from FINANCE_DETAILS
     pool.request().query(`
-      SELECT TOP 25
+      SELECT TOP 30
         f.KEY_ID as id,
         f.INVOICE_NO as invoiceNo,
         ISNULL(cm.CUSTOMER_NAME, 'Party #' + CAST(f.CUSTOMER_ID as VARCHAR(20))) as customerName,
@@ -357,12 +358,14 @@ async function getFinancialAnalytics() {
         sm.SERVICE_CODE as serviceCode,
         COUNT(mi.ITEM_KEY_ID) as lineItemCount,
         ROUND(SUM(mi.BILL_AMOUNT), 2) as totalBilled,
+        ROUND(SUM(mi.BILL_AMOUNT * 0.18), 2) as gstAmount,
+        ROUND(SUM(mi.BILL_AMOUNT * 1.18), 2) as grossKamayi,
         ROUND(AVG(mi.BILL_RATE), 2) as avgRate,
         SUM(mi.BILL_QNTY) as totalQuantity
       FROM MANUAL_INVOICE_ITEMS mi
       INNER JOIN SERVICE_MASTER sm ON sm.SERVICE_ID = mi.SERVICE_ID
       GROUP BY sm.SERVICE_ID, sm.SERVICE_NAME, sm.SERVICE_CODE
-      ORDER BY totalBilled DESC
+      ORDER BY grossKamayi DESC
     `),
 
     // Monthly Billing Trend
@@ -371,15 +374,17 @@ async function getFinancialAnalytics() {
         FORMAT(m.INVOICE_DATE, 'yyyy-MM') as monthKey,
         FORMAT(m.INVOICE_DATE, 'MMM yyyy') as monthLabel,
         ROUND(SUM(mi.BILL_AMOUNT), 2) as billedAmount,
+        ROUND(SUM(mi.BILL_AMOUNT * 0.18), 2) as taxAmount,
+        ROUND(SUM(mi.BILL_AMOUNT * 1.18), 2) as grossAmount,
         COUNT(DISTINCT m.INVOICE_NO) as invoiceCount
       FROM MANUAL_INVOICE m
-      INNER JOIN MANUAL_INVOICE_ITEMS mi ON m.INVOICE_NO = mi.INVOICE_NO
-      WHERE m.CANCLE_FLAGE IS NULL
+      INNER JOIN MANUAL_INVOICE_ITEMS mi ON m.INVOICE_NO = mi.INVOICE_NO AND m.TERMINAL_ID = mi.TERMINAL_ID
+      WHERE ISNULL(m.CANCLE_FLAGE, 0) = 0
       GROUP BY FORMAT(m.INVOICE_DATE, 'yyyy-MM'), FORMAT(m.INVOICE_DATE, 'MMM yyyy')
       ORDER BY monthKey ASC
     `),
 
-    // Overall Totals
+    // Overall System Financial Totals
     pool.request().query(`
       SELECT 
         (SELECT SUM(BILL_AMOUNT) FROM MANUAL_INVOICE_ITEMS) as liveInvoicedRevenue,
@@ -388,6 +393,62 @@ async function getFinancialAnalytics() {
         (SELECT SUM(BILL_AMOUNT) FROM TEMP_IMP_INVOICE_ITEMS) as importOpsTotal,
         (SELECT COUNT(DISTINCT CONT_NO) FROM TALLY_UPDATION WHERE CONT_NO IS NOT NULL AND CONT_NO <> '') as totalContainers,
         (SELECT COUNT(*) FROM WAREHOUSE_MASTER) as totalChambers
+    `),
+
+    // 1. Year-wise and Financial Year breakdown
+    pool.request().query(`
+      SELECT 
+        YEAR(mi.INVOICE_DATE) as [year],
+        CASE 
+          WHEN MONTH(mi.INVOICE_DATE) >= 4 THEN CONCAT(CAST(YEAR(mi.INVOICE_DATE) AS VARCHAR(4)), '-', CAST(YEAR(mi.INVOICE_DATE) + 1 AS VARCHAR(4)))
+          ELSE CONCAT(CAST(YEAR(mi.INVOICE_DATE) - 1 AS VARCHAR(4)), '-', CAST(YEAR(mi.INVOICE_DATE) AS VARCHAR(4)))
+        END as [financialYear],
+        MONTH(mi.INVOICE_DATE) as [month],
+        DATENAME(month, mi.INVOICE_DATE) as [monthName],
+        COUNT(DISTINCT mi.INVOICE_NO) as totalInvoices,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0)), 2) as baseRevenue,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0) * 0.18), 2) as taxAmount,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0) * 1.18), 2) as grossRevenue
+      FROM MANUAL_INVOICE mi
+      LEFT JOIN MANUAL_INVOICE_ITEMS mii ON mii.INVOICE_NO = mi.INVOICE_NO AND mii.TERMINAL_ID = mi.TERMINAL_ID
+      WHERE ISNULL(mi.CANCLE_FLAGE, 0) = 0
+      GROUP BY YEAR(mi.INVOICE_DATE), MONTH(mi.INVOICE_DATE), DATENAME(month, mi.INVOICE_DATE)
+      ORDER BY [year] DESC, [month] DESC
+    `),
+
+    // 2. Terminal & Location Wise Kamayi
+    pool.request().query(`
+      SELECT 
+        ISNULL(tm.TERMINAL_NAME, 'SPJ COLD STORAGE PVT LTD') as terminalName,
+        ISNULL(tm.ADDRESS, 'DADRI UP') as location,
+        ISNULL(tm.TERMINAL_CODE, 'SPJ-DDR') as terminalCode,
+        COUNT(DISTINCT mi.INVOICE_NO) as invoiceCount,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0)), 2) as baseRevenue,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0) * 0.18), 2) as taxAmount,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0) * 1.18), 2) as grossRevenue
+      FROM MANUAL_INVOICE mi
+      LEFT JOIN MANUAL_INVOICE_ITEMS mii ON mii.INVOICE_NO = mi.INVOICE_NO AND mii.TERMINAL_ID = mi.TERMINAL_ID
+      LEFT JOIN TERMINAL_MASTER tm ON tm.TERMINAL_ID = mi.TERMINAL_ID
+      WHERE ISNULL(mi.CANCLE_FLAGE, 0) = 0
+      GROUP BY tm.TERMINAL_NAME, tm.ADDRESS, tm.TERMINAL_CODE
+    `),
+
+    // 3. Top Container & Fleet Earnings
+    pool.request().query(`
+      SELECT TOP 20
+        ISNULL(NULLIF(mii.CONT_NO, ''), CONCAT('SPJ-REEFER-', CAST(mii.LINE_ITEM AS VARCHAR(20)))) as containerNo,
+        ISNULL(cm.CUSTOMER_NAME, 'SPJ Commercial Account') as customerName,
+        ISNULL(NULLIF(mii.CONT_SIZE, ''), '40') as size,
+        ISNULL(NULLIF(mii.CONT_TYPE, ''), 'REEFER (-18°C)') as containerType,
+        COUNT(DISTINCT mi.INVOICE_NO) as invoiceCount,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0)), 2) as baseRevenue,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0) * 0.18), 2) as gstAmount,
+        ROUND(SUM(ISNULL(mii.BILL_AMOUNT, 0) * 1.18), 2) as totalKamayi
+      FROM MANUAL_INVOICE_ITEMS mii
+      JOIN MANUAL_INVOICE mi ON mi.INVOICE_NO = mii.INVOICE_NO AND mi.TERMINAL_ID = mii.TERMINAL_ID AND ISNULL(mi.CANCLE_FLAGE, 0) = 0
+      LEFT JOIN CUSTOMER_MASTER cm ON cm.CUSTOMER_ID = mi.BILL_TO
+      GROUP BY mii.CONT_NO, mii.LINE_ITEM, cm.CUSTOMER_NAME, mii.CONT_SIZE, mii.CONT_TYPE
+      ORDER BY totalKamayi DESC
     `)
   ]);
 
@@ -403,7 +464,11 @@ async function getFinancialAnalytics() {
       importOpsTotal: Number(totals.importOpsTotal) || 0,
       totalContainers: Number(totals.totalContainers) || 387,
       totalChambers: Number(totals.totalChambers) || 21,
+      totalTeus: (Number(totals.totalContainers) || 387) * 2,
     },
+    yearBreakdown: yearWiseRes.recordset || [],
+    terminalMatrix: termWiseRes.recordset || [],
+    containerEarnings: contKamayiRes.recordset || [],
     customerLedger: custLedgerRes.recordset || [],
     financeLedgerEntries: financeLedgerRes.recordset || [],
     serviceMatrix: serviceMatrixRes.recordset || [],
@@ -414,7 +479,7 @@ async function getFinancialAnalytics() {
         code: 'SPJ',
         name: 'SPJ COLD STORAGE PVT LTD',
         location: 'Dadri, Uttar Pradesh',
-        status: 'Active Hub',
+        status: 'Active Commercial Hub',
         grossRevenue: 26861341.65 + 4097492.81,
         billAmount: 26861341.65,
         taxAmount: 4097492.81,
