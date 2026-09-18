@@ -10,8 +10,8 @@ const config = {
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true',
     trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true',
-    connectTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 5000,
-    requestTimeout: parseInt(process.env.DB_REQUEST_TIMEOUT, 10) || 15000,
+    connectTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 15000,
+    requestTimeout: parseInt(process.env.DB_REQUEST_TIMEOUT, 10) || 30000,
   },
   pool: {
     max: 10,
