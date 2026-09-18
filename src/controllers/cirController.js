@@ -1,0 +1,178 @@
+const cirService = require('../services/cirService');
+const { getConnectionStatus, getPool } = require('../config/db');
+const XLSX = require('xlsx');
+
+async function getCIRReport(req, res) {
+  try {
+    const filters = {
+      companyId: req.query.companyId,
+      terminalId: req.query.terminalId,
+      fromDate: req.query.fromDate,
+      toDate: req.query.toDate,
+      contNo: req.query.contNo,
+      blNo: req.query.blNo,
+      tripType: req.query.tripType,
+      customerId: req.query.customerId,
+      serviceId: req.query.serviceId,
+      search: req.query.search,
+    };
+
+    const result = await cirService.getCIRReport(filters);
+    return res.json({
+      success: true,
+      ...result,
+    });
+  } catch (err) {
+    console.error('Error fetching CIR report from Live DB:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve CIR report from Live Database',
+      error: err.message,
+    });
+  }
+}
+
+async function getFinancialAnalytics(req, res) {
+  try {
+    const result = await cirService.getFinancialAnalytics();
+    return res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    console.error('Error fetching financial analytics:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve financial analytics',
+      error: err.message
+    });
+  }
+}
+
+async function getContainers(req, res) {
+  try {
+    const filters = {
+      search: req.query.search,
+      status: req.query.status,
+      terminalId: req.query.terminalId
+    };
+    const result = await cirService.getContainersTracking(filters);
+    return res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve container tracking data',
+      error: err.message
+    });
+  }
+}
+
+async function getMasters(req, res) {
+  try {
+    const masters = await cirService.getMasters();
+    return res.json({
+      success: true,
+      data: masters,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve master records from Live DB',
+      error: err.message,
+    });
+  }
+}
+
+async function getOperations(req, res) {
+  try {
+    const ops = await cirService.getOperationsSummary();
+    return res.json({
+      success: true,
+      data: ops,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve operational data from Live DB',
+      error: err.message,
+    });
+  }
+}
+
+async function checkHealth(req, res) {
+  try {
+    let connected = false;
+    let details = null;
+    try {
+      await getPool();
+      connected = true;
+    } catch (e) {
+      connected = false;
+      details = e.message;
+    }
+
+    return res.json({
+      status: 'online',
+      db: {
+        ...getConnectionStatus(),
+        connected,
+        details,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: 'error',
+      error: err.message,
+    });
+  }
+}
+
+async function exportExcel(req, res) {
+  try {
+    const filters = {
+      companyId: req.query.companyId,
+      terminalId: req.query.terminalId,
+      fromDate: req.query.fromDate,
+      toDate: req.query.toDate,
+      contNo: req.query.contNo,
+      blNo: req.query.blNo,
+      tripType: req.query.tripType,
+      customerId: req.query.customerId,
+      serviceId: req.query.serviceId,
+      search: req.query.search,
+    };
+
+    const result = await cirService.getCIRReport(filters);
+    const data = result.records || [];
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'SPJ_Live_CIR_Report');
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', 'attachment; filename="SPJ_Live_CIR_Report.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    return res.send(buffer);
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to export Excel report',
+      error: err.message,
+    });
+  }
+}
+
+module.exports = {
+  getCIRReport,
+  getFinancialAnalytics,
+  getContainers,
+  getMasters,
+  getOperations,
+  checkHealth,
+  exportExcel,
+};
