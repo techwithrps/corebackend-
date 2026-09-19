@@ -9,6 +9,8 @@ async function getCIRReport(filters = {}) {
   const {
     companyId,
     terminalId,
+    financialYear,
+    size,
     fromDate,
     toDate,
     contNo,
@@ -26,26 +28,90 @@ async function getCIRReport(filters = {}) {
     rows = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
   }
 
-  // In-memory filter on live Oracle SPJLIVE dataset
+  // Helper to extract fiscal year from record
+  const getRecordFY = (item) => {
+    const invDate = item.INVOICE_DATE || '';
+    const invRef = item.INVOICE_REF_NO || item.PARTY_INV_NO || '';
+    if (invRef.includes('26-27') || invDate.includes('/2026') || invDate.includes('-2026') || invDate.includes('/2027')) return 'FY 2026-27';
+    if (invRef.includes('25-26') || invDate.includes('/2025') || invDate.includes('-2025')) return 'FY 2025-26';
+    if (invRef.includes('24-25') || invDate.includes('/2024') || invDate.includes('-2024')) return 'FY 2024-25';
+    if (invRef.includes('23-24') || invDate.includes('/2023') || invDate.includes('-2023')) return 'FY 2023-24';
+    return 'FY 2022-23 & Earlier';
+  };
+
+  // In-memory filter on live Oracle SPJLIVE dataset supporting ALL combinations
   let filteredRows = rows.filter(item => {
-    if (companyId && companyId !== 'all' && item.COMPANY_ID && item.COMPANY_ID.toString() !== companyId.toString()) return false;
-    if (terminalId && terminalId !== 'all' && item.TERMINAL_ID && item.TERMINAL_ID.toString() !== terminalId.toString()) return false;
-    if (customerId && customerId !== 'all' && item.CUSTOMER_ID && item.CUSTOMER_ID.toString() !== customerId.toString()) return false;
-    if (serviceId && serviceId !== 'all' && item.SERVICE_ID && item.SERVICE_ID.toString() !== serviceId.toString()) return false;
-    if (contNo && (!item.CONT_NO || !item.CONT_NO.toLowerCase().includes(contNo.toLowerCase()))) return false;
-    if (blNo && (!item.BL_NO || !item.BL_NO.toLowerCase().includes(blNo.toLowerCase()))) return false;
-    if (tripType && tripType !== 'all' && item.TRIP_TYPE && item.TRIP_TYPE.toLowerCase() !== tripType.toLowerCase()) return false;
+    // 1. Company Filter
+    if (companyId && companyId !== 'all' && companyId !== 'ALL') {
+      if (item.COMPANY_ID && item.COMPANY_ID.toString() !== companyId.toString()) return false;
+    }
+
+    // 2. Terminal Filter (Handles ID or Name)
+    if (terminalId && terminalId !== 'all' && terminalId !== 'ALL') {
+      const tMatch = (item.TERMINAL_ID && item.TERMINAL_ID.toString() === terminalId.toString()) ||
+                     (item.TERMINAL_NAME && item.TERMINAL_NAME.toLowerCase().includes(terminalId.toLowerCase()));
+      if (!tMatch) return false;
+    }
+
+    // 3. Financial Year Filter
+    if (financialYear && financialYear !== 'ALL' && financialYear !== 'all') {
+      const recFY = getRecordFY(item);
+      if (recFY !== financialYear) return false;
+    }
+
+    // 4. Customer Filter
+    if (customerId && customerId !== 'all' && customerId !== 'ALL') {
+      const cMatch = (item.CUSTOMER_ID && item.CUSTOMER_ID.toString() === customerId.toString()) ||
+                     (item.CUSTOMER_NAME && item.CUSTOMER_NAME.toLowerCase().includes(customerId.toLowerCase()));
+      if (!cMatch) return false;
+    }
+
+    // 5. Service Filter
+    if (serviceId && serviceId !== 'all' && serviceId !== 'ALL') {
+      const sMatch = (item.SERVICE_ID && item.SERVICE_ID.toString() === serviceId.toString()) ||
+                     (item.SERVICE_NAME && item.SERVICE_NAME.toLowerCase().includes(serviceId.toLowerCase()));
+      if (!sMatch) return false;
+    }
+
+    // 6. Trip Type Filter
+    if (tripType && tripType !== 'all' && tripType !== 'ALL') {
+      if (!item.TRIP_TYPE || item.TRIP_TYPE.toLowerCase() !== tripType.toLowerCase()) return false;
+    }
+
+    // 7. Size Filter (20 / 40 / 45)
+    if (size && size !== 'all' && size !== 'ALL') {
+      const itemSize = String(item.CONT_SIZE || '').replace(/[^0-9]/g, '');
+      if (itemSize !== String(size).replace(/[^0-9]/g, '')) return false;
+    }
+
+    // 8. Container No Substring
+    if (contNo && contNo.trim() !== '') {
+      if (!item.CONT_NO || !item.CONT_NO.toLowerCase().includes(contNo.trim().toLowerCase())) return false;
+    }
+
+    // 9. BL / Bilty No Substring
+    if (blNo && blNo.trim() !== '') {
+      const blMatch = (item.BL_NO && item.BL_NO.toLowerCase().includes(blNo.trim().toLowerCase())) ||
+                      (item.PARTY_INV_NO && item.PARTY_INV_NO.toLowerCase().includes(blNo.trim().toLowerCase()));
+      if (!blMatch) return false;
+    }
+
     return true;
   });
 
-  if (search) {
-    const q = search.toLowerCase();
-    filteredRows = rows.filter(item => (
+  // Global Keyword Search
+  if (search && search.trim() !== '') {
+    const q = search.trim().toLowerCase();
+    filteredRows = filteredRows.filter(item => (
       (item.CONT_NO && item.CONT_NO.toLowerCase().includes(q)) ||
       (item.BL_NO && item.BL_NO.toLowerCase().includes(q)) ||
       (item.CUSTOMER_NAME && item.CUSTOMER_NAME.toLowerCase().includes(q)) ||
       (item.INVOICE_REF_NO && item.INVOICE_REF_NO.toLowerCase().includes(q)) ||
-      (item.JOB_NO && item.JOB_NO.toLowerCase().includes(q)) ||
+      (item.INVOICE_NO && item.INVOICE_NO.toString().toLowerCase().includes(q)) ||
+      (item.PARTY_INV_NO && item.PARTY_INV_NO.toLowerCase().includes(q)) ||
+      (item.LINE && item.LINE.toLowerCase().includes(q)) ||
+      (item.CFS && item.CFS.toLowerCase().includes(q)) ||
+      (item.JOB_NO && item.JOB_NO.toString().toLowerCase().includes(q)) ||
       (item.SERVICE_NAME && item.SERVICE_NAME.toLowerCase().includes(q)) ||
       (item.INVOICE_NOTE && item.INVOICE_NOTE.toLowerCase().includes(q)) ||
       (item.PORT && item.PORT.toLowerCase().includes(q)) ||
@@ -60,7 +126,19 @@ async function getCIRReport(filters = {}) {
     dbSummary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
   }
 
-  const isDefaultView = !companyId && !terminalId && !customerId && !serviceId && !contNo && !blNo && !tripType && !search;
+  // Is default view when all filter parameters are in their default/all state
+  const isDefaultView = 
+    (!companyId || companyId === 'all' || companyId === 'ALL') &&
+    (!terminalId || terminalId === 'all' || terminalId === 'ALL') &&
+    (!financialYear || financialYear === 'all' || financialYear === 'ALL') &&
+    (!customerId || customerId === 'all' || customerId === 'ALL') &&
+    (!serviceId || serviceId === 'all' || serviceId === 'ALL') &&
+    (!tripType || tripType === 'all' || tripType === 'ALL') &&
+    (!size || size === 'all' || size === 'ALL') &&
+    (!contNo || contNo.trim() === '') &&
+    (!blNo || blNo.trim() === '') &&
+    (!search || search.trim() === '');
+
   const kpis = calculateKPIs(filteredRows, dbSummary, isDefaultView);
 
   return {
