@@ -7,6 +7,8 @@ async function getCIRReport(req, res) {
     const filters = {
       companyId: req.query.companyId,
       terminalId: req.query.terminalId,
+      financialYear: req.query.financialYear,
+      size: req.query.size,
       fromDate: req.query.fromDate,
       toDate: req.query.toDate,
       contNo: req.query.contNo,
@@ -15,6 +17,7 @@ async function getCIRReport(req, res) {
       customerId: req.query.customerId,
       serviceId: req.query.serviceId,
       search: req.query.search,
+      ...req.query
     };
 
     const result = await cirService.getCIRReport(filters);
@@ -56,7 +59,11 @@ async function getContainers(req, res) {
     const filters = {
       search: req.query.search,
       status: req.query.status,
-      terminalId: req.query.terminalId
+      terminalId: req.query.terminalId,
+      financialYear: req.query.financialYear,
+      contSize: req.query.contSize || req.query.size,
+      contType: req.query.contType,
+      ...req.query
     };
     const result = await cirService.getContainersTracking(filters);
     return res.json({
