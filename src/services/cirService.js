@@ -204,11 +204,24 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     const hasTerm = terminalId && terminalId !== 'all' && terminalId !== 'ALL';
     const hasFY = financialYear && financialYear !== 'all' && financialYear !== 'ALL';
 
-    if (hasTerm && hasFY) {
+    let targetTermId = null;
+    if (hasTerm) {
+      if (!isNaN(Number(terminalId))) {
+        targetTermId = Number(terminalId);
+      } else {
+        const cleanTerm = String(terminalId).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const found = detailed.terminals?.find(t => {
+          const tClean = t.terminalName.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return tClean.includes(cleanTerm) || cleanTerm.includes(tClean);
+        });
+        if (found) targetTermId = found.terminalId;
+      }
+    }
+
+    if (hasTerm && hasFY && targetTermId) {
       // Find matching cell in terminalFyMatrix
       const cell = detailed.terminalFyMatrix?.find(m => 
-        (String(m.terminalId) === String(terminalId) || (m.terminalName && m.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))) &&
-        m.fy === financialYear
+        m.terminalId === targetTermId && m.fy === financialYear
       );
       if (cell) {
         return {
@@ -241,12 +254,9 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
           totalRecords: fySum.invoiceCount + fySum.creditCount
         };
       }
-    } else if (hasTerm && !hasFY) {
+    } else if (hasTerm && !hasFY && targetTermId) {
       // Find Terminal summary
-      const tSum = detailed.terminals?.find(t => 
-        String(t.terminalId) === String(terminalId) || 
-        (t.terminalName && t.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))
-      );
+      const tSum = detailed.terminals?.find(t => t.terminalId === targetTermId);
       if (tSum) {
         return {
           totalGrossAmount: Math.round(tSum.netRevenue * 100) / 100,
@@ -774,11 +784,24 @@ async function getContainersTracking(filters = {}) {
   let units20ft = contData.units20ft || 6508;
   let units40ft = contData.units40ft || 82734;
 
+  let targetTermId = null;
+  if (hasTerm) {
+    if (!isNaN(Number(terminalId))) {
+      targetTermId = Number(terminalId);
+    } else {
+      const cleanTerm = String(terminalId).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const found = detailed?.terminals?.find(t => {
+        const tClean = t.terminalName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return tClean.includes(cleanTerm) || cleanTerm.includes(tClean);
+      });
+      if (found) targetTermId = found.terminalId;
+    }
+  }
+
   if (detailed) {
-    if (hasTerm && hasFY) {
+    if (hasTerm && hasFY && targetTermId) {
       const cell = detailed.terminalFyMatrix?.find(m => 
-        (String(m.terminalId) === String(terminalId) || (m.terminalName && m.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))) &&
-        m.fy === financialYear
+        m.terminalId === targetTermId && m.fy === financialYear
       );
       if (cell) {
         totalDBJobs = cell.totalJobs;
@@ -796,11 +819,8 @@ async function getContainersTracking(filters = {}) {
         units20ft = fySum.units20ft;
         units40ft = fySum.units40ft;
       }
-    } else if (hasTerm && !hasFY) {
-      const tSum = detailed.terminals?.find(t => 
-        String(t.terminalId) === String(terminalId) || 
-        (t.terminalName && t.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))
-      );
+    } else if (hasTerm && !hasFY && targetTermId) {
+      const tSum = detailed.terminals?.find(t => t.terminalId === targetTermId);
       if (tSum) {
         totalDBJobs = tSum.totalJobs;
         totalDBContainers = tSum.totalContainers;
