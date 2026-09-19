@@ -126,7 +126,12 @@ async function getCIRReport(filters = {}) {
     dbSummary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
   }
 
-  // Is default view when all filter parameters are in their default/all state
+  const detailedPath = path.join(__dirname, '../data/branchAnalyticsDetailed.json');
+  let detailed = null;
+  if (fs.existsSync(detailedPath)) {
+    detailed = JSON.parse(fs.readFileSync(detailedPath, 'utf8'));
+  }
+
   const isDefaultView = 
     (!companyId || companyId === 'all' || companyId === 'ALL') &&
     (!terminalId || terminalId === 'all' || terminalId === 'ALL') &&
@@ -139,7 +144,15 @@ async function getCIRReport(filters = {}) {
     (!blNo || blNo.trim() === '') &&
     (!search || search.trim() === '');
 
-  const kpis = calculateKPIs(filteredRows, dbSummary, isDefaultView);
+  const kpis = calculateKPIs(filteredRows, dbSummary, detailed, {
+    terminalId,
+    financialYear,
+    customerId,
+    serviceId,
+    tripType,
+    size,
+    isDefaultView
+  });
 
   return {
     source: 'ORACLE_SPJLIVE',
@@ -150,7 +163,7 @@ async function getCIRReport(filters = {}) {
       database: 'pdb1.sub06121018360.prodvcn.oraclevcn.com',
       user: 'SPJLIVE'
     },
-    total: isDefaultView && dbSummary ? dbSummary.validActiveInvoices + dbSummary.validActiveCreditNotes : filteredRows.length,
+    total: kpis.totalRecords || filteredRows.length,
     kpis,
     records: filteredRows,
   };
@@ -159,7 +172,99 @@ async function getCIRReport(filters = {}) {
 /**
  * Calculate KPI summary aggregates including Terminal and Location-wise Breakdown
  */
-function calculateKPIs(rows, dbSummary = null, isDefaultView = false) {
+function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {}) {
+  const { terminalId, financialYear, customerId, serviceId, tripType, size, isDefaultView } = filterMeta;
+
+  // 1. Default View: Grand totals
+  if (isDefaultView && dbSummary) {
+    return {
+      totalGrossAmount: dbSummary.cumulativeGrossSale,
+      totalBillAmount: dbSummary.totalInvoicedBillAmount,
+      totalTax: dbSummary.totalInvoicedTax,
+      totalInvoiceAmount: dbSummary.totalInvoicedGross,
+      totalCreditAmount: dbSummary.totalCreditGross,
+      invoiceCount: dbSummary.validActiveInvoices,
+      creditNoteCount: dbSummary.validActiveCreditNotes,
+      containerCount: dbSummary.totalDBFleetContDtls,
+      teuCount: dbSummary.totalDBTeus,
+      totalRecords: dbSummary.validActiveInvoices + dbSummary.validActiveCreditNotes,
+      totalDBInvoices: dbSummary.totalDBInvoices,
+      totalDBItems: dbSummary.totalInvoiceItems,
+    };
+  }
+
+  // Check if purely Terminal and/or FY filtered without granular row search
+  const isPureTerminalFY = 
+    (!customerId || customerId === 'all' || customerId === 'ALL') &&
+    (!serviceId || serviceId === 'all' || serviceId === 'ALL') &&
+    (!tripType || tripType === 'all' || tripType === 'ALL') &&
+    (!size || size === 'all' || size === 'ALL');
+
+  if (isPureTerminalFY && detailed) {
+    const hasTerm = terminalId && terminalId !== 'all' && terminalId !== 'ALL';
+    const hasFY = financialYear && financialYear !== 'all' && financialYear !== 'ALL';
+
+    if (hasTerm && hasFY) {
+      // Find matching cell in terminalFyMatrix
+      const cell = detailed.terminalFyMatrix?.find(m => 
+        (String(m.terminalId) === String(terminalId) || (m.terminalName && m.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))) &&
+        m.fy === financialYear
+      );
+      if (cell) {
+        return {
+          totalGrossAmount: Math.round(cell.netRevenue * 100) / 100,
+          totalBillAmount: Math.round(cell.billAmount * 100) / 100,
+          totalTax: Math.round(cell.taxAmount * 100) / 100,
+          totalInvoiceAmount: Math.round(cell.grossSale * 100) / 100,
+          totalCreditAmount: Math.round(cell.creditAmount * 100) / 100,
+          invoiceCount: cell.invoiceCount,
+          creditNoteCount: cell.creditCount,
+          containerCount: cell.totalContainers,
+          teuCount: cell.teus,
+          totalRecords: cell.invoiceCount + cell.creditCount
+        };
+      }
+    } else if (hasFY && !hasTerm) {
+      // Find FY summary
+      const fySum = detailed.fySummaries?.[financialYear];
+      if (fySum) {
+        return {
+          totalGrossAmount: Math.round(fySum.netRevenue * 100) / 100,
+          totalBillAmount: Math.round(fySum.billAmount * 100) / 100,
+          totalTax: Math.round(fySum.taxAmount * 100) / 100,
+          totalInvoiceAmount: Math.round(fySum.grossSale * 100) / 100,
+          totalCreditAmount: Math.round(fySum.creditAmount * 100) / 100,
+          invoiceCount: fySum.invoiceCount,
+          creditNoteCount: fySum.creditCount,
+          containerCount: fySum.totalContainers,
+          teuCount: fySum.teus,
+          totalRecords: fySum.invoiceCount + fySum.creditCount
+        };
+      }
+    } else if (hasTerm && !hasFY) {
+      // Find Terminal summary
+      const tSum = detailed.terminals?.find(t => 
+        String(t.terminalId) === String(terminalId) || 
+        (t.terminalName && t.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))
+      );
+      if (tSum) {
+        return {
+          totalGrossAmount: Math.round(tSum.netRevenue * 100) / 100,
+          totalBillAmount: Math.round(tSum.billAmount * 100) / 100,
+          totalTax: Math.round(tSum.taxAmount * 100) / 100,
+          totalInvoiceAmount: Math.round(tSum.grossSale * 100) / 100,
+          totalCreditAmount: Math.round(tSum.creditAmount * 100) / 100,
+          invoiceCount: tSum.invoiceCount,
+          creditNoteCount: tSum.creditCount,
+          containerCount: tSum.totalContainers,
+          teuCount: tSum.teus,
+          totalRecords: tSum.invoiceCount + tSum.creditCount
+        };
+      }
+    }
+  }
+
+  // Dynamic Row Accumulation for granular sub-filters (Customer, Service, Trip Type, Size, Search)
   let totalInvoiceGross = 0;
   let totalCreditGross = 0;
   let totalInvoiceBill = 0;
@@ -205,54 +310,8 @@ function calculateKPIs(rows, dbSummary = null, isDefaultView = false) {
     if (r.LINE && r.LINE.trim() !== '') {
       lineCounts[r.LINE] = (lineCounts[r.LINE] || 0) + 1;
     }
-
-    const term = r.TERMINAL_NAME || 'TRANSWORLD-DADRI';
-    if (!terminalBreakdown[term]) {
-      terminalBreakdown[term] = {
-        name: term,
-        terminalId: r.TERMINAL_ID || 1,
-        location: r.LOCATION || 'DADRI UP',
-        grossRevenue: 0,
-        billAmount: 0,
-        taxAmount: 0,
-        invoiceCount: 0,
-        containerCount: dbSummary?.totalDBFleetContDtls || 89249,
-        chambers: 21,
-      };
-    }
-    terminalBreakdown[term].grossRevenue += (r.INVOICE_TYPE === 'Credit Note' ? -amt : amt);
-    terminalBreakdown[term].billAmount += (r.INVOICE_TYPE === 'Credit Note' ? -bill : bill);
-    terminalBreakdown[term].taxAmount += (r.INVOICE_TYPE === 'Credit Note' ? -tax : tax);
-    terminalBreakdown[term].invoiceCount++;
-
-    const loc = r.PORT || 'SPJ ICD / CFS Dadri';
-    locationBreakdown[loc] = (locationBreakdown[loc] || 0) + amt;
   });
 
-  if (isDefaultView && dbSummary) {
-    return {
-      totalGrossAmount: dbSummary.cumulativeGrossSale,
-      totalBillAmount: dbSummary.totalInvoicedBillAmount,
-      totalTax: dbSummary.totalInvoicedTax,
-      totalInvoiceAmount: dbSummary.totalInvoicedGross,
-      totalCreditAmount: dbSummary.totalCreditGross,
-      invoiceCount: dbSummary.validActiveInvoices,
-      creditNoteCount: dbSummary.validActiveCreditNotes,
-      containerCount: dbSummary.totalDBFleetContDtls,
-      teuCount: dbSummary.totalDBTeus,
-      totalRecords: dbSummary.validActiveInvoices + dbSummary.validActiveCreditNotes,
-      totalDBInvoices: dbSummary.totalDBInvoices,
-      totalDBItems: dbSummary.totalInvoiceItems,
-      tripCounts,
-      serviceAmounts,
-      customerAmounts,
-      lineCounts,
-      terminalBreakdown,
-      locationBreakdown,
-    };
-  }
-
-  // Filtered calculation
   const totalGrossAmount = Math.round((totalInvoiceGross - totalCreditGross) * 100) / 100;
   const totalBillAmount = Math.round(totalInvoiceBill * 100) / 100;
   const totalTax = Math.round(totalInvoiceTax * 100) / 100;
@@ -265,8 +324,8 @@ function calculateKPIs(rows, dbSummary = null, isDefaultView = false) {
     totalCreditAmount: Math.round(totalCreditGross * 100) / 100,
     invoiceCount,
     creditNoteCount,
-    containerCount: dbSummary?.totalDBFleetContDtls || 89249,
-    teuCount: dbSummary?.totalDBTeus || 171984,
+    containerCount: rows.length,
+    teuCount: rows.length * 2,
     totalRecords: rows.length,
     tripCounts,
     serviceAmounts,
@@ -710,22 +769,70 @@ async function getContainersTracking(filters = {}) {
     ));
   }
 
-  const inYardCount = rows.filter(r => r.status.includes('Active') || r.status.includes('Yard') || r.status.includes('Chamber')).length;
-  const dispatchedCount = rows.filter(r => r.status.includes('Dispatched') || r.status.includes('Outward')).length;
-  const jobRegisteredCount = rows.filter(r => r.status.includes('Registered')).length;
+  const detailedPath = path.join(__dirname, '../data/branchAnalyticsDetailed.json');
+  let detailed = null;
+  if (fs.existsSync(detailedPath)) {
+    detailed = JSON.parse(fs.readFileSync(detailedPath, 'utf8'));
+  }
 
-  const count40ft = rows.filter(r => String(r.contSize).includes('40')).length;
-  const count20ft = rows.filter(r => String(r.contSize).includes('20')).length;
-  const calculatedTeus = (count40ft * 2) + count20ft;
+  const hasTerm = terminalId && terminalId !== 'ALL' && terminalId !== 'all';
+  const hasFY = financialYear && financialYear !== 'ALL' && financialYear !== 'all';
+
+  let totalDBJobs = contData.totalDBJobs || 88361;
+  let totalDBContainers = contData.totalDBContainers || 89245;
+  let totalDBTeus = contData.totalDBTeus || 171976;
+  let units20ft = contData.units20ft || 6508;
+  let units40ft = contData.units40ft || 82734;
+
+  if (detailed) {
+    if (hasTerm && hasFY) {
+      const cell = detailed.terminalFyMatrix?.find(m => 
+        (String(m.terminalId) === String(terminalId) || (m.terminalName && m.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))) &&
+        m.fy === financialYear
+      );
+      if (cell) {
+        totalDBJobs = cell.totalJobs;
+        totalDBContainers = cell.totalContainers;
+        totalDBTeus = cell.teus;
+        units20ft = cell.units20ft;
+        units40ft = cell.units40ft;
+      }
+    } else if (hasFY && !hasTerm) {
+      const fySum = detailed.fySummaries?.[financialYear];
+      if (fySum) {
+        totalDBJobs = fySum.totalJobs;
+        totalDBContainers = fySum.totalContainers;
+        totalDBTeus = fySum.teus;
+        units20ft = fySum.units20ft;
+        units40ft = fySum.units40ft;
+      }
+    } else if (hasTerm && !hasFY) {
+      const tSum = detailed.terminals?.find(t => 
+        String(t.terminalId) === String(terminalId) || 
+        (t.terminalName && t.terminalName.toLowerCase().includes(String(terminalId).toLowerCase()))
+      );
+      if (tSum) {
+        totalDBJobs = tSum.totalJobs;
+        totalDBContainers = tSum.totalContainers;
+        totalDBTeus = tSum.teus;
+        units20ft = tSum.units20ft;
+        units40ft = tSum.units40ft;
+      }
+    }
+  }
+
+  const inYardCount = rows.filter(r => r.status && (r.status.includes('Active') || r.status.includes('Yard') || r.status.includes('Chamber'))).length;
+  const dispatchedCount = rows.filter(r => r.status && (r.status.includes('Dispatched') || r.status.includes('Outward'))).length;
+  const jobRegisteredCount = rows.filter(r => r.status && r.status.includes('Registered')).length;
 
   return {
-    total: rows.length,
+    total: (hasTerm || hasFY) ? totalDBContainers : rows.length,
     stats: {
-      totalDBJobs: (terminalId && terminalId !== 'ALL' && terminalId !== 'all') ? rows.length : (contData.totalDBJobs || 88361),
-      totalDBContainers: (terminalId && terminalId !== 'ALL' && terminalId !== 'all') ? rows.length : (contData.totalDBContainers || 89245),
-      totalDBTeus: (terminalId && terminalId !== 'ALL' && terminalId !== 'all') ? calculatedTeus : (contData.totalDBTeus || 171976),
-      units20ft: (terminalId && terminalId !== 'ALL' && terminalId !== 'all') ? count20ft : (contData.units20ft || 6508),
-      units40ft: (terminalId && terminalId !== 'ALL' && terminalId !== 'all') ? count40ft : (contData.units40ft || 82734),
+      totalDBJobs,
+      totalDBContainers,
+      totalDBTeus,
+      units20ft,
+      units40ft,
       filteredContainers: rows.length,
       inYard: inYardCount,
       dispatched: dispatchedCount,
