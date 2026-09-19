@@ -1149,7 +1149,7 @@ function getFallbackOperations(filters = {}) {
       totalGateIn: isFiltered ? gateIns.length : 655,
       totalGateOut: isFiltered ? gateOuts.length : 806,
       totalDispatches: isFiltered ? dispatches.length : 427,
-      totalPicklists: isFiltered ? picklists.length : 219,
+      totalPicklists: isFiltered ? picklists.length : 395,
       totalASNs: isFiltered ? asns.length : 322,
       totalCrossStuffing: isFiltered ? crossStuffing.length : 56
     },
