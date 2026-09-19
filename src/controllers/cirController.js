@@ -94,14 +94,14 @@ async function getMasters(req, res) {
 
 async function getOperations(req, res) {
   try {
-    const ops = await cirService.getOperationsSummary();
+    const ops = await cirService.getOperationsSummary(req.query);
     return res.json({
       success: true,
       data: ops,
     });
   } catch (err) {
     console.error('Error fetching operations, loading fallback:', err.message);
-    const fallback = cirService.getFallbackOperations();
+    const fallback = cirService.getFallbackOperations(req.query);
     return res.json({
       success: true,
       source: 'SNAPSHOT_BACKUP',
@@ -112,7 +112,7 @@ async function getOperations(req, res) {
 
 async function getFleet(req, res) {
   try {
-    const fleet = await cirService.getFleet();
+    const fleet = await cirService.getFleet(req.query);
     return res.json({
       success: true,
       data: fleet,
