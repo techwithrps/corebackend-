@@ -177,19 +177,21 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
 
   // 1. Default View: Grand totals
   if (isDefaultView && dbSummary) {
+    const invCount = dbSummary.validActiveInvoices || rows.length;
+    const creditCount = dbSummary.validActiveCreditNotes || 0;
     return {
-      totalGrossAmount: dbSummary.cumulativeGrossSale,
-      totalBillAmount: dbSummary.totalInvoicedBillAmount,
-      totalTax: dbSummary.totalInvoicedTax,
-      totalInvoiceAmount: dbSummary.totalInvoicedGross,
-      totalCreditAmount: dbSummary.totalCreditGross,
-      invoiceCount: dbSummary.validActiveInvoices,
-      creditNoteCount: dbSummary.validActiveCreditNotes,
-      containerCount: dbSummary.totalDBFleetContDtls,
-      teuCount: dbSummary.totalDBTeus,
-      totalRecords: dbSummary.validActiveInvoices + dbSummary.validActiveCreditNotes,
-      totalDBInvoices: dbSummary.totalDBInvoices,
-      totalDBItems: dbSummary.totalInvoiceItems,
+      totalGrossAmount: dbSummary.cumulativeGrossSale || dbSummary.totalInvoicedGross || 0,
+      totalBillAmount: dbSummary.totalInvoicedBillAmount || 0,
+      totalTax: dbSummary.totalInvoicedTax || 0,
+      totalInvoiceAmount: dbSummary.totalInvoicedGross || 0,
+      totalCreditAmount: dbSummary.totalCreditGross || 0,
+      invoiceCount: invCount,
+      creditNoteCount: creditCount,
+      containerCount: dbSummary.totalContainers || 0,
+      teuCount: dbSummary.totalTeus || 0,
+      totalRecords: invCount + creditCount,
+      totalDBInvoices: invCount,
+      totalDBItems: dbSummary.totalInvoiceItems || rows.length,
     };
   }
 
