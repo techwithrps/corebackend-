@@ -369,197 +369,347 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
 }
 
 /**
- * Fetch Full 360° Financial & Terminal Ledger Analytics directly from live SPJLIVE dataset
+ * Fetch Full 360° Financial, Terminal-Wise & Customer-Wise Analytics strictly from Oracle SPJLIVE dataset
  */
-async function getFinancialAnalytics() {
+async function getFinancialAnalytics(filters = {}) {
+  const { terminalId, customerId, financialYear, fromDate, toDate } = filters;
+
   const snapshotPath = path.join(__dirname, '../data/cachedSnapshot.json');
   let rows = [];
   if (fs.existsSync(snapshotPath)) {
     rows = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
   }
 
-  // 1. Customer Ledger
-  const custMap = {};
-  rows.forEach(r => {
-    const name = r.CUSTOMER_NAME || 'SPJ Account Party';
-    if (!custMap[name]) {
-      custMap[name] = {
-        customerId: r.CUSTOMER_ID || 1,
-        customerName: name,
-        customerCode: (name.substring(0, 4) + '...').toUpperCase(),
-        gstin: '09AAACF3799A1ZN',
-        city: 'Uttar Pradesh',
-        totalInvoices: 0,
-        billAmount: 0,
-        taxAmount: 0,
-        grossRevenue: 0
-      };
-    }
-    custMap[name].totalInvoices++;
-    custMap[name].billAmount += Number(r.BILL_AMOUNT) || 0;
-    custMap[name].taxAmount += Number(r.TAX) || 0;
-    custMap[name].grossRevenue += Number(r.AMOUNT) || 0;
-  });
-  const customerLedger = Object.values(custMap).map(c => ({
-    ...c,
-    billAmount: Math.round(c.billAmount * 100) / 100,
-    taxAmount: Math.round(c.taxAmount * 100) / 100,
-    grossRevenue: Math.round(c.grossRevenue * 100) / 100
-  })).sort((a, b) => b.grossRevenue - a.grossRevenue);
+  // Pre-aggregate items and tax strictly by INVOICE_NO to prevent row multiplication
+  const invoiceMap = new Map();
 
-  // 2. Service-wise Matrix
-  const svcMap = {};
   rows.forEach(r => {
-    const sname = r.SERVICE_NAME || 'Logistics Service';
-    if (!svcMap[sname]) {
-      svcMap[sname] = {
-        serviceId: r.SERVICE_ID || 1,
-        serviceName: sname,
-        serviceCode: (sname.substring(0, 3)).toUpperCase(),
-        lineItemCount: 0,
-        totalBilled: 0,
-        gstAmount: 0,
-        grossKamayi: 0,
-        avgRate: 0,
-        totalQuantity: 0
-      };
-    }
-    svcMap[sname].lineItemCount++;
-    svcMap[sname].totalBilled += Number(r.BILL_AMOUNT) || 0;
-    svcMap[sname].gstAmount += Number(r.TAX) || 0;
-    svcMap[sname].grossKamayi += Number(r.AMOUNT) || 0;
-    svcMap[sname].totalQuantity += 1;
-  });
-  const serviceMatrix = Object.values(svcMap).map(s => ({
-    ...s,
-    totalBilled: Math.round(s.totalBilled * 100) / 100,
-    gstAmount: Math.round(s.gstAmount * 100) / 100,
-    grossKamayi: Math.round(s.grossKamayi * 100) / 100,
-    avgRate: s.lineItemCount > 0 ? Math.round((s.totalBilled / s.lineItemCount) * 100) / 100 : 0
-  })).sort((a, b) => b.grossKamayi - a.grossKamayi);
-
-  // 3. Monthly Trends
-  const monthMap = {};
-  rows.forEach(r => {
-    const dateStr = r.INVOICE_DATE || '18/09/2026';
-    const parts = dateStr.split('/');
-    const monthKey = parts.length === 3 ? `${parts[2]}-${parts[1]}` : '2026-09';
-    const monthLabel = parts.length === 3 ? `${parts[1]}/${parts[2]}` : 'Sep 2026';
-    if (!monthMap[monthKey]) {
-      monthMap[monthKey] = {
-        monthKey,
-        monthLabel,
-        billedAmount: 0,
+    const invNo = String(r.INVOICE_NO || r.INVOICE_REF_NO || 'UNKNOWN');
+    if (!invoiceMap.has(invNo)) {
+      invoiceMap.set(invNo, {
+        invoiceNo: invNo,
+        invoiceRefNo: r.INVOICE_REF_NO || invNo,
+        invoiceDate: r.INVOICE_DATE || '',
+        createdOn: r.CREATED_ON || r.CREATED_DATE || '',
+        customerId: r.CUSTOMER_ID || 0,
+        customerName: r.CUSTOMER_NAME || 'Unmapped / Unknown Customer',
+        terminalId: r.TERMINAL_ID || 0,
+        terminalName: r.TERMINAL_NAME || r.LOCATION || 'Unmapped / Unknown Terminal',
+        serviceName: r.SERVICE_NAME || 'General Freight',
+        tripType: r.TRIP_TYPE || 'Export',
+        currency: r.CURRENCY || 'INR',
+        taxableAmount: 0,
         taxAmount: 0,
         grossAmount: 0,
-        invoiceCount: 0
-      };
+        creditTaxable: 0,
+        creditTax: 0,
+        creditGross: 0,
+        containers: new Set(),
+        movements: new Set(),
+        jobs: new Set(),
+        units20ft: 0,
+        units40ft: 0,
+        units45ft: 0,
+        unspecifiedUnits: 0,
+        teus: 0,
+        isCreditNote: r.INVOICE_TYPE === 'Credit Note' || (r.TRIP_TYPE && r.TRIP_TYPE.toLowerCase().includes('credit'))
+      });
     }
-    monthMap[monthKey].invoiceCount++;
-    monthMap[monthKey].billedAmount += Number(r.BILL_AMOUNT) || 0;
-    monthMap[monthKey].taxAmount += Number(r.TAX) || 0;
-    monthMap[monthKey].grossAmount += Number(r.AMOUNT) || 0;
+
+    const inv = invoiceMap.get(invNo);
+    const bill = Number(r.BILL_AMOUNT || 0);
+    const tax = Number(r.TAX || 0);
+    const gross = Number(r.AMOUNT || 0);
+
+    if (inv.isCreditNote) {
+      inv.creditTaxable += Math.abs(bill);
+      inv.creditTax += Math.abs(tax);
+      inv.creditGross += Math.abs(gross);
+    } else {
+      inv.taxableAmount += bill;
+      inv.taxAmount += tax;
+      inv.grossAmount += gross;
+    }
+
+    const cont = r.CONT_NO;
+    if (cont && cont !== '-' && cont.trim() !== '') {
+      inv.containers.add(cont.trim());
+    }
+    const job = r.JOB_NO;
+    if (job) inv.jobs.add(String(job));
+
+    // Movement tracking: Distinct container job cycle
+    const movKey = (cont || 'C') + '_' + (job || 'J') + '_' + (r.SERVICE_NAME || 'S');
+    inv.movements.add(movKey);
+
+    // Strict TEU logic: Known sizes only
+    const sz = String(r.CONT_SIZE || '').trim();
+    if (sz === '20' || sz.includes('20')) {
+      inv.units20ft += 1;
+      inv.teus += 1.0;
+    } else if (sz === '40' || sz.includes('40')) {
+      inv.units40ft += 1;
+      inv.teus += 2.0;
+    } else if (sz === '45' || sz.includes('45')) {
+      inv.units45ft += 1;
+      inv.teus += 2.0;
+    } else {
+      inv.unspecifiedUnits += 1;
+      // TEU remains 0.0 for unspecified sizes (Zero assumption rule)
+    }
   });
-  const monthlyTrend = Object.values(monthMap).map(m => ({
-    ...m,
-    billedAmount: Math.round(m.billedAmount * 100) / 100,
-    taxAmount: Math.round(m.taxAmount * 100) / 100,
-    grossAmount: Math.round(m.grossAmount * 100) / 100
-  })).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
 
-  // 4. Totals & Terminal Breakdown
-  let liveInvoicedRevenue = 0;
-  let liveTaxOutput = 0;
-  let grossSystemTotal = 0;
-  rows.forEach(r => {
-    liveInvoicedRevenue += Number(r.BILL_AMOUNT) || 0;
-    liveTaxOutput += Number(r.TAX) || 0;
-    grossSystemTotal += Number(r.AMOUNT) || 0;
-  });
+  // Calculate Overall Totals & Breakdown
+  let overallTaxable = 0, overallTax = 0, overallGross = 0, overallCredit = 0;
+  const overallInvoices = new Set();
+  const overallCreditNotes = new Set();
+  const overallContainers = new Set();
+  const overallMovements = new Set();
+  const overallJobs = new Set();
+  let overallUnits20 = 0, overallUnits40 = 0, overallUnits45 = 0, overallUnspecified = 0, overallTeus = 0;
 
-  const uniqueContainers = new Set(rows.map(r => r.CONT_NO).filter(Boolean));
-  const totalContainers = uniqueContainers.size || 391;
+  const termMap = new Map();
+  const custMap = new Map();
+  const invoiceList = [];
 
-  // Load live Branch & Terminal Analytics from Oracle SPJLIVE (FLEET_CONT_JO + FLEET_CONT_JO_DTLS)
-  const branchPath = path.join(__dirname, '../data/branchAnalytics.json');
-  let branchAnalytics = [];
-  if (fs.existsSync(branchPath)) {
-    branchAnalytics = JSON.parse(fs.readFileSync(branchPath, 'utf8'));
+  for (const inv of invoiceMap.values()) {
+    invoiceList.push({
+      invoiceNo: inv.invoiceNo,
+      invoiceRefNo: inv.invoiceRefNo,
+      invoiceDate: inv.invoiceDate,
+      customerId: inv.customerId,
+      customerName: inv.customerName,
+      terminalId: inv.terminalId,
+      terminalName: inv.terminalName,
+      taxableAmount: Math.round(inv.taxableAmount * 100) / 100,
+      taxAmount: Math.round(inv.taxAmount * 100) / 100,
+      grossAmount: Math.round(inv.grossAmount * 100) / 100,
+      creditGross: Math.round(inv.creditGross * 100) / 100,
+      netAmount: Math.round((inv.grossAmount - inv.creditGross) * 100) / 100,
+      containersCount: inv.containers.size,
+      movementsCount: inv.movements.size,
+      teus: inv.teus,
+      isCreditNote: inv.isCreditNote
+    });
+
+    if (inv.isCreditNote) {
+      overallCreditNotes.add(inv.invoiceNo);
+      overallCredit += inv.creditGross;
+    } else {
+      overallInvoices.add(inv.invoiceNo);
+      overallTaxable += inv.taxableAmount;
+      overallTax += inv.taxAmount;
+      overallGross += inv.grossAmount;
+    }
+
+    for (const c of inv.containers) overallContainers.add(c);
+    for (const m of inv.movements) overallMovements.add(m);
+    for (const j of inv.jobs) overallJobs.add(j);
+
+    overallUnits20 += inv.units20ft;
+    overallUnits40 += inv.units40ft;
+    overallUnits45 += inv.units45ft;
+    overallUnspecified += inv.unspecifiedUnits;
+    overallTeus += inv.teus;
+
+    // Terminal Bucket
+    const tKey = inv.terminalName || 'Unmapped / Unknown Terminal';
+    if (!termMap.has(tKey)) {
+      termMap.set(tKey, {
+        terminalId: inv.terminalId,
+        terminalName: tKey,
+        invoices: new Set(),
+        creditNotes: new Set(),
+        taxableAmount: 0,
+        taxAmount: 0,
+        grossAmount: 0,
+        creditAmount: 0,
+        containers: new Set(),
+        movements: new Set(),
+        jobs: new Set(),
+        units20ft: 0,
+        units40ft: 0,
+        units45ft: 0,
+        unspecifiedUnits: 0,
+        teus: 0
+      });
+    }
+    const t = termMap.get(tKey);
+    if (inv.isCreditNote) {
+      t.creditNotes.add(inv.invoiceNo);
+      t.creditAmount += inv.creditGross;
+    } else {
+      t.invoices.add(inv.invoiceNo);
+      t.taxableAmount += inv.taxableAmount;
+      t.taxAmount += inv.taxAmount;
+      t.grossAmount += inv.grossAmount;
+    }
+    for (const c of inv.containers) t.containers.add(c);
+    for (const m of inv.movements) t.movements.add(m);
+    for (const j of inv.jobs) t.jobs.add(j);
+    t.units20ft += inv.units20ft;
+    t.units40ft += inv.units40ft;
+    t.units45ft += inv.units45ft;
+    t.unspecifiedUnits += inv.unspecifiedUnits;
+    t.teus += inv.teus;
+
+    // Customer Bucket
+    const cKey = inv.customerName || 'Unmapped / Unknown Customer';
+    if (!custMap.has(cKey)) {
+      custMap.set(cKey, {
+        customerId: inv.customerId,
+        customerName: cKey,
+        invoices: new Set(),
+        creditNotes: new Set(),
+        taxableAmount: 0,
+        taxAmount: 0,
+        grossAmount: 0,
+        creditAmount: 0,
+        containers: new Set(),
+        movements: new Set(),
+        jobs: new Set(),
+        units20ft: 0,
+        units40ft: 0,
+        units45ft: 0,
+        unspecifiedUnits: 0,
+        teus: 0
+      });
+    }
+    const c = custMap.get(cKey);
+    if (inv.isCreditNote) {
+      c.creditNotes.add(inv.invoiceNo);
+      c.creditAmount += inv.creditGross;
+    } else {
+      c.invoices.add(inv.invoiceNo);
+      c.taxableAmount += inv.taxableAmount;
+      c.taxAmount += inv.taxAmount;
+      c.grossAmount += inv.grossAmount;
+    }
+    for (const cont of inv.containers) c.containers.add(cont);
+    for (const m of inv.movements) c.movements.add(m);
+    for (const j of inv.jobs) c.jobs.add(j);
+    c.units20ft += inv.units20ft;
+    c.units40ft += inv.units40ft;
+    c.units45ft += inv.units45ft;
+    c.unspecifiedUnits += inv.unspecifiedUnits;
+    c.teus += inv.teus;
   }
 
-  const totalBranchJobs = branchAnalytics.reduce((acc, b) => acc + (b.totalJobs || 0), 0) || 88358;
-  const totalBranchContainers = branchAnalytics.reduce((acc, b) => acc + (b.totalContainers || 0), 0) || 89242;
-  const totalBranchTeus = branchAnalytics.reduce((acc, b) => acc + (b.teus || 0), 0) || 174605;
+  // Format Terminal Analytics Table
+  const terminalAnalytics = Array.from(termMap.values()).map(t => {
+    const taxBill = Math.round(t.taxableAmount * 100) / 100;
+    const gstTax = Math.round(t.taxAmount * 100) / 100;
+    const gross = Math.round(t.grossAmount * 100) / 100;
+    const cr = Math.round(t.creditAmount * 100) / 100;
+    const net = Math.round((gross - cr) * 100) / 100;
+    return {
+      terminalId: t.terminalId,
+      terminalName: t.terminalName,
+      invoiceCount: t.invoices.size,
+      creditNoteCount: t.creditNotes.size,
+      taxableRevenue: taxBill,
+      gstTax,
+      grossRevenue: gross,
+      creditNotes: cr,
+      netRevenue: net,
+      physicalContainers: t.containers.size,
+      containerMovements: t.movements.size,
+      jobOrders: t.jobs.size,
+      units20ft: t.units20ft,
+      units40ft: t.units40ft,
+      units45ft: t.units45ft,
+      unspecifiedUnits: t.unspecifiedUnits,
+      teus: t.teus
+    };
+  }).sort((a, b) => b.netRevenue - a.netRevenue);
 
-  const summaryPath = path.join(__dirname, '../data/exactDBSummary.json');
-  let dbSummary = null;
-  if (fs.existsSync(summaryPath)) {
-    dbSummary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
-  }
+  // Format Customer Analytics Table
+  const customerAnalytics = Array.from(custMap.values()).map(c => {
+    const taxBill = Math.round(c.taxableAmount * 100) / 100;
+    const gstTax = Math.round(c.taxAmount * 100) / 100;
+    const gross = Math.round(c.grossAmount * 100) / 100;
+    const cr = Math.round(c.creditAmount * 100) / 100;
+    const net = Math.round((gross - cr) * 100) / 100;
+    return {
+      customerId: c.customerId,
+      customerName: c.customerName,
+      invoiceCount: c.invoices.size,
+      creditNoteCount: c.creditNotes.size,
+      taxableRevenue: taxBill,
+      gstTax,
+      grossRevenue: gross,
+      creditNotes: cr,
+      netRevenue: net,
+      physicalContainers: c.containers.size,
+      containerMovements: c.movements.size,
+      jobOrders: c.jobs.size,
+      units20ft: c.units20ft,
+      units40ft: c.units40ft,
+      units45ft: c.units45ft,
+      unspecifiedUnits: c.unspecifiedUnits,
+      teus: c.teus
+    };
+  }).sort((a, b) => b.netRevenue - a.netRevenue);
 
-  const grandSystemRevenue = dbSummary?.cumulativeGrossSale || 74238770193.79;
-  const totalInvoicedRevenue = dbSummary?.totalInvoicedBillAmount || 63753956160.36;
-  const totalTaxOutput = dbSummary?.totalInvoicedTax || 11475712108.86;
+  // Reconciliation Check: Overall vs Sum(Terminals) vs Sum(Customers)
+  const sumTermTaxable = terminalAnalytics.reduce((s, t) => s + t.taxableRevenue, 0);
+  const sumTermTax = terminalAnalytics.reduce((s, t) => s + t.gstTax, 0);
+  const sumTermGross = terminalAnalytics.reduce((s, t) => s + t.grossRevenue, 0);
+  const sumTermCredit = terminalAnalytics.reduce((s, t) => s + t.creditNotes, 0);
+  const sumTermNet = terminalAnalytics.reduce((s, t) => s + t.netRevenue, 0);
 
-  // Load detailed multi-dimensional branch analytics (All 39 terminals, Financial Years, Matrix, Top Customers, Top Services)
-  const branchDetailedPath = path.join(__dirname, '../data/branchAnalyticsDetailed.json');
-  let branchDetailed = null;
-  if (fs.existsSync(branchDetailedPath)) {
-    branchDetailed = JSON.parse(fs.readFileSync(branchDetailedPath, 'utf8'));
-  }
+  const sumCustTaxable = customerAnalytics.reduce((s, c) => s + c.taxableRevenue, 0);
+  const sumCustTax = customerAnalytics.reduce((s, c) => s + c.gstTax, 0);
+  const sumCustGross = customerAnalytics.reduce((s, c) => s + c.grossRevenue, 0);
+  const sumCustCredit = customerAnalytics.reduce((s, c) => s + c.creditNotes, 0);
+  const sumCustNet = customerAnalytics.reduce((s, c) => s + c.netRevenue, 0);
+
+  const roundedOverallTaxable = Math.round(overallTaxable * 100) / 100;
+  const roundedOverallTax = Math.round(overallTax * 100) / 100;
+  const roundedOverallGross = Math.round(overallGross * 100) / 100;
+  const roundedOverallCredit = Math.round(overallCredit * 100) / 100;
+  const roundedOverallNet = Math.round((roundedOverallGross - roundedOverallCredit) * 100) / 100;
+
+  const termVariance = Math.abs(roundedOverallNet - Math.round(sumTermNet * 100) / 100);
+  const custVariance = Math.abs(roundedOverallNet - Math.round(sumCustNet * 100) / 100);
+  const isReconciled = termVariance <= 0.05 && custVariance <= 0.05;
+
+  const overallKPIs = {
+    totalInvoices: overallInvoices.size,
+    creditNoteCount: overallCreditNotes.size,
+    taxableRevenue: roundedOverallTaxable,
+    gstTax: roundedOverallTax,
+    grossRevenue: roundedOverallGross,
+    creditNotes: roundedOverallCredit,
+    netRevenue: roundedOverallNet,
+    physicalContainers: overallContainers.size,
+    containerMovements: overallMovements.size,
+    jobOrders: overallJobs.size,
+    units20ft: overallUnits20,
+    units40ft: overallUnits40,
+    units45ft: overallUnits45,
+    unspecifiedSizeUnits: overallUnspecified,
+    teus: overallTeus
+  };
+
+  const reconciliation = {
+    isReconciled,
+    overallNet: roundedOverallNet,
+    sumTermNet: Math.round(sumTermNet * 100) / 100,
+    sumCustNet: Math.round(sumCustNet * 100) / 100,
+    termVariance: Math.round(termVariance * 100) / 100,
+    custVariance: Math.round(custVariance * 100) / 100,
+    lastAuditTimestamp: new Date().toISOString()
+  };
 
   return {
-    totals: {
-      grandSystemRevenue: Math.round(grandSystemRevenue * 100) / 100,
-      liveInvoicedRevenue: Math.round(totalInvoicedRevenue * 100) / 100,
-      liveTaxOutput: Math.round(totalTaxOutput * 100) / 100,
-      totalBranchJobs,
-      totalBranchContainers,
-      totalBranchTeus,
-      totalContainers: dbSummary?.totalDBFleetContDtls || 89249,
-      units40ft: dbSummary?.units40ft || 82738,
-      units20ft: dbSummary?.units20ft || 6508,
-      totalChambers: 21,
-      totalTeus: dbSummary?.totalDBTeus || 171984,
-      validActiveInvoices: dbSummary?.validActiveInvoices || 184699,
-      validActiveCreditNotes: dbSummary?.validActiveCreditNotes || 7066,
-      totalCreditGross: dbSummary?.totalCreditGross || 990898075.43,
-      activeOwnVehicles: dbSummary?.activeOwnVehicles || 236,
-      totalCustomers: dbSummary?.totalCustomers || 1425,
-      totalServices: dbSummary?.totalServices || 606,
-      totalTerminals: dbSummary?.totalTerminals || 39
-    },
-    branchAnalytics,
-    branchDetailed,
-    yearBreakdown: [
-      {
-        year: 2026,
-        financialYear: '2026-2027',
-        month: 9,
-        monthName: 'September',
-        totalInvoices: rows.length,
-        baseRevenue: Math.round(liveInvoicedRevenue * 100) / 100,
-        taxAmount: Math.round(liveTaxOutput * 100) / 100,
-        grossRevenue: Math.round(grossSystemTotal * 100) / 100
-      }
-    ],
-    terminalMatrix: branchAnalytics.map(b => ({
-      terminalName: b.terminalName,
-      terminalId: b.terminalId,
-      location: b.terminalName.includes('DADRI') ? 'DADRI UP' : 'INDIA REGIONAL',
-      totalJobs: b.totalJobs,
-      totalContainers: b.totalContainers,
-      teus: b.teus,
-      units20ft: b.units20ft,
-      units40ft: b.units40ft,
-      reeferCount: b.reeferCount,
-      exportCount: b.exportCount,
-      importCount: b.importCount,
-      domesticCount: b.domesticCount
-    })),
-    customerLedger,
-    serviceMatrix,
-    monthlyTrend,
+    source: 'ORACLE_SPJLIVE',
+    overallKPIs,
+    reconciliation,
+    terminalAnalytics,
+    customerAnalytics,
+    invoiceList: invoiceList.slice(0, 100),
+    totalInvoicesRecorded: invoiceList.length
   };
 }
 
