@@ -1,13 +1,13 @@
 {
-  "validActiveInvoices": 184888,
-  "totalInvoicedBillAmount": 6.531586501716E10,
-  "totalInvoicedTax": 1.175685570309E10,
-  "totalInvoicedGross": 7.707272072025E10,
-  "cumulativeGrossSale": 7.707272072025E10,
-  "totalContainers": 83399,
-  "units20ft": 8340,
-  "units40ft": 75059,
-  "totalTeus": 158458,
-  "totalCustomers": 1426,
+  "validActiveInvoices": 537,
+  "totalInvoicedBillAmount": 320524157.50,
+  "totalInvoicedTax": 57694426.00,
+  "totalInvoicedGross": 378218583.50,
+  "cumulativeGrossSale": 378218583.50,
+  "totalContainers": 611,
+  "units20ft": 84,
+  "units40ft": 527,
+  "totalTeus": 1138,
+  "totalCustomers": 128,
   "totalTerminals": 39
 }
