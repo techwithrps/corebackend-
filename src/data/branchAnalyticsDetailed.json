@@ -6,12 +6,12 @@
       "units20ft": 616,
       "units40ft": 5540,
       "teus": 11695,
-      "billAmount": 7.20220012839E9,
-      "taxAmount": 1.29639602311E9,
-      "grossSale": 8.4985961515E9,
-      "creditCount": 0,
-      "creditAmount": 0,
-      "netRevenue": 8.4985961515E9
+      "billAmount": 7202200128.39,
+      "taxAmount": 1296396023.11,
+      "grossSale": 8498596151.5,
+      "creditCount": 621,
+      "creditAmount": 87042307.94,
+      "netRevenue": 8411553843.56
     },
     "FY 2025-26": {
       "invoiceCount": 32864,
@@ -19,12 +19,12 @@
       "units20ft": 1290,
       "units40ft": 11614,
       "teus": 24518,
-      "billAmount": 7.17286889702E9,
-      "taxAmount": 1.29111640146E9,
-      "grossSale": 8.46398529848E9,
-      "creditCount": 0,
-      "creditAmount": 0,
-      "netRevenue": 8.46398529848E9
+      "billAmount": 7172868897.02,
+      "taxAmount": 1291116401.46,
+      "grossSale": 8463985298.48,
+      "creditCount": 1256,
+      "creditAmount": 176132431.11,
+      "netRevenue": 8287852867.37
     },
     "FY 2024-25": {
       "invoiceCount": 31710,
@@ -32,12 +32,12 @@
       "units20ft": 1222,
       "units40ft": 10999,
       "teus": 23220,
-      "billAmount": 8.30485161641E9,
-      "taxAmount": 1.49487329095E9,
-      "grossSale": 9.79972490736E9,
-      "creditCount": 0,
-      "creditAmount": 0,
-      "netRevenue": 9.79972490736E9
+      "billAmount": 8304851616.41,
+      "taxAmount": 1494873290.95,
+      "grossSale": 9799724907.36,
+      "creditCount": 1212,
+      "creditAmount": 169948929.84,
+      "netRevenue": 9629775977.52
     },
     "FY 2023-24": {
       "invoiceCount": 42108,
@@ -45,12 +45,12 @@
       "units20ft": 1732,
       "units40ft": 15584,
       "teus": 32900,
-      "billAmount": 8.18518224311E9,
-      "taxAmount": 1.47333280376E9,
-      "grossSale": 9.65851504686E9,
-      "creditCount": 0,
-      "creditAmount": 0,
-      "netRevenue": 9.65851504686E9
+      "billAmount": 8185182243.11,
+      "taxAmount": 1473332803.76,
+      "grossSale": 9658515046.86,
+      "creditCount": 1609,
+      "creditAmount": 225677036.08,
+      "netRevenue": 9432838010.78
     },
     "FY 2022-23 & Earlier": {
       "invoiceCount": 61967,
@@ -58,12 +58,12 @@
       "units20ft": 3480,
       "units40ft": 31323,
       "teus": 66126,
-      "billAmount": 3.445076213223E10,
-      "taxAmount": 6.2011371838E9,
-      "grossSale": 4.065189931603E10,
-      "creditCount": 0,
-      "creditAmount": 0,
-      "netRevenue": 4.065189931603E10
+      "billAmount": 34450762132.23,
+      "taxAmount": 6201137183.8,
+      "grossSale": 40651899316.03,
+      "creditCount": 2368,
+      "creditAmount": 332097370.46,
+      "netRevenue": 40319801945.57
     }
   },
   "terminals": [
@@ -78,12 +78,12 @@
       "units40ft": 8,
       "teus": 17,
       "invoiceCount": 14,
-      "billAmount": 1.458634654E7,
+      "billAmount": 14586346.54,
       "taxAmount": 2625542.38,
-      "grossSale": 1.721188892E7,
+      "grossSale": 17211888.92,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.721188892E7
+      "netRevenue": 17211888.92
     },
     {
       "terminalId": 3,
@@ -96,12 +96,12 @@
       "units40ft": 209,
       "teus": 441,
       "invoiceCount": 393,
-      "billAmount": 1.674230049E7,
+      "billAmount": 16742300.49,
       "taxAmount": 3013614.09,
-      "grossSale": 1.975591458E7,
+      "grossSale": 19755914.58,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.975591458E7
+      "netRevenue": 19755914.58
     },
     {
       "terminalId": 28,
@@ -132,12 +132,12 @@
       "units40ft": 361,
       "teus": 762,
       "invoiceCount": 1163,
-      "billAmount": 2.1142482899E8,
-      "taxAmount": 3.805646922E7,
-      "grossSale": 2.4948129821E8,
+      "billAmount": 211424828.99,
+      "taxAmount": 38056469.22,
+      "grossSale": 249481298.21,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.4948129821E8
+      "netRevenue": 249481298.21
     },
     {
       "terminalId": 34,
@@ -150,12 +150,12 @@
       "units40ft": 35,
       "teus": 74,
       "invoiceCount": 58,
-      "billAmount": 2.03337896E7,
+      "billAmount": 20333789.6,
       "taxAmount": 3660082.13,
-      "grossSale": 2.399387173E7,
+      "grossSale": 23993871.73,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.399387173E7
+      "netRevenue": 23993871.73
     },
     {
       "terminalId": 33,
@@ -168,12 +168,12 @@
       "units40ft": 588,
       "teus": 1241,
       "invoiceCount": 1754,
-      "billAmount": 4.6069573504E8,
-      "taxAmount": 8.292523231E7,
-      "grossSale": 5.4362096735E8,
+      "billAmount": 460695735.04,
+      "taxAmount": 82925232.31,
+      "grossSale": 543620967.35,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.4362096735E8
+      "netRevenue": 543620967.35
     },
     {
       "terminalId": 49,
@@ -222,12 +222,12 @@
       "units40ft": 7113,
       "teus": 15016,
       "invoiceCount": 18689,
-      "billAmount": 6.06745811157E9,
-      "taxAmount": 1.09214246008E9,
-      "grossSale": 7.15960057165E9,
+      "billAmount": 6067458111.57,
+      "taxAmount": 1092142460.08,
+      "grossSale": 7159600571.65,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 7.15960057165E9
+      "netRevenue": 7159600571.65
     },
     {
       "terminalId": 6,
@@ -240,12 +240,12 @@
       "units40ft": 4605,
       "teus": 9722,
       "invoiceCount": 9803,
-      "billAmount": 4.82398174678E9,
-      "taxAmount": 8.6831671442E8,
-      "grossSale": 5.6922984612E9,
+      "billAmount": 4823981746.78,
+      "taxAmount": 868316714.42,
+      "grossSale": 5692298461.2,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.6922984612E9
+      "netRevenue": 5692298461.2
     },
     {
       "terminalId": 42,
@@ -258,12 +258,12 @@
       "units40ft": 156,
       "teus": 329,
       "invoiceCount": 377,
-      "billAmount": 1.1396886961E8,
-      "taxAmount": 2.051439653E7,
-      "grossSale": 1.3448326614E8,
+      "billAmount": 113968869.61,
+      "taxAmount": 20514396.53,
+      "grossSale": 134483266.14,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.3448326614E8
+      "netRevenue": 134483266.14
     },
     {
       "terminalId": 32,
@@ -294,12 +294,12 @@
       "units40ft": 0,
       "teus": 0,
       "invoiceCount": 10,
-      "billAmount": 3150000.0,
-      "taxAmount": 567000.0,
-      "grossSale": 3717000.0,
+      "billAmount": 3150000,
+      "taxAmount": 567000,
+      "grossSale": 3717000,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 3717000.0
+      "netRevenue": 3717000
     },
     {
       "terminalId": 29,
@@ -312,12 +312,12 @@
       "units40ft": 860,
       "teus": 1815,
       "invoiceCount": 1103,
-      "billAmount": 1.26904668691E9,
-      "taxAmount": 2.2842840364E8,
-      "grossSale": 1.49747509055E9,
+      "billAmount": 1269046686.91,
+      "taxAmount": 228428403.64,
+      "grossSale": 1497475090.55,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.49747509055E9
+      "netRevenue": 1497475090.55
     },
     {
       "terminalId": 53,
@@ -330,12 +330,12 @@
       "units40ft": 19,
       "teus": 40,
       "invoiceCount": 28,
-      "billAmount": 1.084341057E7,
+      "billAmount": 10843410.57,
       "taxAmount": 1951813.9,
-      "grossSale": 1.279522447E7,
+      "grossSale": 12795224.47,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.279522447E7
+      "netRevenue": 12795224.47
     },
     {
       "terminalId": 5,
@@ -348,12 +348,12 @@
       "units40ft": 8876,
       "teus": 18738,
       "invoiceCount": 15681,
-      "billAmount": 4.84629318932E9,
-      "taxAmount": 8.7233277408E8,
-      "grossSale": 5.7186259634E9,
+      "billAmount": 4846293189.32,
+      "taxAmount": 872332774.08,
+      "grossSale": 5718625963.4,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.7186259634E9
+      "netRevenue": 5718625963.4
     },
     {
       "terminalId": 54,
@@ -366,12 +366,12 @@
       "units40ft": 1175,
       "teus": 2481,
       "invoiceCount": 2687,
-      "billAmount": 6.8893023964E8,
-      "taxAmount": 1.2400744314E8,
-      "grossSale": 8.1293768278E8,
+      "billAmount": 688930239.64,
+      "taxAmount": 124007443.14,
+      "grossSale": 812937682.78,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 8.1293768278E8
+      "netRevenue": 812937682.78
     },
     {
       "terminalId": 40,
@@ -384,12 +384,12 @@
       "units40ft": 2070,
       "teus": 4370,
       "invoiceCount": 4250,
-      "billAmount": 1.12529431989E9,
-      "taxAmount": 2.0255297758E8,
-      "grossSale": 1.32784729747E9,
+      "billAmount": 1125294319.89,
+      "taxAmount": 202552977.58,
+      "grossSale": 1327847297.47,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.32784729747E9
+      "netRevenue": 1327847297.47
     },
     {
       "terminalId": 51,
@@ -402,12 +402,12 @@
       "units40ft": 120,
       "teus": 253,
       "invoiceCount": 161,
-      "billAmount": 4.426121491E7,
+      "billAmount": 44261214.91,
       "taxAmount": 7967018.68,
-      "grossSale": 5.222823359E7,
+      "grossSale": 52228233.59,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.222823359E7
+      "netRevenue": 52228233.59
     },
     {
       "terminalId": 39,
@@ -421,7 +421,7 @@
       "teus": 6,
       "invoiceCount": 3,
       "billAmount": 30955.53,
-      "taxAmount": 5572.0,
+      "taxAmount": 5572,
       "grossSale": 36527.53,
       "creditCount": 0,
       "creditAmount": 0,
@@ -438,12 +438,12 @@
       "units40ft": 4959,
       "teus": 10469,
       "invoiceCount": 9875,
-      "billAmount": 2.01049598863E9,
-      "taxAmount": 3.6188927795E8,
-      "grossSale": 2.37238526658E9,
+      "billAmount": 2010495988.63,
+      "taxAmount": 361889277.95,
+      "grossSale": 2372385266.58,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.37238526658E9
+      "netRevenue": 2372385266.58
     },
     {
       "terminalId": 37,
@@ -456,7 +456,7 @@
       "units40ft": 362,
       "teus": 764,
       "invoiceCount": 178,
-      "billAmount": 2425844.0,
+      "billAmount": 2425844,
       "taxAmount": 436651.92,
       "grossSale": 2862495.92,
       "creditCount": 0,
@@ -474,12 +474,12 @@
       "units40ft": 117,
       "teus": 247,
       "invoiceCount": 1006,
-      "billAmount": 1.30181458732E9,
-      "taxAmount": 2.3432662572E8,
-      "grossSale": 1.53614121304E9,
+      "billAmount": 1301814587.32,
+      "taxAmount": 234326625.72,
+      "grossSale": 1536141213.04,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.53614121304E9
+      "netRevenue": 1536141213.04
     },
     {
       "terminalId": 38,
@@ -492,12 +492,12 @@
       "units40ft": 5,
       "teus": 11,
       "invoiceCount": 3,
-      "billAmount": 180000.0,
-      "taxAmount": 32400.0,
-      "grossSale": 212400.0,
+      "billAmount": 180000,
+      "taxAmount": 32400,
+      "grossSale": 212400,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 212400.0
+      "netRevenue": 212400
     },
     {
       "terminalId": 2,
@@ -528,12 +528,12 @@
       "units40ft": 44,
       "teus": 93,
       "invoiceCount": 121,
-      "billAmount": 3.028779986E7,
+      "billAmount": 30287799.86,
       "taxAmount": 5451803.97,
-      "grossSale": 3.573960383E7,
+      "grossSale": 35739603.83,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 3.573960383E7
+      "netRevenue": 35739603.83
     },
     {
       "terminalId": 31,
@@ -546,12 +546,12 @@
       "units40ft": 44801,
       "teus": 94580,
       "invoiceCount": 117277,
-      "billAmount": 4.218938987335E10,
-      "taxAmount": 7.5940901772E9,
-      "grossSale": 4.978348005055E10,
+      "billAmount": 42189389873.35,
+      "taxAmount": 7594090177.2,
+      "grossSale": 49783480050.55,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 4.978348005055E10
+      "netRevenue": 49783480050.55
     },
     {
       "terminalId": 36,
@@ -582,12 +582,12 @@
       "units40ft": 15,
       "teus": 32,
       "invoiceCount": 18,
-      "billAmount": 4.557513359E7,
+      "billAmount": 45575133.59,
       "taxAmount": 8203524.05,
-      "grossSale": 5.377865764E7,
+      "grossSale": 53778657.64,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.377865764E7
+      "netRevenue": 53778657.64
     }
   ],
   "terminalFyMatrix": [
@@ -600,12 +600,12 @@
       "units20ft": 1,
       "units40ft": 8,
       "teus": 17,
-      "billAmount": 1.456109454E7,
+      "billAmount": 14561094.54,
       "taxAmount": 2620997.02,
-      "grossSale": 1.718209156E7,
+      "grossSale": 17182091.56,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.718209156E7
+      "netRevenue": 17182091.56
     },
     {
       "terminalId": 44,
@@ -616,7 +616,7 @@
       "units20ft": 0,
       "units40ft": 0,
       "teus": 0,
-      "billAmount": 25252.0,
+      "billAmount": 25252,
       "taxAmount": 4545.36,
       "grossSale": 29797.36,
       "creditCount": 0,
@@ -664,7 +664,7 @@
       "units20ft": 6,
       "units40ft": 50,
       "teus": 106,
-      "billAmount": 1719090.0,
+      "billAmount": 1719090,
       "taxAmount": 309436.2,
       "grossSale": 2028526.2,
       "creditCount": 0,
@@ -680,12 +680,12 @@
       "units20ft": 17,
       "units40ft": 154,
       "teus": 325,
-      "billAmount": 1.037578085E7,
+      "billAmount": 10375780.85,
       "taxAmount": 1867640.55,
-      "grossSale": 1.22434214E7,
+      "grossSale": 12243421.4,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.22434214E7
+      "netRevenue": 12243421.4
     },
     {
       "terminalId": 3,
@@ -760,12 +760,12 @@
       "units20ft": 17,
       "units40ft": 151,
       "teus": 319,
-      "billAmount": 7.959649029E7,
-      "taxAmount": 1.432736825E7,
-      "grossSale": 9.392385854E7,
+      "billAmount": 79596490.29,
+      "taxAmount": 14327368.25,
+      "grossSale": 93923858.54,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 9.392385854E7
+      "netRevenue": 93923858.54
     },
     {
       "terminalId": 26,
@@ -776,12 +776,12 @@
       "units20ft": 5,
       "units40ft": 48,
       "teus": 101,
-      "billAmount": 2.214175917E7,
+      "billAmount": 22141759.17,
       "taxAmount": 3985516.65,
-      "grossSale": 2.612727582E7,
+      "grossSale": 26127275.82,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.612727582E7
+      "netRevenue": 26127275.82
     },
     {
       "terminalId": 26,
@@ -792,12 +792,12 @@
       "units20ft": 13,
       "units40ft": 119,
       "teus": 251,
-      "billAmount": 8.699816195E7,
-      "taxAmount": 1.565966915E7,
-      "grossSale": 1.026578311E8,
+      "billAmount": 86998161.95,
+      "taxAmount": 15659669.15,
+      "grossSale": 102657831.1,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.026578311E8
+      "netRevenue": 102657831.1
     },
     {
       "terminalId": 26,
@@ -808,12 +808,12 @@
       "units20ft": 5,
       "units40ft": 42,
       "teus": 89,
-      "billAmount": 2.19258892E7,
+      "billAmount": 21925889.2,
       "taxAmount": 3946660.06,
-      "grossSale": 2.587254926E7,
+      "grossSale": 25872549.26,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.587254926E7
+      "netRevenue": 25872549.26
     },
     {
       "terminalId": 26,
@@ -840,12 +840,12 @@
       "units20ft": 4,
       "units40ft": 35,
       "teus": 74,
-      "billAmount": 2.03337896E7,
+      "billAmount": 20333789.6,
       "taxAmount": 3660082.13,
-      "grossSale": 2.399387173E7,
+      "grossSale": 23993871.73,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.399387173E7
+      "netRevenue": 23993871.73
     },
     {
       "terminalId": 33,
@@ -856,12 +856,12 @@
       "units20ft": 42,
       "units40ft": 374,
       "teus": 789,
-      "billAmount": 3.4061876582E8,
-      "taxAmount": 6.131137785E7,
-      "grossSale": 4.0193014367E8,
+      "billAmount": 340618765.82,
+      "taxAmount": 61311377.85,
+      "grossSale": 401930143.67,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 4.0193014367E8
+      "netRevenue": 401930143.67
     },
     {
       "terminalId": 33,
@@ -872,12 +872,12 @@
       "units20ft": 16,
       "units40ft": 147,
       "teus": 310,
-      "billAmount": 7.672477563E7,
-      "taxAmount": 1.381045961E7,
-      "grossSale": 9.053523524E7,
+      "billAmount": 76724775.63,
+      "taxAmount": 13810459.61,
+      "grossSale": 90535235.24,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 9.053523524E7
+      "netRevenue": 90535235.24
     },
     {
       "terminalId": 33,
@@ -888,12 +888,12 @@
       "units20ft": 6,
       "units40ft": 53,
       "teus": 112,
-      "billAmount": 1.745595754E7,
+      "billAmount": 17455957.54,
       "taxAmount": 3142072.36,
-      "grossSale": 2.05980299E7,
+      "grossSale": 20598029.9,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.05980299E7
+      "netRevenue": 20598029.9
     },
     {
       "terminalId": 33,
@@ -920,12 +920,12 @@
       "units20ft": 1,
       "units40ft": 12,
       "teus": 25,
-      "billAmount": 1.998880339E7,
+      "billAmount": 19988803.39,
       "taxAmount": 3597984.61,
-      "grossSale": 2.3586788E7,
+      "grossSale": 23586788,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.3586788E7
+      "netRevenue": 23586788
     },
     {
       "terminalId": 49,
@@ -952,7 +952,7 @@
       "units20ft": 0,
       "units40ft": 1,
       "teus": 2,
-      "billAmount": 74635.0,
+      "billAmount": 74635,
       "taxAmount": 13434.3,
       "grossSale": 88069.3,
       "creditCount": 0,
@@ -1032,12 +1032,12 @@
       "units20ft": 158,
       "units40ft": 1422,
       "teus": 3002,
-      "billAmount": 2.16180323981E9,
-      "taxAmount": 3.8912458317E8,
-      "grossSale": 2.55092782298E9,
+      "billAmount": 2161803239.81,
+      "taxAmount": 389124583.17,
+      "grossSale": 2550927822.98,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.55092782298E9
+      "netRevenue": 2550927822.98
     },
     {
       "terminalId": 25,
@@ -1048,12 +1048,12 @@
       "units20ft": 217,
       "units40ft": 1954,
       "teus": 4125,
-      "billAmount": 1.08034332191E9,
-      "taxAmount": 1.9446179794E8,
-      "grossSale": 1.27480511985E9,
+      "billAmount": 1080343321.91,
+      "taxAmount": 194461797.94,
+      "grossSale": 1274805119.85,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.27480511985E9
+      "netRevenue": 1274805119.85
     },
     {
       "terminalId": 25,
@@ -1064,12 +1064,12 @@
       "units20ft": 196,
       "units40ft": 1763,
       "teus": 3722,
-      "billAmount": 1.29166598825E9,
-      "taxAmount": 2.3249987789E8,
-      "grossSale": 1.52416586614E9,
+      "billAmount": 1291665988.25,
+      "taxAmount": 232499877.89,
+      "grossSale": 1524165866.14,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.52416586614E9
+      "netRevenue": 1524165866.14
     },
     {
       "terminalId": 25,
@@ -1080,12 +1080,12 @@
       "units20ft": 170,
       "units40ft": 1528,
       "teus": 3226,
-      "billAmount": 9.7390074626E8,
-      "taxAmount": 1.7530213433E8,
-      "grossSale": 1.14920288059E9,
+      "billAmount": 973900746.26,
+      "taxAmount": 175302134.33,
+      "grossSale": 1149202880.59,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.14920288059E9
+      "netRevenue": 1149202880.59
     },
     {
       "terminalId": 25,
@@ -1096,12 +1096,12 @@
       "units20ft": 50,
       "units40ft": 446,
       "teus": 941,
-      "billAmount": 5.5974481534E8,
-      "taxAmount": 1.0075406676E8,
-      "grossSale": 6.604988821E8,
+      "billAmount": 559744815.34,
+      "taxAmount": 100754066.76,
+      "grossSale": 660498882.1,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 6.604988821E8
+      "netRevenue": 660498882.1
     },
     {
       "terminalId": 6,
@@ -1112,12 +1112,12 @@
       "units20ft": 208,
       "units40ft": 1871,
       "teus": 3950,
-      "billAmount": 2.41754518718E9,
-      "taxAmount": 4.3515813369E8,
-      "grossSale": 2.85270332087E9,
+      "billAmount": 2417545187.18,
+      "taxAmount": 435158133.69,
+      "grossSale": 2852703320.87,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.85270332087E9
+      "netRevenue": 2852703320.87
     },
     {
       "terminalId": 6,
@@ -1128,12 +1128,12 @@
       "units20ft": 93,
       "units40ft": 841,
       "teus": 1775,
-      "billAmount": 4.3620702579E8,
-      "taxAmount": 7.851726464E7,
-      "grossSale": 5.1472429043E8,
+      "billAmount": 436207025.79,
+      "taxAmount": 78517264.64,
+      "grossSale": 514724290.43,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.1472429043E8
+      "netRevenue": 514724290.43
     },
     {
       "terminalId": 6,
@@ -1144,12 +1144,12 @@
       "units20ft": 70,
       "units40ft": 632,
       "teus": 1334,
-      "billAmount": 6.5986153622E8,
-      "taxAmount": 1.1877507652E8,
-      "grossSale": 7.7863661274E8,
+      "billAmount": 659861536.22,
+      "taxAmount": 118775076.52,
+      "grossSale": 778636612.74,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 7.7863661274E8
+      "netRevenue": 778636612.74
     },
     {
       "terminalId": 6,
@@ -1160,12 +1160,12 @@
       "units20ft": 73,
       "units40ft": 654,
       "teus": 1381,
-      "billAmount": 4.9404716972E8,
-      "taxAmount": 8.892849055E7,
-      "grossSale": 5.8297566027E8,
+      "billAmount": 494047169.72,
+      "taxAmount": 88928490.55,
+      "grossSale": 582975660.27,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.8297566027E8
+      "netRevenue": 582975660.27
     },
     {
       "terminalId": 6,
@@ -1176,12 +1176,12 @@
       "units20ft": 68,
       "units40ft": 608,
       "teus": 1283,
-      "billAmount": 8.1632082787E8,
-      "taxAmount": 1.4693774902E8,
-      "grossSale": 9.6325857689E8,
+      "billAmount": 816320827.87,
+      "taxAmount": 146937749.02,
+      "grossSale": 963258576.89,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 9.6325857689E8
+      "netRevenue": 963258576.89
     },
     {
       "terminalId": 42,
@@ -1192,12 +1192,12 @@
       "units20ft": 11,
       "units40ft": 103,
       "teus": 217,
-      "billAmount": 7.526013519E7,
-      "taxAmount": 1.354682433E7,
-      "grossSale": 8.880695952E7,
+      "billAmount": 75260135.19,
+      "taxAmount": 13546824.33,
+      "grossSale": 88806959.52,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 8.880695952E7
+      "netRevenue": 88806959.52
     },
     {
       "terminalId": 42,
@@ -1208,12 +1208,12 @@
       "units20ft": 6,
       "units40ft": 53,
       "teus": 112,
-      "billAmount": 3.870873442E7,
+      "billAmount": 38708734.42,
       "taxAmount": 6967572.2,
-      "grossSale": 4.567630662E7,
+      "grossSale": 45676306.62,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 4.567630662E7
+      "netRevenue": 45676306.62
     },
     {
       "terminalId": 32,
@@ -1240,12 +1240,12 @@
       "units20ft": 0,
       "units40ft": 0,
       "teus": 0,
-      "billAmount": 1498000.0,
-      "taxAmount": 269640.0,
-      "grossSale": 1767640.0,
+      "billAmount": 1498000,
+      "taxAmount": 269640,
+      "grossSale": 1767640,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1767640.0
+      "netRevenue": 1767640
     },
     {
       "terminalId": 48,
@@ -1256,12 +1256,12 @@
       "units20ft": 0,
       "units40ft": 0,
       "teus": 0,
-      "billAmount": 1652000.0,
-      "taxAmount": 297360.0,
-      "grossSale": 1949360.0,
+      "billAmount": 1652000,
+      "taxAmount": 297360,
+      "grossSale": 1949360,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1949360.0
+      "netRevenue": 1949360
     },
     {
       "terminalId": 29,
@@ -1272,12 +1272,12 @@
       "units20ft": 26,
       "units40ft": 235,
       "teus": 496,
-      "billAmount": 1.2753951439E8,
-      "taxAmount": 2.295711259E7,
-      "grossSale": 1.5049662698E8,
+      "billAmount": 127539514.39,
+      "taxAmount": 22957112.59,
+      "grossSale": 150496626.98,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.5049662698E8
+      "netRevenue": 150496626.98
     },
     {
       "terminalId": 29,
@@ -1288,12 +1288,12 @@
       "units20ft": 4,
       "units40ft": 32,
       "teus": 68,
-      "billAmount": 7.919282249E7,
-      "taxAmount": 1.425470805E7,
-      "grossSale": 9.344753054E7,
+      "billAmount": 79192822.49,
+      "taxAmount": 14254708.05,
+      "grossSale": 93447530.54,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 9.344753054E7
+      "netRevenue": 93447530.54
     },
     {
       "terminalId": 29,
@@ -1304,12 +1304,12 @@
       "units20ft": 34,
       "units40ft": 303,
       "teus": 640,
-      "billAmount": 7.1721312987E8,
-      "taxAmount": 1.2909836338E8,
-      "grossSale": 8.4631149325E8,
+      "billAmount": 717213129.87,
+      "taxAmount": 129098363.38,
+      "grossSale": 846311493.25,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 8.4631149325E8
+      "netRevenue": 846311493.25
     },
     {
       "terminalId": 29,
@@ -1320,12 +1320,12 @@
       "units20ft": 23,
       "units40ft": 207,
       "teus": 437,
-      "billAmount": 2.5279180705E8,
-      "taxAmount": 4.550252527E7,
-      "grossSale": 2.9829433232E8,
+      "billAmount": 252791807.05,
+      "taxAmount": 45502525.27,
+      "grossSale": 298294332.32,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.9829433232E8
+      "netRevenue": 298294332.32
     },
     {
       "terminalId": 29,
@@ -1336,12 +1336,12 @@
       "units20ft": 9,
       "units40ft": 82,
       "teus": 173,
-      "billAmount": 9.230941311E7,
-      "taxAmount": 1.661569436E7,
-      "grossSale": 1.0892510747E8,
+      "billAmount": 92309413.11,
+      "taxAmount": 16615694.36,
+      "grossSale": 108925107.47,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.0892510747E8
+      "netRevenue": 108925107.47
     },
     {
       "terminalId": 53,
@@ -1354,10 +1354,10 @@
       "teus": 30,
       "billAmount": 9589448.02,
       "taxAmount": 1726100.64,
-      "grossSale": 1.131554866E7,
+      "grossSale": 11315548.66,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.131554866E7
+      "netRevenue": 11315548.66
     },
     {
       "terminalId": 53,
@@ -1400,12 +1400,12 @@
       "units20ft": 525,
       "units40ft": 4725,
       "teus": 9975,
-      "billAmount": 3.06589798628E9,
-      "taxAmount": 5.5186163753E8,
-      "grossSale": 3.61775962381E9,
+      "billAmount": 3065897986.28,
+      "taxAmount": 551861637.53,
+      "grossSale": 3617759623.81,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 3.61775962381E9
+      "netRevenue": 3617759623.81
     },
     {
       "terminalId": 5,
@@ -1416,12 +1416,12 @@
       "units20ft": 165,
       "units40ft": 1487,
       "teus": 3139,
-      "billAmount": 4.3101777489E8,
-      "taxAmount": 7.758319948E7,
-      "grossSale": 5.0860097437E8,
+      "billAmount": 431017774.89,
+      "taxAmount": 77583199.48,
+      "grossSale": 508600974.37,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.0860097437E8
+      "netRevenue": 508600974.37
     },
     {
       "terminalId": 5,
@@ -1432,12 +1432,12 @@
       "units20ft": 127,
       "units40ft": 1141,
       "teus": 2409,
-      "billAmount": 4.6549853619E8,
-      "taxAmount": 8.378973651E7,
-      "grossSale": 5.492882727E8,
+      "billAmount": 465498536.19,
+      "taxAmount": 83789736.51,
+      "grossSale": 549288272.7,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.492882727E8
+      "netRevenue": 549288272.7
     },
     {
       "terminalId": 5,
@@ -1448,12 +1448,12 @@
       "units20ft": 142,
       "units40ft": 1280,
       "teus": 2702,
-      "billAmount": 7.2366620231E8,
-      "taxAmount": 1.3025991642E8,
-      "grossSale": 8.5392611873E8,
+      "billAmount": 723666202.31,
+      "taxAmount": 130259916.42,
+      "grossSale": 853926118.73,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 8.5392611873E8
+      "netRevenue": 853926118.73
     },
     {
       "terminalId": 5,
@@ -1464,12 +1464,12 @@
       "units20ft": 27,
       "units40ft": 243,
       "teus": 513,
-      "billAmount": 1.6021268965E8,
-      "taxAmount": 2.883828414E7,
-      "grossSale": 1.8905097379E8,
+      "billAmount": 160212689.65,
+      "taxAmount": 28838284.14,
+      "grossSale": 189050973.79,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.8905097379E8
+      "netRevenue": 189050973.79
     },
     {
       "terminalId": 54,
@@ -1480,12 +1480,12 @@
       "units20ft": 29,
       "units40ft": 258,
       "teus": 545,
-      "billAmount": 1.0878688208E8,
-      "taxAmount": 1.958163877E7,
-      "grossSale": 1.2836852085E8,
+      "billAmount": 108786882.08,
+      "taxAmount": 19581638.77,
+      "grossSale": 128368520.85,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.2836852085E8
+      "netRevenue": 128368520.85
     },
     {
       "terminalId": 54,
@@ -1496,12 +1496,12 @@
       "units20ft": 70,
       "units40ft": 627,
       "teus": 1324,
-      "billAmount": 2.4958117304E8,
-      "taxAmount": 4.492461115E7,
-      "grossSale": 2.9450578419E8,
+      "billAmount": 249581173.04,
+      "taxAmount": 44924611.15,
+      "grossSale": 294505784.19,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.9450578419E8
+      "netRevenue": 294505784.19
     },
     {
       "terminalId": 54,
@@ -1512,12 +1512,12 @@
       "units20ft": 32,
       "units40ft": 290,
       "teus": 612,
-      "billAmount": 3.3056218452E8,
-      "taxAmount": 5.950119321E7,
-      "grossSale": 3.9006337773E8,
+      "billAmount": 330562184.52,
+      "taxAmount": 59501193.21,
+      "grossSale": 390063377.73,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 3.9006337773E8
+      "netRevenue": 390063377.73
     },
     {
       "terminalId": 40,
@@ -1528,12 +1528,12 @@
       "units20ft": 124,
       "units40ft": 1112,
       "teus": 2347,
-      "billAmount": 8.0286228164E8,
-      "taxAmount": 1.445152107E8,
-      "grossSale": 9.4737749234E8,
+      "billAmount": 802862281.64,
+      "taxAmount": 144515210.7,
+      "grossSale": 947377492.34,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 9.4737749234E8
+      "netRevenue": 947377492.34
     },
     {
       "terminalId": 40,
@@ -1544,12 +1544,12 @@
       "units20ft": 90,
       "units40ft": 809,
       "teus": 1708,
-      "billAmount": 2.6106073448E8,
-      "taxAmount": 4.699093221E7,
-      "grossSale": 3.0805166669E8,
+      "billAmount": 261060734.48,
+      "taxAmount": 46990932.21,
+      "grossSale": 308051666.69,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 3.0805166669E8
+      "netRevenue": 308051666.69
     },
     {
       "terminalId": 40,
@@ -1560,12 +1560,12 @@
       "units20ft": 17,
       "units40ft": 149,
       "teus": 314,
-      "billAmount": 6.134252357E7,
-      "taxAmount": 1.104165424E7,
-      "grossSale": 7.238417781E7,
+      "billAmount": 61342523.57,
+      "taxAmount": 11041654.24,
+      "grossSale": 72384177.81,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 7.238417781E7
+      "netRevenue": 72384177.81
     },
     {
       "terminalId": 40,
@@ -1608,12 +1608,12 @@
       "units20ft": 1,
       "units40ft": 13,
       "teus": 27,
-      "billAmount": 1.068572653E7,
+      "billAmount": 10685726.53,
       "taxAmount": 1923430.78,
-      "grossSale": 1.260915731E7,
+      "grossSale": 12609157.31,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.260915731E7
+      "netRevenue": 12609157.31
     },
     {
       "terminalId": 51,
@@ -1626,10 +1626,10 @@
       "teus": 11,
       "billAmount": 9939804.69,
       "taxAmount": 1789164.84,
-      "grossSale": 1.172896953E7,
+      "grossSale": 11728969.53,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.172896953E7
+      "netRevenue": 11728969.53
     },
     {
       "terminalId": 51,
@@ -1640,12 +1640,12 @@
       "units20ft": 5,
       "units40ft": 48,
       "teus": 101,
-      "billAmount": 1.25981334E7,
+      "billAmount": 12598133.4,
       "taxAmount": 2267664.01,
-      "grossSale": 1.486579741E7,
+      "grossSale": 14865797.41,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.486579741E7
+      "netRevenue": 14865797.41
     },
     {
       "terminalId": 51,
@@ -1673,7 +1673,7 @@
       "units40ft": 3,
       "teus": 6,
       "billAmount": 30955.53,
-      "taxAmount": 5572.0,
+      "taxAmount": 5572,
       "grossSale": 36527.53,
       "creditCount": 0,
       "creditAmount": 0,
@@ -1688,12 +1688,12 @@
       "units20ft": 258,
       "units40ft": 2320,
       "teus": 4898,
-      "billAmount": 9.0504260797E8,
-      "taxAmount": 1.6290766943E8,
-      "grossSale": 1.0679502774E9,
+      "billAmount": 905042607.97,
+      "taxAmount": 162907669.43,
+      "grossSale": 1067950277.4,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.0679502774E9
+      "netRevenue": 1067950277.4
     },
     {
       "terminalId": 7,
@@ -1704,12 +1704,12 @@
       "units20ft": 182,
       "units40ft": 1639,
       "teus": 3460,
-      "billAmount": 7.9378334015E8,
-      "taxAmount": 1.4288100123E8,
-      "grossSale": 9.3666434138E8,
+      "billAmount": 793783340.15,
+      "taxAmount": 142881001.23,
+      "grossSale": 936664341.38,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 9.3666434138E8
+      "netRevenue": 936664341.38
     },
     {
       "terminalId": 7,
@@ -1720,12 +1720,12 @@
       "units20ft": 68,
       "units40ft": 613,
       "teus": 1294,
-      "billAmount": 2.3809232894E8,
-      "taxAmount": 4.285661921E7,
-      "grossSale": 2.8094894815E8,
+      "billAmount": 238092328.94,
+      "taxAmount": 42856619.21,
+      "grossSale": 280948948.15,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.8094894815E8
+      "netRevenue": 280948948.15
     },
     {
       "terminalId": 7,
@@ -1736,12 +1736,12 @@
       "units20ft": 36,
       "units40ft": 328,
       "teus": 692,
-      "billAmount": 5.998842512E7,
-      "taxAmount": 1.079791652E7,
-      "grossSale": 7.078634164E7,
+      "billAmount": 59988425.12,
+      "taxAmount": 10797916.52,
+      "grossSale": 70786341.64,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 7.078634164E7
+      "netRevenue": 70786341.64
     },
     {
       "terminalId": 7,
@@ -1752,12 +1752,12 @@
       "units20ft": 7,
       "units40ft": 59,
       "teus": 125,
-      "billAmount": 1.358928645E7,
+      "billAmount": 13589286.45,
       "taxAmount": 2446071.56,
-      "grossSale": 1.603535801E7,
+      "grossSale": 16035358.01,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.603535801E7
+      "netRevenue": 16035358.01
     },
     {
       "terminalId": 37,
@@ -1768,7 +1768,7 @@
       "units20ft": 37,
       "units40ft": 333,
       "teus": 703,
-      "billAmount": 2270084.0,
+      "billAmount": 2270084,
       "taxAmount": 408615.12,
       "grossSale": 2678699.12,
       "creditCount": 0,
@@ -1784,7 +1784,7 @@
       "units20ft": 3,
       "units40ft": 29,
       "teus": 61,
-      "billAmount": 155760.0,
+      "billAmount": 155760,
       "taxAmount": 28036.8,
       "grossSale": 183796.8,
       "creditCount": 0,
@@ -1800,12 +1800,12 @@
       "units20ft": 13,
       "units40ft": 117,
       "teus": 247,
-      "billAmount": 5.0975185779E8,
-      "taxAmount": 9.17553344E7,
-      "grossSale": 6.0150719219E8,
+      "billAmount": 509751857.79,
+      "taxAmount": 91755334.4,
+      "grossSale": 601507192.19,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 6.0150719219E8
+      "netRevenue": 601507192.19
     },
     {
       "terminalId": 41,
@@ -1816,12 +1816,12 @@
       "units20ft": 0,
       "units40ft": 0,
       "teus": 0,
-      "billAmount": 2.6321780176E8,
-      "taxAmount": 4.737920432E7,
-      "grossSale": 3.1059700608E8,
+      "billAmount": 263217801.76,
+      "taxAmount": 47379204.32,
+      "grossSale": 310597006.08,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 3.1059700608E8
+      "netRevenue": 310597006.08
     },
     {
       "terminalId": 41,
@@ -1832,12 +1832,12 @@
       "units20ft": 0,
       "units40ft": 0,
       "teus": 0,
-      "billAmount": 1.9751834723E8,
-      "taxAmount": 3.55533025E7,
-      "grossSale": 2.3307164973E8,
+      "billAmount": 197518347.23,
+      "taxAmount": 35553302.5,
+      "grossSale": 233071649.73,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.3307164973E8
+      "netRevenue": 233071649.73
     },
     {
       "terminalId": 41,
@@ -1848,12 +1848,12 @@
       "units20ft": 0,
       "units40ft": 0,
       "teus": 0,
-      "billAmount": 2.1889249849E8,
-      "taxAmount": 3.940064973E7,
-      "grossSale": 2.5829314822E8,
+      "billAmount": 218892498.49,
+      "taxAmount": 39400649.73,
+      "grossSale": 258293148.22,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.5829314822E8
+      "netRevenue": 258293148.22
     },
     {
       "terminalId": 41,
@@ -1864,12 +1864,12 @@
       "units20ft": 0,
       "units40ft": 0,
       "teus": 0,
-      "billAmount": 1.1243408205E8,
-      "taxAmount": 2.023813477E7,
-      "grossSale": 1.3267221682E8,
+      "billAmount": 112434082.05,
+      "taxAmount": 20238134.77,
+      "grossSale": 132672216.82,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1.3267221682E8
+      "netRevenue": 132672216.82
     },
     {
       "terminalId": 38,
@@ -1880,12 +1880,12 @@
       "units20ft": 1,
       "units40ft": 5,
       "teus": 11,
-      "billAmount": 180000.0,
-      "taxAmount": 32400.0,
-      "grossSale": 212400.0,
+      "billAmount": 180000,
+      "taxAmount": 32400,
+      "grossSale": 212400,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 212400.0
+      "netRevenue": 212400
     },
     {
       "terminalId": 2,
@@ -1928,12 +1928,12 @@
       "units20ft": 4,
       "units40ft": 38,
       "teus": 80,
-      "billAmount": 2.863473715E7,
+      "billAmount": 28634737.15,
       "taxAmount": 5154252.69,
-      "grossSale": 3.378898984E7,
+      "grossSale": 33788989.84,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 3.378898984E7
+      "netRevenue": 33788989.84
     },
     {
       "terminalId": 47,
@@ -1946,10 +1946,10 @@
       "teus": 8,
       "billAmount": 1217302.54,
       "taxAmount": 219114.46,
-      "grossSale": 1436417.0,
+      "grossSale": 1436417,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 1436417.0
+      "netRevenue": 1436417
     },
     {
       "terminalId": 47,
@@ -1962,10 +1962,10 @@
       "teus": 6,
       "billAmount": 435760.17,
       "taxAmount": 78436.83,
-      "grossSale": 514197.0,
+      "grossSale": 514197,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 514197.0
+      "netRevenue": 514197
     },
     {
       "terminalId": 31,
@@ -1976,12 +1976,12 @@
       "units20ft": 2177,
       "units40ft": 19597,
       "teus": 41371,
-      "billAmount": 2.397355894922E10,
-      "taxAmount": 4.31524061086E9,
-      "grossSale": 2.828879956008E10,
+      "billAmount": 23973558949.22,
+      "taxAmount": 4315240610.86,
+      "grossSale": 28288799560.08,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 2.828879956008E10
+      "netRevenue": 28288799560.08
     },
     {
       "terminalId": 31,
@@ -1992,12 +1992,12 @@
       "units20ft": 977,
       "units40ft": 8794,
       "teus": 18565,
-      "billAmount": 4.71251544459E9,
-      "taxAmount": 8.4825278003E8,
-      "grossSale": 5.56076822461E9,
+      "billAmount": 4712515444.59,
+      "taxAmount": 848252780.03,
+      "grossSale": 5560768224.61,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.56076822461E9
+      "netRevenue": 5560768224.61
     },
     {
       "terminalId": 31,
@@ -2008,12 +2008,12 @@
       "units20ft": 659,
       "units40ft": 5932,
       "teus": 12523,
-      "billAmount": 4.37233719335E9,
-      "taxAmount": 7.870206948E8,
-      "grossSale": 5.15935788815E9,
+      "billAmount": 4372337193.35,
+      "taxAmount": 787020694.8,
+      "grossSale": 5159357888.15,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.15935788815E9
+      "netRevenue": 5159357888.15
     },
     {
       "terminalId": 31,
@@ -2024,12 +2024,12 @@
       "units20ft": 747,
       "units40ft": 6724,
       "teus": 14195,
-      "billAmount": 4.0888575719E9,
-      "taxAmount": 7.3599436294E8,
-      "grossSale": 4.82485193484E9,
+      "billAmount": 4088857571.9,
+      "taxAmount": 735994362.94,
+      "grossSale": 4824851934.84,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 4.82485193484E9
+      "netRevenue": 4824851934.84
     },
     {
       "terminalId": 31,
@@ -2040,12 +2040,12 @@
       "units20ft": 417,
       "units40ft": 3755,
       "teus": 7927,
-      "billAmount": 5.04212071429E9,
-      "taxAmount": 9.0758172857E8,
-      "grossSale": 5.94970244286E9,
+      "billAmount": 5042120714.29,
+      "taxAmount": 907581728.57,
+      "grossSale": 5949702442.86,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.94970244286E9
+      "netRevenue": 5949702442.86
     },
     {
       "terminalId": 36,
@@ -2088,12 +2088,12 @@
       "units20ft": 2,
       "units40ft": 14,
       "teus": 29,
-      "billAmount": 4.430205235E7,
+      "billAmount": 44302052.35,
       "taxAmount": 7974369.42,
-      "grossSale": 5.227642177E7,
+      "grossSale": 52276421.77,
       "creditCount": 0,
       "creditAmount": 0,
-      "netRevenue": 5.227642177E7
+      "netRevenue": 52276421.77
     }
   ]
 }
