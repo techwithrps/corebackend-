@@ -5,9 +5,9 @@
   "totalInvoicedGross": 378218583.50,
   "cumulativeGrossSale": 378218583.50,
   "totalContainers": 611,
-  "units20ft": 84,
-  "units40ft": 527,
-  "totalTeus": 1138,
-  "totalCustomers": 128,
+  "units20ft": 0,
+  "units40ft": 611,
+  "totalTeus": 1222,
+  "totalCustomers": 42,
   "totalTerminals": 39
 }
