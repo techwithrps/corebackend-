@@ -283,8 +283,12 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
   let totalCreditBill = 0;
   let totalInvoiceTax = 0;
   let totalCreditTax = 0;
-  let invoiceCount = 0;
-  let creditNoteCount = 0;
+
+  const distinctInvoices = new Set();
+  const distinctCreditNotes = new Set();
+  const distinctContainers = new Set();
+  let units20 = 0;
+  let units40 = 0;
 
   const tripCounts = {};
   const serviceAmounts = {};
@@ -298,16 +302,29 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     const bill = Number(r.BILL_AMOUNT) || 0;
     const tax = Number(r.TAX) || 0;
 
+    const invKey = (r.INVOICE_REF_NO || r.INVOICE_NO || 'INV') + '__' + (r.CUSTOMER_ID || r.CUSTOMER_NAME || 'CUST');
+    const contKey = r.CONT_NO || '';
+
     if (r.INVOICE_TYPE === 'Credit Note' || (r.TRIP_TYPE && r.TRIP_TYPE.toLowerCase().includes('credit'))) {
-      creditNoteCount++;
+      distinctCreditNotes.add(invKey);
       totalCreditGross += Math.abs(amt);
       totalCreditBill += Math.abs(bill);
       totalCreditTax += Math.abs(tax);
     } else {
-      invoiceCount++;
+      distinctInvoices.add(invKey);
       totalInvoiceGross += Math.abs(amt);
       totalInvoiceBill += Math.abs(bill);
       totalInvoiceTax += Math.abs(tax);
+    }
+
+    if (contKey && contKey.trim() !== '' && contKey !== '-' && !distinctContainers.has(contKey)) {
+      distinctContainers.add(contKey);
+      const sz = String(r.CONT_SIZE || '');
+      if (sz.includes('20')) {
+        units20++;
+      } else {
+        units40++;
+      }
     }
 
     const trip = r.TRIP_TYPE || 'Other';
@@ -327,6 +344,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
   const totalGrossAmount = Math.round((totalInvoiceGross - totalCreditGross) * 100) / 100;
   const totalBillAmount = Math.round(totalInvoiceBill * 100) / 100;
   const totalTax = Math.round(totalInvoiceTax * 100) / 100;
+  const totalTeus = units20 + (units40 * 2);
 
   return {
     totalGrossAmount,
@@ -334,11 +352,13 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     totalTax,
     totalInvoiceAmount: Math.round(totalInvoiceGross * 100) / 100,
     totalCreditAmount: Math.round(totalCreditGross * 100) / 100,
-    invoiceCount,
-    creditNoteCount,
-    containerCount: rows.length,
-    teuCount: rows.length * 2,
+    invoiceCount: distinctInvoices.size,
+    creditNoteCount: distinctCreditNotes.size,
+    containerCount: distinctContainers.size || rows.length,
+    teuCount: totalTeus || (distinctContainers.size * 2),
     totalRecords: rows.length,
+    totalDBInvoices: distinctInvoices.size,
+    totalDBItems: rows.length,
     tripCounts,
     serviceAmounts,
     customerAmounts,
