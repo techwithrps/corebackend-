@@ -652,6 +652,8 @@ async function getFinancialAnalytics(filters = {}) {
       grossRevenue: gross,
       creditNotes: cr,
       netRevenue: net,
+      billAmount: taxBill,
+      taxAmount: gstTax,
       physicalContainers: c.containers.size,
       containerMovements: c.movements.size,
       jobOrders: c.jobs.size,
@@ -662,6 +664,39 @@ async function getFinancialAnalytics(filters = {}) {
       teus: c.teus
     };
   }).sort((a, b) => b.netRevenue - a.netRevenue);
+
+  // Format Logistics Tariff & Services Analytics Table
+  const serviceMap = new Map();
+  rows.forEach(r => {
+    const sName = r.SERVICE_NAME || 'General Logistics Handling';
+    const sId = r.SERVICE_ID || 0;
+    if (!serviceMap.has(sName)) {
+      serviceMap.set(sName, {
+        serviceId: sId,
+        serviceName: sName,
+        itemCount: 0,
+        billAmount: 0,
+        taxAmount: 0,
+        grossRevenue: 0
+      });
+    }
+    const s = serviceMap.get(sName);
+    s.itemCount++;
+    s.billAmount += Number(r.BILL_AMOUNT || 0);
+    s.taxAmount += Number(r.TAX || 0);
+    s.grossRevenue += Number(r.AMOUNT || (r.BILL_AMOUNT + r.TAX));
+  });
+
+  const serviceAnalytics = Array.from(serviceMap.values())
+    .map(s => ({
+      serviceId: s.serviceId,
+      serviceName: s.serviceName,
+      itemCount: s.itemCount,
+      billAmount: Math.round(s.billAmount * 100) / 100,
+      taxAmount: Math.round(s.taxAmount * 100) / 100,
+      grossRevenue: Math.round(s.grossRevenue * 100) / 100
+    }))
+    .sort((a, b) => b.grossRevenue - a.grossRevenue);
 
   // Reconciliation Check: Overall vs Sum(Terminals) vs Sum(Customers)
   const sumTermTaxable = terminalAnalytics.reduce((s, t) => s + t.taxableRevenue, 0);
@@ -733,12 +768,24 @@ async function getFinancialAnalytics(filters = {}) {
     dbSummary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
   }
 
+  if (branchDetailed) {
+    if (!branchDetailed.topCustomers || branchDetailed.topCustomers.length === 0) {
+      branchDetailed.topCustomers = customerAnalytics;
+    }
+    if (!branchDetailed.topServices || branchDetailed.topServices.length === 0) {
+      branchDetailed.topServices = serviceAnalytics;
+    }
+  }
+
   return {
     source: 'ORACLE_SPJLIVE',
     overallKPIs,
     reconciliation,
     terminalAnalytics,
     customerAnalytics,
+    topCustomers: customerAnalytics,
+    serviceAnalytics,
+    topServices: serviceAnalytics,
     invoiceList: invoiceList.slice(0, 100),
     totalInvoicesRecorded: invoiceList.length,
     branchDetailed,
