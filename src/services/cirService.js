@@ -80,6 +80,7 @@ async function getCIRReport(filters = {}) {
 
   // 3. Calculate KPIs across the ENTIRE authorized filtered dataset
   const kpis = calculateKPIs(filteredRows, dbSummary, detailed, {
+    companyId: filters.companyId,
     terminalId: filters.terminalId,
     financialYear: filters.financialYear,
     customerId: filters.customerId,

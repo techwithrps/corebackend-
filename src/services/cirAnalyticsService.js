@@ -76,7 +76,7 @@ function invalidateAnalyticsCache() {
  * Calculate KPI summary aggregates including Terminal and Location-wise Breakdown
  */
 function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {}) {
-  const { terminalId, financialYear, customerId, serviceId, tripType, size, isDefaultView } = filterMeta;
+  const { companyId, terminalId, financialYear, customerId, serviceId, tripType, size, isDefaultView } = filterMeta;
 
   // 1. Default View: Grand totals
   if (isDefaultView && dbSummary) {
@@ -152,6 +152,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
 
   // Check if purely Terminal and/or FY filtered without granular row search
   const isPureTerminalFY = 
+    (!companyId || companyId === 'all' || companyId === 'ALL') &&
     (!customerId || customerId === 'all' || customerId === 'ALL') &&
     (!serviceId || serviceId === 'all' || serviceId === 'ALL') &&
     (!tripType || tripType === 'all' || tripType === 'ALL') &&
