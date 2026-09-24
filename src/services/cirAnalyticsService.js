@@ -82,12 +82,63 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
   if (isDefaultView && dbSummary) {
     const invCount = dbSummary.validActiveInvoices || rows.length;
     const creditCount = dbSummary.validActiveCreditNotes || 0;
+    const grossAmount = dbSummary.cumulativeGrossSale || dbSummary.totalInvoicedGross || 0;
+    const billAmount = dbSummary.totalInvoicedBillAmount || 0;
+    const taxAmount = dbSummary.totalInvoicedTax || 0;
+    const creditAmount = dbSummary.totalCreditGross || 0;
+    const netRev = dbSummary.cumulativeGrossSale || (grossAmount - creditAmount);
+
+    // Build customerWise from snapshot rows
+    const customerMap = {};
+    rows.forEach(r => {
+      const custName = r.CUSTOMER_NAME || 'Unknown Customer';
+      const custId = String(r.CUSTOMER_ID || custName);
+      const amt = Number(r.AMOUNT) || Number(r.BILL_AMOUNT) || 0;
+      const bill = Number(r.BILL_AMOUNT) || 0;
+      const tax = Number(r.TAX) || 0;
+      if (!customerMap[custId]) {
+        customerMap[custId] = {
+          customerId: custId,
+          customerName: custName,
+          invoiceCount: 0,
+          containerCount: 0,
+          billAmount: 0,
+          taxAmount: 0,
+          grossAmount: 0,
+          netRevenue: 0,
+          terminals: new Set()
+        };
+      }
+      const cEntry = customerMap[custId];
+      cEntry.invoiceCount++;
+      cEntry.billAmount += bill;
+      cEntry.taxAmount += tax;
+      cEntry.grossAmount += amt;
+      cEntry.netRevenue += amt;
+      if (r.CONT_NO) cEntry.containerCount++;
+      if (r.TERMINAL_NAME) cEntry.terminals.add(r.TERMINAL_NAME);
+    });
+
+    const customerWise = Object.values(customerMap)
+      .map(c => ({
+        ...c,
+        billAmount: Math.round(c.billAmount * 100) / 100,
+        taxAmount: Math.round(c.taxAmount * 100) / 100,
+        grossAmount: Math.round(c.grossAmount * 100) / 100,
+        netRevenue: Math.round(c.netRevenue * 100) / 100,
+        terminalCount: c.terminals.size,
+        terminals: Array.from(c.terminals)
+      }))
+      .sort((a, b) => b.grossAmount - a.grossAmount);
+
     return {
-      totalGrossAmount: dbSummary.cumulativeGrossSale || dbSummary.totalInvoicedGross || 0,
-      totalBillAmount: dbSummary.totalInvoicedBillAmount || 0,
-      totalTax: dbSummary.totalInvoicedTax || 0,
-      totalInvoiceAmount: dbSummary.totalInvoicedGross || 0,
-      totalCreditAmount: dbSummary.totalCreditGross || 0,
+      totalGrossAmount: grossAmount,
+      grossRevenue: grossAmount,
+      netRevenue: netRev,
+      totalBillAmount: billAmount,
+      totalTax: taxAmount,
+      totalInvoiceAmount: grossAmount,
+      totalCreditAmount: creditAmount,
       invoiceCount: invCount,
       creditNoteCount: creditCount,
       containerCount: dbSummary.totalContainers || 0,
@@ -95,6 +146,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
       totalRecords: invCount + creditCount,
       totalDBInvoices: invCount,
       totalDBItems: dbSummary.totalInvoiceItems || rows.length,
+      customerWise
     };
   }
 
@@ -130,6 +182,8 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
       if (cell) {
         return {
           totalGrossAmount: Math.round(cell.netRevenue * 100) / 100,
+          grossRevenue: Math.round(cell.grossSale * 100) / 100,
+          netRevenue: Math.round(cell.netRevenue * 100) / 100,
           totalBillAmount: Math.round(cell.billAmount * 100) / 100,
           totalTax: Math.round(cell.taxAmount * 100) / 100,
           totalInvoiceAmount: Math.round(cell.grossSale * 100) / 100,
@@ -146,6 +200,8 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
       if (fySum) {
         return {
           totalGrossAmount: Math.round(fySum.netRevenue * 100) / 100,
+          grossRevenue: Math.round(fySum.grossSale * 100) / 100,
+          netRevenue: Math.round(fySum.netRevenue * 100) / 100,
           totalBillAmount: Math.round(fySum.billAmount * 100) / 100,
           totalTax: Math.round(fySum.taxAmount * 100) / 100,
           totalInvoiceAmount: Math.round(fySum.grossSale * 100) / 100,
@@ -162,6 +218,8 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
       if (tSum) {
         return {
           totalGrossAmount: Math.round(tSum.netRevenue * 100) / 100,
+          grossRevenue: Math.round(tSum.grossSale * 100) / 100,
+          netRevenue: Math.round(tSum.netRevenue * 100) / 100,
           totalBillAmount: Math.round(tSum.billAmount * 100) / 100,
           totalTax: Math.round(tSum.taxAmount * 100) / 100,
           totalInvoiceAmount: Math.round(tSum.grossSale * 100) / 100,
@@ -193,6 +251,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
   const tripCounts = {};
   const serviceAmounts = {};
   const customerAmounts = {};
+  const customerMap = {};
   const lineCounts = {};
   const terminalBreakdown = {};
   const locationBreakdown = {};
@@ -233,25 +292,73 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     const svc = r.SERVICE_NAME || 'General';
     serviceAmounts[svc] = (serviceAmounts[svc] || 0) + amt;
 
-    const cust = r.CUSTOMER_NAME || 'Unknown';
-    customerAmounts[cust] = (customerAmounts[cust] || 0) + amt;
+    const custName = r.CUSTOMER_NAME || 'Unknown Customer';
+    const custId = String(r.CUSTOMER_ID || custName);
+    customerAmounts[custName] = (customerAmounts[custName] || 0) + amt;
+
+    if (!customerMap[custId]) {
+      customerMap[custId] = {
+        customerId: custId,
+        customerName: custName,
+        invoiceCount: 0,
+        containerCount: 0,
+        billAmount: 0,
+        taxAmount: 0,
+        grossAmount: 0,
+        netRevenue: 0,
+        terminals: new Set()
+      };
+    }
+    const cEntry = customerMap[custId];
+    cEntry.invoiceCount++;
+    cEntry.billAmount += bill;
+    cEntry.taxAmount += tax;
+    cEntry.grossAmount += amt;
+    cEntry.netRevenue += amt;
+    if (contKey && contKey.trim() !== '' && contKey !== '-') cEntry.containerCount++;
+    if (r.TERMINAL_NAME) cEntry.terminals.add(r.TERMINAL_NAME);
+
+    if (r.TERMINAL_NAME) {
+      if (!terminalBreakdown[r.TERMINAL_NAME]) {
+        terminalBreakdown[r.TERMINAL_NAME] = { terminalName: r.TERMINAL_NAME, containers: 0, revenue: 0, invoices: 0 };
+      }
+      terminalBreakdown[r.TERMINAL_NAME].invoices++;
+      terminalBreakdown[r.TERMINAL_NAME].revenue += amt;
+      if (contKey) terminalBreakdown[r.TERMINAL_NAME].containers++;
+    }
 
     if (r.LINE && r.LINE.trim() !== '') {
       lineCounts[r.LINE] = (lineCounts[r.LINE] || 0) + 1;
     }
   });
 
-  const totalGrossAmount = Math.round((totalInvoiceGross - totalCreditGross) * 100) / 100;
+  const customerWise = Object.values(customerMap)
+    .map(c => ({
+      ...c,
+      billAmount: Math.round(c.billAmount * 100) / 100,
+      taxAmount: Math.round(c.taxAmount * 100) / 100,
+      grossAmount: Math.round(c.grossAmount * 100) / 100,
+      netRevenue: Math.round(c.netRevenue * 100) / 100,
+      terminalCount: c.terminals.size,
+      terminals: Array.from(c.terminals)
+    }))
+    .sort((a, b) => b.grossAmount - a.grossAmount);
+
+  const totalInvoiceAmount = Math.round(totalInvoiceGross * 100) / 100;
+  const totalCreditAmount = Math.round(totalCreditGross * 100) / 100;
+  const netRevenue = Math.round((totalInvoiceGross - totalCreditGross) * 100) / 100;
   const totalBillAmount = Math.round(totalInvoiceBill * 100) / 100;
   const totalTax = Math.round(totalInvoiceTax * 100) / 100;
   const totalTeus = units20 + (units40 * 2);
 
   return {
-    totalGrossAmount,
+    totalGrossAmount: totalInvoiceAmount,
+    grossRevenue: totalInvoiceAmount,
+    netRevenue,
     totalBillAmount,
     totalTax,
-    totalInvoiceAmount: Math.round(totalInvoiceGross * 100) / 100,
-    totalCreditAmount: Math.round(totalCreditGross * 100) / 100,
+    totalInvoiceAmount,
+    totalCreditAmount,
     invoiceCount: distinctInvoices.size,
     creditNoteCount: distinctCreditNotes.size,
     containerCount: distinctContainers.size || rows.length,
@@ -262,6 +369,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     tripCounts,
     serviceAmounts,
     customerAmounts,
+    customerWise,
     lineCounts,
     terminalBreakdown,
     locationBreakdown,

@@ -239,12 +239,87 @@ async function getMasters() {
 
   return {
     companies: [
-      { id: 1, name: 'SPJ CARGO LOGISTICS PVT LTD', code: 'SPJ' },
-      { id: 2, name: 'SPJ COLD STORAGE PVT LTD', code: 'SPJ-CS' }
+      { id: 1, code: 'SPJ', name: 'SPJ CARGO PVT LTD', gstin: '07AAOCS1758E1Z5', director: 'Mr. Puran Joshi' },
+      { id: 2, code: 'SPJ-MUM', name: 'SPJ CARGO PVT LTD-MUMBAI', gstin: '27AAOCS1758E1Z3', director: 'Mr. Puran Joshi' },
+      { id: 3, code: 'SJ', name: 'S.J. CARGO MOVERS', gstin: '07ADGPJ3166M1ZA', director: 'Mr. Puran Joshi' },
+      { id: 4, code: 'PJ', name: 'PURAN JOSHI', gstin: '07ADGPJ3166M2Z9', director: 'Mr. Puran Joshi' },
+      { id: 5, code: 'PJ-OLD', name: 'PURAN JOSHI OLD', gstin: '07ADGPJ3166M1ZA', director: 'Mr. Puran Joshi' }
     ],
     terminals,
     customers: masters.customers || [],
     services: masters.services || [],
+    customerTerminalMatrix: (() => {
+      try {
+        const snap = getSnapshotData();
+        const { getRecordFinancialYear } = require('../utils/dateUtils');
+        const custMatrix = {};
+
+        snap.forEach(r => {
+          const cId = String(r.CUSTOMER_ID || r.CUSTOMER_NAME || 'Unknown');
+          const cName = r.CUSTOMER_NAME || 'Unknown';
+          const compId = String(r.COMPANY_ID || '1');
+          const tId = String(r.TERMINAL_ID || '');
+          const tName = r.TERMINAL_NAME || ('Terminal ' + tId);
+          const fy = getRecordFinancialYear(r);
+          const amt = Number(r.AMOUNT) || Number(r.BILL_AMOUNT) || 0;
+
+          if (!custMatrix[cId]) {
+            custMatrix[cId] = {
+              customerId: cId,
+              customerName: cName,
+              companyId: compId,
+              totalInvoices: 0,
+              totalRevenue: 0,
+              terminals: {},
+              financialYears: new Set()
+            };
+          }
+
+          const c = custMatrix[cId];
+          c.totalInvoices++;
+          c.totalRevenue += amt;
+          c.financialYears.add(fy);
+
+          if (tId) {
+            if (!c.terminals[tId]) {
+              c.terminals[tId] = {
+                terminalId: tId,
+                terminalName: tName,
+                invoiceCount: 0,
+                netRevenue: 0,
+                totalContainers: 0,
+                financialYears: new Set()
+              };
+            }
+            const t = c.terminals[tId];
+            t.invoiceCount++;
+            t.netRevenue += amt;
+            if (r.CONT_NO) t.totalContainers++;
+            t.financialYears.add(fy);
+          }
+        });
+
+        return Object.values(custMatrix).map(c => ({
+          customerId: c.customerId,
+          customerName: c.customerName,
+          companyId: c.companyId,
+          totalInvoices: c.totalInvoices,
+          totalRevenue: Math.round(c.totalRevenue * 100) / 100,
+          financialYears: Array.from(c.financialYears),
+          terminalCount: Object.keys(c.terminals).length,
+          terminals: Object.values(c.terminals).map(t => ({
+            terminalId: t.terminalId,
+            terminalName: t.terminalName,
+            invoiceCount: t.invoiceCount,
+            totalContainers: t.totalContainers,
+            netRevenue: Math.round(t.netRevenue * 100) / 100,
+            financialYears: Array.from(t.financialYears)
+          }))
+        })).sort((a, b) => b.totalRevenue - a.totalRevenue);
+      } catch (e) {
+        return [];
+      }
+    })(),
     warehouses: [
       { id: 1, name: 'CHAMBER 1 TO 21 (-18°C)', code: 'CH-ALL' }
     ],
