@@ -4,6 +4,7 @@ const { exec } = require('child_process');
 
 const WAREHOUSE_FILE = path.join(__dirname, '../data/dataWarehouse.json');
 const ROOT_DIR = path.resolve(__dirname, '../../../');
+const cacheService = require('./cacheService');
 
 let cachedWarehouse = null;
 let isSyncing = false;
@@ -65,6 +66,7 @@ function syncLiveOracle() {
 
       console.log('[DataWarehouse] Live sync output:', stdout);
       const updated = loadWarehouse();
+      cacheService.clear();
       lastSyncTime = new Date().toISOString();
       resolve({
         status: 'SUCCESS',

@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { sql, getPool, getConnectionStatus } = require('../config/db');
 const dataWarehouseService = require('./dataWarehouseService');
+const cacheService = require('./cacheService');
 
 /**
  * Fetch CIR Report strictly from Live Oracle SPJLIVE Database Snapshot
@@ -21,6 +22,11 @@ async function getCIRReport(filters = {}) {
     serviceId,
     search,
   } = filters;
+
+  // In-memory cache check (< 0.5ms)
+  const cacheKey = cacheService.generateKey('cir_report', filters);
+  const cached = cacheService.get(cacheKey);
+  if (cached) return cached;
 
   // Load live Oracle SPJLIVE dataset
   const snapshotPath = path.join(__dirname, '../data/cachedSnapshot.json');
@@ -155,7 +161,7 @@ async function getCIRReport(filters = {}) {
     isDefaultView
   });
 
-  return {
+  const response = {
     source: 'ORACLE_SPJLIVE',
     connectionStatus: {
       connected: true,
@@ -168,6 +174,9 @@ async function getCIRReport(filters = {}) {
     kpis,
     records: filteredRows,
   };
+
+  cacheService.set(cacheKey, response);
+  return response;
 }
 
 /**
@@ -374,6 +383,13 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
  */
 async function getFinancialAnalytics(filters = {}) {
   const { terminalId, customerId, financialYear, fromDate, toDate } = filters;
+
+  // Ultra-fast in-memory cache check (< 0.5ms)
+  const cacheKey = cacheService.generateKey('fin_analytics', filters);
+  const cached = cacheService.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
   const snapshotPath = path.join(__dirname, '../data/cachedSnapshot.json');
   let rows = [];
@@ -778,7 +794,7 @@ async function getFinancialAnalytics(filters = {}) {
     branchDetailed.topServices = topServ;
   }
 
-  return {
+  const response = {
     source: 'ORACLE_SPJLIVE',
     overallKPIs,
     reconciliation,
@@ -825,6 +841,9 @@ async function getFinancialAnalytics(filters = {}) {
       }
     ]
   };
+
+  cacheService.set(cacheKey, response);
+  return response;
 }
 
 /**

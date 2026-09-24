@@ -12,5 +12,14 @@ router.get('/operations', cirController.getOperations);
 router.get('/export/excel', cirController.exportExcel);
 router.post('/sync-warehouse', cirController.syncWarehouse);
 router.get('/warehouse-status', cirController.getWarehouseStatus);
+router.get('/cache-stats', (req, res) => {
+  const cacheService = require('../services/cacheService');
+  res.json({ success: true, data: cacheService.stats() });
+});
+router.post('/cache-flush', (req, res) => {
+  const cacheService = require('../services/cacheService');
+  cacheService.clear();
+  res.json({ success: true, message: 'All in-memory cache flushed successfully' });
+});
 
 module.exports = router;
