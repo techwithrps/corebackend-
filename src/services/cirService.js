@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { sql, getPool, getConnectionStatus } = require('../config/db');
+const dataWarehouseService = require('./dataWarehouseService');
 
 /**
  * Fetch CIR Report strictly from Live Oracle SPJLIVE Database Snapshot
@@ -768,13 +769,13 @@ async function getFinancialAnalytics(filters = {}) {
     dbSummary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
   }
 
+  const dw = dataWarehouseService.getWarehouse();
+  const topCust = (dw && dw.topCustomers && dw.topCustomers.length > 0) ? dw.topCustomers : customerAnalytics;
+  const topServ = (dw && dw.topServices && dw.topServices.length > 0) ? dw.topServices : serviceAnalytics;
+
   if (branchDetailed) {
-    if (!branchDetailed.topCustomers || branchDetailed.topCustomers.length === 0) {
-      branchDetailed.topCustomers = customerAnalytics;
-    }
-    if (!branchDetailed.topServices || branchDetailed.topServices.length === 0) {
-      branchDetailed.topServices = serviceAnalytics;
-    }
+    branchDetailed.topCustomers = topCust;
+    branchDetailed.topServices = topServ;
   }
 
   return {
@@ -783,17 +784,17 @@ async function getFinancialAnalytics(filters = {}) {
     reconciliation,
     terminalAnalytics,
     customerAnalytics,
-    topCustomers: customerAnalytics,
+    topCustomers: topCust,
     serviceAnalytics,
-    topServices: serviceAnalytics,
+    topServices: topServ,
     invoiceList: invoiceList.slice(0, 100),
     totalInvoicesRecorded: invoiceList.length,
     branchDetailed,
     branchAnalytics,
     totals: {
-      grandSystemRevenue: branchDetailed?.metadata?.lifetimeTotals?.grossRevenue || 38536360360.11,
-      liveInvoicedRevenue: branchDetailed?.metadata?.lifetimeTotals?.taxableRevenue || 32657932508.59,
-      liveTaxOutput: branchDetailed?.metadata?.lifetimeTotals?.statutoryGST || 5878427851.55,
+      grandSystemRevenue: dw?.allTimeGrandTotals?.grossInvoicedAmount || branchDetailed?.metadata?.lifetimeTotals?.grossRevenue || 35925092116.56,
+      liveInvoicedRevenue: dw?.allTimeGrandTotals?.baseTaxableAmount || branchDetailed?.metadata?.lifetimeTotals?.taxableRevenue || 33498602689.32,
+      liveTaxOutput: dw?.allTimeGrandTotals?.totalStatutoryGst || branchDetailed?.metadata?.lifetimeTotals?.statutoryGST || 2424636281.90,
       totalBranchJobs: 88358,
       totalBranchContainers: branchDetailed?.metadata?.lifetimeTotals?.totalContainers || 83399,
       totalBranchTeus: branchDetailed?.metadata?.lifetimeTotals?.totalTeus || 158458,
@@ -802,14 +803,14 @@ async function getFinancialAnalytics(filters = {}) {
       units20ft: 8340,
       totalChambers: 21,
       totalTeus: branchDetailed?.metadata?.lifetimeTotals?.totalTeus || 158458,
-      validActiveInvoices: branchDetailed?.metadata?.lifetimeTotals?.activeInvoices || 184888,
-      validActiveCreditNotes: 7066,
-      totalCreditGross: branchDetailed?.metadata?.lifetimeTotals?.creditAdjustments || 990898075.43,
-      totalNetRevenue: branchDetailed?.metadata?.lifetimeTotals?.netRevenue || 37545462284.68,
+      validActiveInvoices: dw?.allTimeGrandTotals?.totalActiveInvoices || branchDetailed?.metadata?.lifetimeTotals?.activeInvoices || 185192,
+      validActiveCreditNotes: dw?.allTimeGrandTotals?.creditNotesCount || 7091,
+      totalCreditGross: dw?.allTimeGrandTotals?.creditNotesAmount || branchDetailed?.metadata?.lifetimeTotals?.creditAdjustments || 998087321.96,
+      totalNetRevenue: dw?.allTimeGrandTotals?.netRealizedRevenue || branchDetailed?.metadata?.lifetimeTotals?.netRevenue || 34927004794.60,
       activeOwnVehicles: 236,
-      totalCustomers: 1425,
-      totalServices: 184,
-      totalTerminals: 39
+      totalCustomers: dw?.topCustomers?.length || 674,
+      totalServices: dw?.topServices?.length || 572,
+      totalTerminals: dw?.terminals?.length || 28
     },
     yearBreakdown: [
       {

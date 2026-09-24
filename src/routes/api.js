@@ -10,5 +10,7 @@ router.get('/masters', cirController.getMasters);
 router.get('/fleet', cirController.getFleet);
 router.get('/operations', cirController.getOperations);
 router.get('/export/excel', cirController.exportExcel);
+router.post('/sync-warehouse', cirController.syncWarehouse);
+router.get('/warehouse-status', cirController.getWarehouseStatus);
 
 module.exports = router;

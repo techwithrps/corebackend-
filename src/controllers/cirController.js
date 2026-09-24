@@ -198,6 +198,39 @@ async function exportExcel(req, res) {
   }
 }
 
+async function syncWarehouse(req, res) {
+  const dataWarehouseService = require('../services/dataWarehouseService');
+  try {
+    const result = await dataWarehouseService.syncLiveOracle();
+    return res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Live warehouse sync failed',
+      error: err.message
+    });
+  }
+}
+
+async function getWarehouseStatus(req, res) {
+  const dataWarehouseService = require('../services/dataWarehouseService');
+  try {
+    const status = dataWarehouseService.getStatus();
+    return res.json({
+      success: true,
+      data: status
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+}
+
 module.exports = {
   getCIRReport,
   getFinancialAnalytics,
@@ -207,4 +240,6 @@ module.exports = {
   getOperations,
   checkHealth,
   exportExcel,
+  syncWarehouse,
+  getWarehouseStatus,
 };
