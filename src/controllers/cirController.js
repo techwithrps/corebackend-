@@ -135,29 +135,27 @@ async function getFleet(req, res) {
 
 async function checkHealth(req, res) {
   try {
-    let connected = false;
-    let details = null;
+    let dbConnected = false;
     try {
-      await getPool();
-      connected = true;
-    } catch (e) {
-      connected = false;
-      details = e.message;
+      const pool = await getPool();
+      dbConnected = !!pool;
+    } catch {
+      dbConnected = false;
     }
 
     return res.json({
       status: 'online',
-      db: {
-        ...getConnectionStatus(),
-        connected,
-        details,
+      services: {
+        api: 'operational',
+        dataWarehouse: 'operational',
+        database: dbConnected ? 'connected' : 'offline',
       },
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
     return res.status(500).json({
       status: 'error',
-      error: err.message,
+      message: 'Health check failed',
     });
   }
 }
@@ -175,10 +173,21 @@ async function exportExcel(req, res) {
       customerId: req.query.customerId,
       serviceId: req.query.serviceId,
       search: req.query.search,
+      isExport: true,
     };
 
     const result = await cirService.getCIRReport(filters);
-    const data = result.records || [];
+    let data = result.records || [];
+
+    // Excel Security Requirement: Enforce maximum export row cap to prevent memory amplification
+    const MAX_EXPORT_ROWS = 2000;
+    const totalRecordsFound = result.totalRecords || data.length;
+    let isCapped = false;
+
+    if (data.length > MAX_EXPORT_ROWS) {
+      data = data.slice(0, MAX_EXPORT_ROWS);
+      isCapped = true;
+    }
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -188,12 +197,16 @@ async function exportExcel(req, res) {
 
     res.setHeader('Content-Disposition', 'attachment; filename="SPJ_Live_CIR_Report.xlsx"');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('X-Total-Records', String(totalRecordsFound));
+    res.setHeader('X-Export-Capped', isCapped ? 'true' : 'false');
+    if (isCapped) {
+      res.setHeader('X-Max-Allowed', String(MAX_EXPORT_ROWS));
+    }
     return res.send(buffer);
   } catch (err) {
     return res.status(500).json({
       success: false,
       message: 'Failed to export Excel report',
-      error: err.message,
     });
   }
 }
@@ -202,6 +215,7 @@ async function syncWarehouse(req, res) {
   const dataWarehouseService = require('../services/dataWarehouseService');
   try {
     const result = await dataWarehouseService.syncLiveOracle();
+    cirService.invalidateCache();
     return res.json({
       success: true,
       data: result

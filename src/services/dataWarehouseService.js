@@ -53,7 +53,7 @@ function syncLiveOracle() {
 
     isSyncing = true;
     lastSyncError = null;
-    const cmd = 'java -cp ".:scratch/ojdbc11.jar:scratch" OracleWarehouseExporter';
+    const cmd = 'java -cp ".:backend/src/tools/oracle/ojdbc11.jar:backend/src/tools/oracle:scratch/ojdbc11.jar:scratch" OracleWarehouseExporter';
 
     console.log('[DataWarehouse] Triggering live Oracle read-only warehouse sync...');
     exec(cmd, { cwd: ROOT_DIR, timeout: 60000 }, (error, stdout, stderr) => {
@@ -66,13 +66,19 @@ function syncLiveOracle() {
 
       console.log('[DataWarehouse] Live sync output:', stdout);
       const updated = loadWarehouse();
+      if (!updated || !updated.allTimeGrandTotals) {
+        lastSyncError = 'Warehouse validation failed: incomplete dataset';
+        console.error('[DataWarehouse] Sync failed validation. Keeping previous warehouse.');
+        return reject(new Error('Warehouse validation failed: output data incomplete'));
+      }
+
       cacheService.clear();
       lastSyncTime = new Date().toISOString();
       resolve({
         status: 'SUCCESS',
         message: 'Data Warehouse successfully synced from live Oracle SPJLIVE!',
         lastSyncTime,
-        totals: updated ? updated.allTimeGrandTotals : null
+        totals: updated.allTimeGrandTotals
       });
     });
   });

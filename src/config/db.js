@@ -2,11 +2,11 @@ const sql = require('mssql');
 require('dotenv').config();
 
 const config = {
-  user: process.env.DB_USER || 'sa',
-  password: process.env.DB_PASSWORD || 'jqgiF@12345ZPK',
-  server: process.env.DB_SERVER || '103.197.76.251',
+  user: process.env.DB_USER || '',
+  password: process.env.DB_PASSWORD || '',
+  server: process.env.DB_SERVER || '',
   port: parseInt(process.env.DB_PORT, 10) || 1433,
-  database: process.env.DB_NAME || 'SPJ',
+  database: process.env.DB_NAME || '',
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true' ? true : false,
     trustServerCertificate: true,
@@ -28,6 +28,9 @@ let isConnected = false;
 let lastError = null;
 
 async function getPool() {
+  if (!config.server || !config.password) {
+    return null;
+  }
   if (pool && isConnected) return pool;
   try {
     console.log(`[MSSQL] Connecting to ${config.server}:${config.port}/${config.database}...`);
