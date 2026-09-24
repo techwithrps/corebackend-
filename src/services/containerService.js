@@ -107,25 +107,41 @@ async function getContainersTracking(filters = {}) {
     rows = rows.filter(r => String(r.contSize || '').replace(/[^0-9]/g, '') === targetSize);
   }
 
-  // 4. Container Type Filter
+  // 4. Container Type Filter (Reefer vs Dry Cargo)
   if (contType && contType !== 'all' && contType !== 'ALL') {
-    if (contType === 'REEFER') {
-      rows = rows.filter(r => r.contType && (r.contType.toLowerCase().includes('rf') || r.contType.toLowerCase().includes('reefer')));
+    const ctUpper = String(contType).toUpperCase();
+    if (ctUpper === 'REEFER' || ctUpper === 'RF') {
+      rows = rows.filter(r => {
+        const t = String(r.contType || '').toUpperCase();
+        return t.includes('RF') || t.includes('REEFER');
+      });
+    } else if (ctUpper === 'DRY' || ctUpper === 'GP') {
+      rows = rows.filter(r => {
+        const t = String(r.contType || '').toUpperCase();
+        return t.includes('DRY') || t.includes('GP') || t.includes('HC');
+      });
     } else {
       const ctLower = contType.toLowerCase();
-      rows = rows.filter(r => r.contType && r.contType.toLowerCase().includes(ctLower));
+      rows = rows.filter(r => String(r.contType || '').toLowerCase().includes(ctLower));
     }
   }
 
-  // 5. Status Filter
+  // 5. Status Filter (In Chamber / Cold Storage vs Dispatched / Gate Out)
   if (status && status !== 'all' && status !== 'ALL') {
-    if (status === 'Stored in Cold Chamber') {
-      rows = rows.filter(r => r.status && (r.status.includes('Chamber') || r.status.includes('Active') || r.status.includes('Yard')));
-    } else if (status === 'Dispatched / Gate Out') {
-      rows = rows.filter(r => r.status && (r.status.includes('Dispatched') || r.status.includes('Outward')));
+    const stUpper = String(status).toUpperCase();
+    if (stUpper.includes('CHAMBER') || stUpper.includes('COLD')) {
+      rows = rows.filter(r => {
+        const s = String(r.status || '').toUpperCase();
+        return s.includes('CHAMBER') || s.includes('COLD') || s.includes('YARD') || s.includes('ACTIVE') || s.includes('BUFFER');
+      });
+    } else if (stUpper.includes('DISPATCH') || stUpper.includes('GATE OUT') || stUpper.includes('OUTWARD')) {
+      rows = rows.filter(r => {
+        const s = String(r.status || '').toUpperCase();
+        return s.includes('DISPATCH') || s.includes('GATE OUT') || s.includes('OUTWARD');
+      });
     } else {
       const stLower = status.toLowerCase();
-      rows = rows.filter(r => r.status && r.status.toLowerCase().includes(stLower));
+      rows = rows.filter(r => String(r.status || '').toLowerCase().includes(stLower));
     }
   }
 
