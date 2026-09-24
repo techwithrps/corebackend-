@@ -83,8 +83,9 @@ function filterCIRRows(rows, filters = {}) {
   return rows.filter(item => {
     // 1. Company Filter
     if (hasCompany) {
-      const directMatch = item.COMPANY_ID && Number(item.COMPANY_ID) === targetCompanyId;
-      if (!directMatch) {
+      if (item.COMPANY_ID) {
+        if (Number(item.COMPANY_ID) !== targetCompanyId) return false;
+      } else {
         const cName = (item.CUSTOMER_NAME || '').toLowerCase();
         const tId = Number(item.TERMINAL_ID);
         const custMatch = targetCompanyCusts ? targetCompanyCusts.has(cName) : false;
@@ -93,7 +94,7 @@ function filterCIRRows(rows, filters = {}) {
           if (!([5, 54].includes(tId) || (item.TERMINAL_NAME && item.TERMINAL_NAME.includes('NHAVA')) || custMatch)) {
             return false;
           }
-        } else if (!custMatch && !directMatch) {
+        } else if (!custMatch) {
           return false;
         }
       }
