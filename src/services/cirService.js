@@ -92,6 +92,8 @@ async function getCIRReport(filters = {}) {
 
   // 4. Server-Side Pagination (default page=1, limit=50, max=100; or export cap)
   const pagination = paginateRows(filteredRows, filters, !!filters.isExport);
+  const effectiveTotal = kpis.totalRecords || kpis.invoiceCount || pagination.totalRecords;
+  const effectiveTotalPages = Math.ceil(effectiveTotal / pagination.limit) || 1;
 
   const response = {
     source: 'ORACLE_SPJLIVE',
@@ -103,13 +105,13 @@ async function getCIRReport(filters = {}) {
       user: 'SPJLIVE'
     },
     count: pagination.count,
-    total: kpis.totalRecords || pagination.totalRecords,
-    totalRecords: pagination.totalRecords,
+    total: effectiveTotal,
+    totalRecords: effectiveTotal,
     page: pagination.page,
     limit: pagination.limit,
-    totalPages: pagination.totalPages,
-    hasNextPage: pagination.hasNextPage,
-    hasPreviousPage: pagination.hasPreviousPage,
+    totalPages: effectiveTotalPages,
+    hasNextPage: pagination.page < effectiveTotalPages,
+    hasPreviousPage: pagination.page > 1,
     kpis,
     records: pagination.records,
   };
