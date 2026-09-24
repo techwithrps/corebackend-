@@ -6,6 +6,8 @@
   "totalInvoicedGross": 38536360360.24,
   "cumulativeGrossSale": 38536360360.24,
   "totalContainers": 85313,
+  "totalMovements": 128450,
+  "totalJobOrders": 88358,
   "units20ft": 8531,
   "units40ft": 76782,
   "totalTeus": 162095,
