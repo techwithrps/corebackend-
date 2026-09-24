@@ -1,7 +1,19 @@
-/**
- * CIR In-Memory Filtering, Sanitized Search & Pagination Service
- */
+const path = require('path');
+const fs = require('fs');
 const { getRecordFinancialYear, sanitizeSearchQuery } = require('../utils/dateUtils');
+
+let companyMastersData = null;
+function getCompanyMasters() {
+  if (!companyMastersData) {
+    try {
+      const p = path.join(__dirname, '../data/companyMasters.json');
+      if (fs.existsSync(p)) {
+        companyMastersData = JSON.parse(fs.readFileSync(p, 'utf8'));
+      }
+    } catch (e) {}
+  }
+  return companyMastersData;
+}
 
 /**
  * Filter CIR rows based on request criteria
@@ -40,12 +52,51 @@ function filterCIRRows(rows, filters = {}) {
   const termLower = hasTerminal ? terminalId.toString().toLowerCase() : null;
   const custLower = hasCustomer ? customerId.toString().toLowerCase() : null;
   const servLower = hasService ? serviceId.toString().toLowerCase() : null;
-  const compStr = hasCompany ? companyId.toString() : null;
+
+  // Resolve target company metadata
+  let targetCompanyId = null;
+  let targetCompanyCusts = null;
+  let targetCompanyTerms = null;
+
+  if (hasCompany) {
+    const raw = String(companyId).toUpperCase().trim();
+    if (raw === '3' || raw === 'PJ-OLD' || raw.includes('OLD')) targetCompanyId = 3;
+    else if (raw === '2' || raw === 'SPJ') targetCompanyId = 2;
+    else if (raw === '1' || raw === 'SJ') targetCompanyId = 1;
+    else if (raw === '5' || raw === 'PJ') targetCompanyId = 5;
+    else if (raw === '4' || raw === 'SPJ-MUM' || raw.includes('MUMBAI')) targetCompanyId = 4;
+    else targetCompanyId = Number(companyId) || null;
+
+    if (targetCompanyId) {
+      const cm = getCompanyMasters();
+      if (cm) {
+        if (cm.companyCustomers && cm.companyCustomers[targetCompanyId]) {
+          targetCompanyCusts = new Set(cm.companyCustomers[targetCompanyId].map(c => c.name.toLowerCase()));
+        }
+        if (cm.companyTerminals && cm.companyTerminals[targetCompanyId]) {
+          targetCompanyTerms = new Set(cm.companyTerminals[targetCompanyId].map(t => Number(t.terminalId)));
+        }
+      }
+    }
+  }
 
   return rows.filter(item => {
     // 1. Company Filter
     if (hasCompany) {
-      if (item.COMPANY_ID && item.COMPANY_ID.toString() !== compStr) return false;
+      const directMatch = item.COMPANY_ID && Number(item.COMPANY_ID) === targetCompanyId;
+      if (!directMatch) {
+        const cName = (item.CUSTOMER_NAME || '').toLowerCase();
+        const tId = Number(item.TERMINAL_ID);
+        const custMatch = targetCompanyCusts ? targetCompanyCusts.has(cName) : false;
+
+        if (targetCompanyId === 4) { // SPJ Mumbai requires Mumbai terminal or customer
+          if (!([5, 54].includes(tId) || (item.TERMINAL_NAME && item.TERMINAL_NAME.includes('NHAVA')) || custMatch)) {
+            return false;
+          }
+        } else if (!custMatch && !directMatch) {
+          return false;
+        }
+      }
     }
 
     // 2. Terminal Filter (Handles ID or Name)

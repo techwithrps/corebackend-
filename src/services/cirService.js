@@ -237,89 +237,173 @@ async function getMasters() {
     ];
   }
 
-  return {
-    companies: [
-      { id: 1, code: 'SPJ', name: 'SPJ CARGO PVT LTD', gstin: '07AAOCS1758E1Z5', director: 'Mr. Puran Joshi' },
-      { id: 2, code: 'SPJ-MUM', name: 'SPJ CARGO PVT LTD-MUMBAI', gstin: '27AAOCS1758E1Z3', director: 'Mr. Puran Joshi' },
-      { id: 3, code: 'SJ', name: 'S.J. CARGO MOVERS', gstin: '07ADGPJ3166M1ZA', director: 'Mr. Puran Joshi' },
-      { id: 4, code: 'PJ', name: 'PURAN JOSHI', gstin: '07ADGPJ3166M2Z9', director: 'Mr. Puran Joshi' },
-      { id: 5, code: 'PJ-OLD', name: 'PURAN JOSHI OLD', gstin: '07ADGPJ3166M1ZA', director: 'Mr. Puran Joshi' }
-    ],
-    terminals,
-    customers: masters.customers || [],
-    services: masters.services || [],
-    customerTerminalMatrix: (() => {
-      try {
-        const snap = getSnapshotData();
-        const { getRecordFinancialYear } = require('../utils/dateUtils');
-        const custMatrix = {};
+  // Load real Oracle company relationships from companyMasters.json
+  let compData = null;
+  try {
+    const cmPath = path.join(__dirname, '../data/companyMasters.json');
+    if (fs.existsSync(cmPath)) {
+      compData = JSON.parse(fs.readFileSync(cmPath, 'utf8'));
+    }
+  } catch (e) {
+    console.warn('[cirService] Error loading companyMasters.json:', e.message);
+  }
 
-        snap.forEach(r => {
-          const cId = String(r.CUSTOMER_ID || r.CUSTOMER_NAME || 'Unknown');
-          const cName = r.CUSTOMER_NAME || 'Unknown';
-          const compId = String(r.COMPANY_ID || '1');
-          const tId = String(r.TERMINAL_ID || '');
-          const tName = r.TERMINAL_NAME || ('Terminal ' + tId);
-          const fy = getRecordFinancialYear(r);
-          const amt = Number(r.AMOUNT) || Number(r.BILL_AMOUNT) || 0;
+  // 5 Official Group Companies in the exact requested order:
+  // 1. PURAN JOSHI OLD (id: 3, PJ-OLD)
+  // 2. SPJ CARGO PVT LTD (id: 2, SPJ)
+  // 3. S.J. CARGO MOVERS (id: 1, SJ)
+  // 4. PURAN JOSHI (id: 5, PJ)
+  // 5. SPJ CARGO PVT LTD-MUMBAI (id: 4, SPJ-MUM)
+  const officialCompanies = [
+    { id: 3, companyId: 3, code: 'PJ-OLD', name: 'PURAN JOSHI OLD', gstin: '07ADGPJ3166M1ZA', director: 'Mr. Puran Joshi', city: 'NEW DELHI', state: 'DELHI' },
+    { id: 2, companyId: 2, code: 'SPJ', name: 'SPJ CARGO PVT LTD', gstin: '07AAOCS1758E1Z5', director: 'Mr. Puran Joshi', city: 'NEW DELHI', state: 'DELHI' },
+    { id: 1, companyId: 1, code: 'SJ', name: 'S.J. CARGO MOVERS', gstin: '07ADGPJ3166M1ZA', director: 'Mr. Puran Joshi', city: 'NEW DELHI', state: 'DELHI' },
+    { id: 5, companyId: 5, code: 'PJ', name: 'PURAN JOSHI', gstin: '07ADGPJ3166M2Z9', director: 'Mr. Puran Joshi', city: 'NEW DELHI', state: 'DELHI' },
+    { id: 4, companyId: 4, code: 'SPJ-MUM', name: 'SPJ CARGO PVT LTD-MUMBAI', gstin: '27AAOCS1758E1Z3', director: 'Mr. Puran Joshi', city: 'Mumbai', state: 'Maharashtra' }
+  ];
 
-          if (!custMatrix[cId]) {
-            custMatrix[cId] = {
+  // Build Comprehensive Customer-to-Terminal Matrix across Companies
+  const customerTerminalMatrix = (() => {
+    try {
+      const custMatrix = {};
+
+      // 1. Ingest Oracle Tri-matrix relationships if available
+      if (compData && compData.triMatrix) {
+        compData.triMatrix.forEach(item => {
+          const cId = String(item.customerId);
+          const compId = item.companyId;
+          const key = compId + '_' + cId;
+
+          if (!custMatrix[key]) {
+            custMatrix[key] = {
               customerId: cId,
-              customerName: cName,
+              customerName: item.customerName,
               companyId: compId,
               totalInvoices: 0,
               totalRevenue: 0,
               terminals: {},
-              financialYears: new Set()
+              financialYears: ['All Financial Years', 'FY 2026-27', 'FY 2025-26']
             };
           }
 
-          const c = custMatrix[cId];
+          const c = custMatrix[key];
+          c.totalInvoices += item.invoiceCount || 0;
+          c.totalRevenue += item.totalAmount || 0;
+
+          const tId = String(item.terminalId);
+          if (!c.terminals[tId]) {
+            c.terminals[tId] = {
+              terminalId: tId,
+              terminalName: item.terminalName,
+              invoiceCount: 0,
+              totalContainers: 0,
+              netRevenue: 0,
+              financialYears: ['All Financial Years', 'FY 2026-27', 'FY 2025-26']
+            };
+          }
+          c.terminals[tId].invoiceCount += item.invoiceCount || 0;
+          c.terminals[tId].netRevenue += item.totalAmount || 0;
+        });
+      }
+
+      // 2. Also overlay live snapshot records for active container counts
+      const snap = getSnapshotData();
+      const { getRecordFinancialYear } = require('../utils/dateUtils');
+      snap.forEach(r => {
+        const cName = (r.CUSTOMER_NAME || '').toLowerCase().trim();
+        const tId = String(r.TERMINAL_ID || '');
+        const amt = Number(r.AMOUNT) || Number(r.BILL_AMOUNT) || 0;
+        const fy = getRecordFinancialYear(r);
+
+        let matched = false;
+        for (const k in custMatrix) {
+          if (custMatrix[k].customerName.toLowerCase().trim() === cName) {
+            matched = true;
+            if (tId) {
+              if (!custMatrix[k].terminals[tId]) {
+                custMatrix[k].terminals[tId] = {
+                  terminalId: tId,
+                  terminalName: r.TERMINAL_NAME || ('Terminal ' + tId),
+                  invoiceCount: 0,
+                  totalContainers: 0,
+                  netRevenue: 0,
+                  financialYears: [fy]
+                };
+              }
+              if (r.CONT_NO) custMatrix[k].terminals[tId].totalContainers++;
+            }
+          }
+        }
+
+        // If not in Oracle triMatrix, create entry
+        if (!matched && cName) {
+          const cId = String(r.CUSTOMER_ID || r.CUSTOMER_NAME);
+          const compId = 2; // Default to SPJ
+          const key = compId + '_' + cId;
+          if (!custMatrix[key]) {
+            custMatrix[key] = {
+              customerId: cId,
+              customerName: r.CUSTOMER_NAME,
+              companyId: compId,
+              totalInvoices: 0,
+              totalRevenue: 0,
+              terminals: {},
+              financialYears: [fy]
+            };
+          }
+          const c = custMatrix[key];
           c.totalInvoices++;
           c.totalRevenue += amt;
-          c.financialYears.add(fy);
-
           if (tId) {
             if (!c.terminals[tId]) {
               c.terminals[tId] = {
                 terminalId: tId,
-                terminalName: tName,
+                terminalName: r.TERMINAL_NAME || ('Terminal ' + tId),
                 invoiceCount: 0,
-                netRevenue: 0,
                 totalContainers: 0,
-                financialYears: new Set()
+                netRevenue: 0,
+                financialYears: [fy]
               };
             }
-            const t = c.terminals[tId];
-            t.invoiceCount++;
-            t.netRevenue += amt;
-            if (r.CONT_NO) t.totalContainers++;
-            t.financialYears.add(fy);
+            c.terminals[tId].invoiceCount++;
+            c.terminals[tId].netRevenue += amt;
+            if (r.CONT_NO) c.terminals[tId].totalContainers++;
           }
-        });
+        }
+      });
 
-        return Object.values(custMatrix).map(c => ({
-          customerId: c.customerId,
-          customerName: c.customerName,
-          companyId: c.companyId,
-          totalInvoices: c.totalInvoices,
-          totalRevenue: Math.round(c.totalRevenue * 100) / 100,
-          financialYears: Array.from(c.financialYears),
-          terminalCount: Object.keys(c.terminals).length,
-          terminals: Object.values(c.terminals).map(t => ({
-            terminalId: t.terminalId,
-            terminalName: t.terminalName,
-            invoiceCount: t.invoiceCount,
-            totalContainers: t.totalContainers,
-            netRevenue: Math.round(t.netRevenue * 100) / 100,
-            financialYears: Array.from(t.financialYears)
-          }))
-        })).sort((a, b) => b.totalRevenue - a.totalRevenue);
-      } catch (e) {
-        return [];
-      }
-    })(),
+      return Object.values(custMatrix).map(c => ({
+        customerId: c.customerId,
+        customerName: c.customerName,
+        companyId: c.companyId,
+        totalInvoices: c.totalInvoices,
+        totalRevenue: Math.round(c.totalRevenue * 100) / 100,
+        financialYears: Array.isArray(c.financialYears) ? c.financialYears : Array.from(c.financialYears || []),
+        terminalCount: Object.keys(c.terminals).length,
+        terminals: Object.values(c.terminals).map(t => ({
+          terminalId: t.terminalId,
+          terminalName: t.terminalName,
+          invoiceCount: t.invoiceCount,
+          totalContainers: t.totalContainers || 0,
+          netRevenue: Math.round(t.netRevenue * 100) / 100,
+          financialYears: Array.isArray(t.financialYears) ? t.financialYears : Array.from(t.financialYears || [])
+        }))
+      })).sort((a, b) => b.totalRevenue - a.totalRevenue);
+    } catch (e) {
+      console.error('[cirService] Error building customerTerminalMatrix:', e);
+      return [];
+    }
+  })();
+
+  return {
+    companies: officialCompanies,
+    companyCustomers: compData?.companyCustomers || {},
+    companyTerminals: compData?.companyTerminals || {},
+    triMatrix: compData?.triMatrix || [],
+    terminals,
+    customers: masters.customers || [],
+    services: masters.services || [],
+    customerTerminalMatrix,
     warehouses: [
       { id: 1, name: 'CHAMBER 1 TO 21 (-18°C)', code: 'CH-ALL' }
     ],
