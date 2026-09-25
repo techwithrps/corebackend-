@@ -83,17 +83,7 @@ function getIndianFiscalYear(year, month) {
 function getRecordFinancialYear(record) {
   if (!record) return 'FY 2022-23 & Earlier';
 
-  // 1. Check explicit invoice reference notation first (primary business key)
-  const invRef = String(record.INVOICE_REF_NO || record.PARTY_INV_NO || '');
-  if (invRef) {
-    if (invRef.includes('26-27') || invRef.includes('/26-27') || invRef.includes('-26-27')) return 'FY 2026-27';
-    if (invRef.includes('25-26') || invRef.includes('/25-26') || invRef.includes('-25-26')) return 'FY 2025-26';
-    if (invRef.includes('24-25') || invRef.includes('/24-25') || invRef.includes('-24-25')) return 'FY 2024-25';
-    if (invRef.includes('23-24') || invRef.includes('/23-24') || invRef.includes('-23-24')) return 'FY 2023-24';
-    if (invRef.includes('22-23') || invRef.includes('21-22') || invRef.includes('20-21')) return 'FY 2022-23 & Earlier';
-  }
-
-  // 2. Fallback to date fields with exact April-March boundary handling
+  // 1. Check primary transaction dates with exact April-March boundary handling
   const dateCandidates = [
     record.INVOICE_DATE,
     record.CREATED_DATE,
@@ -111,6 +101,16 @@ function getRecordFinancialYear(record) {
         return getIndianFiscalYear(parts.year, parts.month);
       }
     }
+  }
+
+  // 2. Fallback to explicit invoice reference notation if date is missing or unparseable
+  const invRef = String(record.INVOICE_REF_NO || record.PARTY_INV_NO || '');
+  if (invRef) {
+    if (invRef.includes('26-27') || invRef.includes('/26-27') || invRef.includes('-26-27')) return 'FY 2026-27';
+    if (invRef.includes('25-26') || invRef.includes('/25-26') || invRef.includes('-25-26')) return 'FY 2025-26';
+    if (invRef.includes('24-25') || invRef.includes('/24-25') || invRef.includes('-24-25')) return 'FY 2024-25';
+    if (invRef.includes('23-24') || invRef.includes('/23-24') || invRef.includes('-23-24')) return 'FY 2023-24';
+    if (invRef.includes('22-23') || invRef.includes('21-22') || invRef.includes('20-21')) return 'FY 2022-23 & Earlier';
   }
 
   return 'FY 2022-23 & Earlier';
