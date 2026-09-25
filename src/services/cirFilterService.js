@@ -176,16 +176,38 @@ function filterCIRRows(rows, filters = {}) {
   });
 }
 
+function getRowTimestamp(item) {
+  const dStr = item.INVOICE_DATE || item.DATE || item.createdOn || item.CREATED_ON;
+  if (dStr) {
+    const s = String(dStr).trim();
+    const dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+    if (dmy) {
+      return new Date(parseInt(dmy[3], 10), parseInt(dmy[2], 10) - 1, parseInt(dmy[1], 10), 12, 0, 0).getTime() || 0;
+    }
+    const t = new Date(s).getTime();
+    if (!isNaN(t)) return t;
+  }
+  return Number(item.INVOICE_ID) || 0;
+}
+
 /**
  * Paginate rows safely
  * Rules: Default page = 1, default limit = 50, maximum limit = 100
- * If isExport is true, allow up to maxExportLimit (default 2000)
+ * Ensures latest records by actual database date are ALWAYS at the top.
  */
 function paginateRows(rows, paginationParams = {}, isExport = false, maxExportLimit = 2000) {
-  const totalRecords = rows.length;
+  // Sort rows descending by actual database date & invoice ID
+  const sortedRows = [...rows].sort((a, b) => {
+    const tB = getRowTimestamp(b);
+    const tA = getRowTimestamp(a);
+    if (tB !== tA) return tB - tA;
+    return (Number(b.INVOICE_ID) || 0) - (Number(a.INVOICE_ID) || 0);
+  });
+
+  const totalRecords = sortedRows.length;
 
   if (isExport) {
-    const capped = rows.slice(0, maxExportLimit);
+    const capped = sortedRows.slice(0, maxExportLimit);
     return {
       records: capped,
       page: 1,
@@ -213,7 +235,7 @@ function paginateRows(rows, paginationParams = {}, isExport = false, maxExportLi
   }
 
   const startIndex = (page - 1) * limit;
-  const paginatedSlice = rows.slice(startIndex, startIndex + limit);
+  const paginatedSlice = sortedRows.slice(startIndex, startIndex + limit);
 
   return {
     records: paginatedSlice,
@@ -230,4 +252,6 @@ function paginateRows(rows, paginationParams = {}, isExport = false, maxExportLi
 module.exports = {
   filterCIRRows,
   paginateRows,
+  getRowTimestamp
 };
+
