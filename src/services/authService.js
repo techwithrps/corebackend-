@@ -25,6 +25,86 @@ const SERVER_USERS = [
     }
   },
   {
+    id: 'CUST-2857',
+    username: 'fair',
+    password: process.env.FAIR_PASSWORD || 'fair@123',
+    name: 'FAIR EXPORTS (INDIA) PVT LTD',
+    role: 'customer',
+    badge: 'Enterprise Customer',
+    tenantScope: {
+      type: 'CUSTOMER',
+      customerId: 'CUST-2857',
+      customerCode: 'FAIR',
+      customerName: 'FAIR EXPORTS (INDIA) PVT LTD',
+      companyId: null,
+      terminalId: null,
+    }
+  },
+  {
+    id: 'CUST-IFF',
+    username: 'iff',
+    password: process.env.IFF_PASSWORD || 'iff@123',
+    name: 'IFF INDIA FROZEN FOODS PRIVATE LIMITED',
+    role: 'customer',
+    badge: 'Enterprise Customer',
+    tenantScope: {
+      type: 'CUSTOMER',
+      customerId: 'CUST-IFF',
+      customerCode: 'IFF',
+      customerName: 'IFF INDIA FROZEN FOODS PRIVATE LIMITED',
+      companyId: null,
+      terminalId: null,
+    }
+  },
+  {
+    id: 'CUST-MARHABA',
+    username: 'marhaba',
+    password: process.env.MARHABA_PASSWORD || 'marhaba@123',
+    name: 'MARHABA FROZEN FOODS',
+    role: 'customer',
+    badge: 'Enterprise Customer',
+    tenantScope: {
+      type: 'CUSTOMER',
+      customerId: 'CUST-MARHABA',
+      customerCode: 'MARHABA',
+      customerName: 'MARHABA FROZEN FOODS',
+      companyId: null,
+      terminalId: null,
+    }
+  },
+  {
+    id: 'CUST-1847',
+    username: 'rustam',
+    password: process.env.RUSTAM_PASSWORD || 'rustam@123',
+    name: 'RUSTAM FOODS PVT LTD',
+    role: 'customer',
+    badge: 'Enterprise Customer',
+    tenantScope: {
+      type: 'CUSTOMER',
+      customerId: 'CUST-1847',
+      customerCode: 'RUSTAM',
+      customerName: 'RUSTAM FOODS PVT.LTD.',
+      companyId: null,
+      terminalId: null,
+    }
+  },
+  {
+    id: 'CUST-ALAMMAR',
+    username: 'alammar',
+    password: process.env.ALAMMAR_PASSWORD || 'alammar@123',
+    name: 'AL AMMAR FROZEN FOOD EXPORTS PVT LTD',
+    role: 'customer',
+    badge: 'Enterprise Customer',
+    tenantScope: {
+      type: 'CUSTOMER',
+      customerId: 'CUST-ALAMMAR',
+      customerCode: 'ALAMMAR',
+      customerName: 'AL AMMAR FROZEN FOOD EXPORTS PVT LTD',
+      companyId: null,
+      terminalId: null,
+    }
+  },
+  {
     id: 'CUST-1793',
     username: 'hma',
     password: process.env.HMA_PASSWORD || 'hma@123',
@@ -52,22 +132,6 @@ const SERVER_USERS = [
       customerId: 'CUST-1845',
       customerCode: 'INTL',
       customerName: 'INTERNATIONAL AGRO FOODS',
-      companyId: null,
-      terminalId: null,
-    }
-  },
-  {
-    id: 'CUST-1847',
-    username: 'rustam',
-    password: process.env.RUSTAM_PASSWORD || 'rustam@123',
-    name: 'RUSTAM FOODS PVT LTD',
-    role: 'customer',
-    badge: 'Enterprise Customer',
-    tenantScope: {
-      type: 'CUSTOMER',
-      customerId: 'CUST-1847',
-      customerCode: 'RUSTAM',
-      customerName: 'RUSTAM FOODS PVT LTD',
       companyId: null,
       terminalId: null,
     }
