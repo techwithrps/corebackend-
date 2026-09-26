@@ -75,237 +75,12 @@ function invalidateAnalyticsCache() {
 /**
  * Calculate KPI summary aggregates including Terminal and Location-wise Breakdown
  */
-function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {}) {
-  const { companyId, terminalId, financialYear, customerId, serviceId, tripType, size, isDefaultView } = filterMeta;
-
-  // 1. Default View: Grand totals
-  if (isDefaultView && dbSummary) {
-    const invCount = dbSummary.validActiveInvoices || rows.length;
-    const creditCount = dbSummary.validActiveCreditNotes || 0;
-    const grossAmount = dbSummary.cumulativeGrossSale || dbSummary.totalInvoicedGross || 0;
-    const billAmount = dbSummary.totalInvoicedBillAmount || 0;
-    const taxAmount = dbSummary.totalInvoicedTax || 0;
-    const creditAmount = dbSummary.totalCreditGross || 0;
-    const netRev = dbSummary.cumulativeGrossSale || (grossAmount - creditAmount);
-
-    // Build customerWise from snapshot rows
-    const customerMap = {};
-    rows.forEach(r => {
-      const custName = r.CUSTOMER_NAME || 'Unknown Customer';
-      const custId = String(r.CUSTOMER_ID || custName);
-      const amt = Number(r.AMOUNT) || Number(r.BILL_AMOUNT) || 0;
-      const bill = Number(r.BILL_AMOUNT) || 0;
-      const tax = Number(r.TAX) || 0;
-      if (!customerMap[custId]) {
-        customerMap[custId] = {
-          customerId: custId,
-          customerName: custName,
-          invoiceCount: 0,
-          containerCount: 0,
-          billAmount: 0,
-          taxAmount: 0,
-          grossAmount: 0,
-          netRevenue: 0,
-          terminals: new Set()
-        };
-      }
-      const cEntry = customerMap[custId];
-      cEntry.invoiceCount++;
-      cEntry.billAmount += bill;
-      cEntry.taxAmount += tax;
-      cEntry.grossAmount += amt;
-      cEntry.netRevenue += amt;
-      if (r.CONT_NO) cEntry.containerCount++;
-      if (r.TERMINAL_NAME) cEntry.terminals.add(r.TERMINAL_NAME);
-    });
-
-    const customerWise = Object.values(customerMap)
-      .map(c => ({
-        ...c,
-        billAmount: Math.round(c.billAmount * 100) / 100,
-        taxAmount: Math.round(c.taxAmount * 100) / 100,
-        grossAmount: Math.round(c.grossAmount * 100) / 100,
-        netRevenue: Math.round(c.netRevenue * 100) / 100,
-        terminalCount: c.terminals.size,
-        terminals: Array.from(c.terminals)
-      }))
-      .sort((a, b) => b.grossAmount - a.grossAmount);
-
-    return {
-      totalGrossAmount: grossAmount,
-      grossRevenue: grossAmount,
-      netRevenue: netRev,
-      totalBillAmount: billAmount,
-      totalTax: taxAmount,
-      totalInvoiceAmount: grossAmount,
-      totalCreditAmount: creditAmount,
-      invoiceCount: invCount,
-      creditNoteCount: creditCount,
-      containerCount: dbSummary.totalContainers || 89245,
-      containerMovements: dbSummary.totalMovements || 128450,
-      jobOrders: dbSummary.totalJobOrders || 88361,
-      teuCount: dbSummary.totalTeus || 171976,
-      totalRecords: invCount + creditCount,
-      totalDBInvoices: invCount,
-      totalDBItems: dbSummary.totalInvoiceItems || rows.length,
-      customerWise
-    };
-  }
-
-  // 2. Pure Company Scope
-  const isPureCompany = 
-    (companyId && companyId !== 'all' && companyId !== 'ALL') &&
-    (!customerId || customerId === 'all' || customerId === 'ALL') &&
-    (!serviceId || serviceId === 'all' || serviceId === 'ALL') &&
-    (!tripType || tripType === 'all' || tripType === 'ALL') &&
-    (!size || size === 'all' || size === 'ALL') &&
-    (!terminalId || terminalId === 'all' || terminalId === 'ALL');
-
-  if (isPureCompany) {
-    const raw = String(companyId).toUpperCase().trim();
-    let compId = '3';
-    if (raw === '2' || raw === 'SPJ') compId = '2';
-    else if (raw === '1' || raw === 'SJ') compId = '1';
-    else if (raw === '5' || raw === 'PJ') compId = '5';
-    else if (raw === '4' || raw === 'SPJ-MUM' || raw.includes('MUM')) compId = '4';
-
-    const companyTotals = {
-      '3': { gross: 60563736, invoices: 72, containers: 82, teus: 156 },
-      '2': { gross: 32948600000, invoices: 142739, containers: 65800, teus: 125020 },
-      '1': { gross: 1688500000, invoices: 26719, containers: 12300, teus: 23370 },
-      '5': { gross: 188700000, invoices: 255, containers: 290, teus: 551 },
-      '4': { gross: 3650000000, invoices: 15200, containers: 7000, teus: 13300 }
-    };
-
-    if (companyTotals[compId]) {
-      const ct = companyTotals[compId];
-      let finalGross = ct.gross;
-      let finalInvs = ct.invoices;
-      let finalConts = ct.containers;
-      let finalTeus = ct.teus;
-
-      if (financialYear && financialYear !== 'all' && financialYear !== 'ALL' && financialYear !== 'CUSTOM_RANGE' && financialYear !== 'Custom Date Range' && financialYear !== 'CUSTOM' && detailed?.fySummaries?.[financialYear]) {
-        const fyGross = detailed.fySummaries[financialYear].grossSale || 0;
-        const allGross = 38536360360.24;
-        const ratio = allGross > 0 ? (fyGross / allGross) : 0.125;
-        finalGross = Math.round(finalGross * ratio * 100) / 100;
-        finalInvs = Math.round(finalInvs * ratio);
-        finalConts = Math.round(finalConts * ratio);
-        finalTeus = Math.round(finalTeus * ratio);
-      }
-
-      const bill = Math.round((finalGross / 1.18) * 100) / 100;
-      const tax = Math.round((finalGross - bill) * 100) / 100;
-
-      return {
-        totalGrossAmount: finalGross,
-        grossRevenue: finalGross,
-        netRevenue: finalGross,
-        totalBillAmount: bill,
-        taxableRevenue: bill,
-        totalTax: tax,
-        gstTax: tax,
-        totalInvoiceAmount: finalGross,
-        totalCreditAmount: 0,
-        invoiceCount: finalInvs,
-        creditNoteCount: 0,
-        containerCount: finalConts,
-        containerMovements: Math.round(finalInvs * 0.69),
-        jobOrders: Math.round(finalInvs * 0.48),
-        teuCount: finalTeus,
-        totalRecords: finalInvs,
-        totalDBInvoices: finalInvs,
-        totalDBItems: finalInvs
-      };
-    }
-  }
-
-  // Check if purely Terminal and/or FY filtered without granular row search
-  const isPureTerminalFY = 
-    (!companyId || companyId === 'all' || companyId === 'ALL') &&
-    (!customerId || customerId === 'all' || customerId === 'ALL') &&
-    (!serviceId || serviceId === 'all' || serviceId === 'ALL') &&
-    (!tripType || tripType === 'all' || tripType === 'ALL') &&
-    (!size || size === 'all' || size === 'ALL');
-
-  if (isPureTerminalFY && detailed) {
-    const hasTerm = terminalId && terminalId !== 'all' && terminalId !== 'ALL';
-    const hasFY = financialYear && financialYear !== 'all' && financialYear !== 'ALL' && financialYear !== 'CUSTOM_RANGE' && financialYear !== 'Custom Date Range' && financialYear !== 'CUSTOM';
-
-    let targetTermId = null;
-    if (hasTerm) {
-      if (!isNaN(Number(terminalId))) {
-        targetTermId = Number(terminalId);
-      } else {
-        const cleanTerm = String(terminalId).toLowerCase().replace(/[^a-z0-9]/g, '');
-        const found = detailed.terminals?.find(t => {
-          const tClean = t.terminalName.toLowerCase().replace(/[^a-z0-9]/g, '');
-          return tClean.includes(cleanTerm) || cleanTerm.includes(tClean);
-        });
-        if (found) targetTermId = found.terminalId;
-      }
-    }
-
-    if (hasTerm && hasFY && targetTermId) {
-      const cell = detailed.terminalFyMatrix?.find(m => 
-        m.terminalId === targetTermId && m.fy === financialYear
-      );
-      if (cell) {
-        return {
-          totalGrossAmount: Math.round(cell.netRevenue * 100) / 100,
-          grossRevenue: Math.round(cell.grossSale * 100) / 100,
-          netRevenue: Math.round(cell.netRevenue * 100) / 100,
-          totalBillAmount: Math.round(cell.billAmount * 100) / 100,
-          totalTax: Math.round(cell.taxAmount * 100) / 100,
-          totalInvoiceAmount: Math.round(cell.grossSale * 100) / 100,
-          totalCreditAmount: Math.round(cell.creditAmount * 100) / 100,
-          invoiceCount: cell.invoiceCount,
-          creditNoteCount: cell.creditCount,
-          containerCount: cell.totalContainers,
-          teuCount: cell.teus,
-          totalRecords: cell.invoiceCount + cell.creditCount
-        };
-      }
-    } else if (hasFY && !hasTerm) {
-      const fySum = detailed.fySummaries?.[financialYear];
-      if (fySum) {
-        return {
-          totalGrossAmount: Math.round(fySum.netRevenue * 100) / 100,
-          grossRevenue: Math.round(fySum.grossSale * 100) / 100,
-          netRevenue: Math.round(fySum.netRevenue * 100) / 100,
-          totalBillAmount: Math.round(fySum.billAmount * 100) / 100,
-          totalTax: Math.round(fySum.taxAmount * 100) / 100,
-          totalInvoiceAmount: Math.round(fySum.grossSale * 100) / 100,
-          totalCreditAmount: Math.round(fySum.creditAmount * 100) / 100,
-          invoiceCount: fySum.invoiceCount,
-          creditNoteCount: fySum.creditCount,
-          containerCount: fySum.totalContainers,
-          teuCount: fySum.teus,
-          totalRecords: fySum.invoiceCount + fySum.creditCount
-        };
-      }
-    } else if (hasTerm && !hasFY && targetTermId) {
-      const tSum = detailed.terminals?.find(t => t.terminalId === targetTermId);
-      if (tSum) {
-        return {
-          totalGrossAmount: Math.round(tSum.netRevenue * 100) / 100,
-          grossRevenue: Math.round(tSum.grossSale * 100) / 100,
-          netRevenue: Math.round(tSum.netRevenue * 100) / 100,
-          totalBillAmount: Math.round(tSum.billAmount * 100) / 100,
-          totalTax: Math.round(tSum.taxAmount * 100) / 100,
-          totalInvoiceAmount: Math.round(tSum.grossSale * 100) / 100,
-          totalCreditAmount: Math.round(tSum.creditAmount * 100) / 100,
-          invoiceCount: tSum.invoiceCount,
-          creditNoteCount: tSum.creditCount,
-          containerCount: tSum.totalContainers,
-          teuCount: tSum.teus,
-          totalRecords: tSum.invoiceCount + tSum.creditCount
-        };
-      }
-    }
-  }
-
-  // Dynamic Row Accumulation for granular sub-filters (Customer, Service, Trip Type, Size, Search)
+/**
+ * Calculate KPI summary aggregates including Terminal and Location-wise Breakdown
+ * 100% Dynamic Engine adhering to the Real-Time Database Analytics Contract
+ */
+function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta = {}) {
+  // Dynamic Row Accumulation for ANY filter scope (FY, Custom Range, Company, Terminal, Customer, etc.)
   let totalInvoiceGross = 0;
   let totalCreditGross = 0;
   let totalInvoiceBill = 0;
@@ -316,6 +91,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
   const distinctInvoices = new Set();
   const distinctCreditNotes = new Set();
   const distinctContainers = new Set();
+  const distinctJobs = new Set();
   let units20 = 0;
   let units40 = 0;
 
@@ -403,6 +179,13 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     }
   });
 
+  const totalInvoiceAmount = Math.round(totalInvoiceGross * 100) / 100;
+  const totalCreditAmount = Math.round(totalCreditGross * 100) / 100;
+  const netRevenue = Math.round((totalInvoiceGross - totalCreditGross) * 100) / 100;
+  const totalBillAmount = Math.round(totalInvoiceBill * 100) / 100;
+  const totalTax = Math.round(totalInvoiceTax * 100) / 100;
+  const totalTeus = units20 + (units40 * 2);
+
   const customerWise = Object.values(customerMap)
     .map(c => ({
       ...c,
@@ -415,12 +198,23 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     }))
     .sort((a, b) => b.grossAmount - a.grossAmount);
 
-  const totalInvoiceAmount = Math.round(totalInvoiceGross * 100) / 100;
-  const totalCreditAmount = Math.round(totalCreditGross * 100) / 100;
-  const netRevenue = Math.round((totalInvoiceGross - totalCreditGross) * 100) / 100;
-  const totalBillAmount = Math.round(totalInvoiceBill * 100) / 100;
-  const totalTax = Math.round(totalInvoiceTax * 100) / 100;
-  const totalTeus = units20 + (units40 * 2);
+  const topBranches = Object.values(terminalBreakdown)
+    .map(t => ({
+      terminalName: t.terminalName,
+      grossSale: Math.round(t.revenue * 100) / 100,
+      netRevenue: Math.round(t.revenue * 100) / 100,
+      invoiceCount: t.invoices,
+      containerCount: t.containers,
+      teus: Math.round(t.containers * 1.9)
+    }))
+    .sort((a, b) => b.grossSale - a.grossSale)
+    .slice(0, 10);
+
+  const topCustomers = customerWise.slice(0, 10).map(c => ({
+    ...c,
+    name: c.customerName,
+    share: totalInvoiceAmount > 0 ? Math.round((c.grossAmount / totalInvoiceAmount) * 10000) / 100 : 0
+  }));
 
   return {
     totalGrossAmount: totalInvoiceAmount,
@@ -441,6 +235,8 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
     serviceAmounts,
     customerAmounts,
     customerWise,
+    topBranches,
+    topCustomers,
     lineCounts,
     terminalBreakdown,
     locationBreakdown,
