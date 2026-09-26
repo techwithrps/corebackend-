@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const { getRecordFinancialYear, sanitizeSearchQuery, parseDateToObj } = require('../utils/dateUtils');
+const { getRecordFinancialYear, sanitizeSearchQuery, parseDateToObj, normalizeAnalyticsFilters } = require('../utils/dateUtils');
 
 let companyMastersData = null;
 function getCompanyMasters() {
@@ -16,17 +16,21 @@ function getCompanyMasters() {
 }
 
 /**
- * Filter CIR rows based on request criteria
+ * Filter CIR rows based on normalized request criteria
+ * 100% Conjunctive (AND) Predicate Filter Engine
  */
-function filterCIRRows(rows, filters = {}) {
+function filterCIRRows(rows = [], inputFilters = {}) {
+  const norm = inputFilters.fromDateObj !== undefined 
+    ? inputFilters 
+    : normalizeAnalyticsFilters(inputFilters);
+
   const {
     companyId,
     terminalId,
     financialYear,
-    fromDate,
-    toDate,
-    customFromDate,
-    customToDate,
+    fromDateObj,
+    toDateExclusive,
+    toDateInclusiveObj,
     size,
     tripType,
     customerId,
@@ -34,31 +38,21 @@ function filterCIRRows(rows, filters = {}) {
     contNo,
     blNo,
     search,
-  } = filters;
+  } = norm;
 
-  const hasCompany = companyId && companyId !== 'all' && companyId !== 'ALL';
-  const hasTerminal = terminalId && terminalId !== 'all' && terminalId !== 'ALL';
-  const hasFY = financialYear && financialYear !== 'all' && financialYear !== 'ALL';
-  const hasCustomer = customerId && customerId !== 'all' && customerId !== 'ALL';
-  const hasService = serviceId && serviceId !== 'all' && serviceId !== 'ALL';
-  const hasTrip = tripType && tripType !== 'all' && tripType !== 'ALL';
-  const hasSize = size && size !== 'all' && size !== 'ALL';
-  const hasContNo = contNo && contNo.trim() !== '';
-  const hasBlNo = blNo && blNo.trim() !== '';
+  const hasCompany = !!companyId;
+  const hasTerminal = !!terminalId;
+  const hasCustomer = !!customerId;
+  const hasService = !!serviceId;
+  const hasTrip = !!tripType;
+  const hasSize = !!size;
+  const cleanContNo = contNo ? sanitizeSearchQuery(contNo) : null;
+  const cleanBlNo = blNo ? sanitizeSearchQuery(blNo) : null;
+  const cleanSearch = search ? sanitizeSearchQuery(search) : null;
 
-  const fDateStr = fromDate || customFromDate;
-  const tDateStr = toDate || customToDate;
-  const fromDateObj = fDateStr ? parseDateToObj(fDateStr, false) : null;
-  const toDateObj = tDateStr ? parseDateToObj(tDateStr, true) : null;
-  const isCustomRange = (hasFY && (financialYear === 'CUSTOM_RANGE' || financialYear === 'Custom Date Range' || financialYear === 'CUSTOM')) || (fromDateObj || toDateObj);
-
-  const cleanSearch = sanitizeSearchQuery(search);
-  const cleanContNo = hasContNo ? sanitizeSearchQuery(contNo) : null;
-  const cleanBlNo = hasBlNo ? sanitizeSearchQuery(blNo) : null;
   const targetSizeNum = hasSize ? String(size).replace(/[^0-9]/g, '') : null;
   const targetTripLower = hasTrip ? tripType.toLowerCase() : null;
 
-  // Pre-clean terminalId and customerId for fast comparison
   const termLower = hasTerminal ? terminalId.toString().toLowerCase() : null;
   const custLower = hasCustomer ? customerId.toString().toLowerCase() : null;
   const servLower = hasService ? serviceId.toString().toLowerCase() : null;
@@ -112,13 +106,13 @@ function filterCIRRows(rows, filters = {}) {
 
     // 2. Terminal Filter (Handles ID or Name)
     if (hasTerminal) {
-      const match = (item.TERMINAL_ID && item.TERMINAL_ID.toString() === termLower) ||
+      const match = (item.TERMINAL_ID && item.TERMINAL_ID.toString().toLowerCase() === termLower) ||
                     (item.TERMINAL_NAME && item.TERMINAL_NAME.toLowerCase().includes(termLower));
       if (!match) return false;
     }
 
-    // 3. Financial Year / Date Range Filter
-    if (isCustomRange) {
+    // 3. Date Range & Financial Year Filter (Inclusive / Exclusive date boundary logic)
+    if (fromDateObj || toDateExclusive || toDateInclusiveObj) {
       const dateCandidates = [
         item.INVOICE_DATE,
         item.CREATED_DATE,
@@ -137,9 +131,10 @@ function filterCIRRows(rows, filters = {}) {
       }
       if (recDateObj) {
         if (fromDateObj && recDateObj < fromDateObj) return false;
-        if (toDateObj && recDateObj > toDateObj) return false;
+        if (toDateExclusive && recDateObj >= toDateExclusive) return false;
+        else if (!toDateExclusive && toDateInclusiveObj && recDateObj > toDateInclusiveObj) return false;
       }
-    } else if (hasFY) {
+    } else if (financialYear && financialYear !== 'CUSTOM_RANGE' && financialYear !== 'Custom Date Range' && financialYear !== 'CUSTOM') {
       const recFY = getRecordFinancialYear(item);
       if (recFY !== financialYear) return false;
     }

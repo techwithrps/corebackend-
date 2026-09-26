@@ -139,11 +139,101 @@ function sanitizeSearchQuery(query, maxLength = 80) {
   return trimmed.toLowerCase();
 }
 
+/**
+ * Single Normalized Analytics Filter Contract Engine
+ * Validates, sanitizes, and normalizes incoming query filters.
+ * Returns normalized filter object or error object with message.
+ */
+function normalizeAnalyticsFilters(query = {}) {
+  const companyId = (query.companyId && query.companyId !== 'ALL' && query.companyId !== 'all') ? String(query.companyId).trim() : null;
+  const customerId = (query.customerId && query.customerId !== 'ALL' && query.customerId !== 'all') ? String(query.customerId).trim() : null;
+  const terminalId = (query.terminalId && query.terminalId !== 'ALL' && query.terminalId !== 'all') ? String(query.terminalId).trim() : null;
+  const financialYear = (query.financialYear && query.financialYear !== 'ALL' && query.financialYear !== 'all') ? String(query.financialYear).trim() : null;
+
+  let fromDate = (query.fromDate || query.customFromDate || '').trim() || null;
+  let toDate = (query.toDate || query.customToDate || '').trim() || null;
+
+  const serviceId = (query.serviceId && query.serviceId !== 'ALL' && query.serviceId !== 'all') ? String(query.serviceId).trim() : null;
+  const tripType = (query.tripType && query.tripType !== 'ALL' && query.tripType !== 'all') ? String(query.tripType).trim() : null;
+
+  const sizeRaw = (query.size || query.contSize || query.sizeId || '').toString().trim();
+  const size = (sizeRaw && sizeRaw !== 'ALL' && sizeRaw !== 'all') ? sizeRaw : null;
+
+  const contNo = sanitizeSearchQuery(query.contNo);
+  const blNo = sanitizeSearchQuery(query.blNo);
+  const search = sanitizeSearchQuery(query.search);
+
+  // If financialYear is specified and fromDate/toDate are not explicitly given, derive date boundaries
+  if (financialYear && financialYear !== 'CUSTOM_RANGE' && financialYear !== 'Custom Date Range' && financialYear !== 'CUSTOM' && !fromDate && !toDate) {
+    const fyMatch = financialYear.match(/(20\d{2})[-_]?(\d{2,4})/);
+    if (fyMatch) {
+      const startYr = parseInt(fyMatch[1], 10);
+      let endYr = parseInt(fyMatch[2], 10);
+      if (endYr < 100) endYr = 2000 + endYr;
+      fromDate = `${startYr}-04-01`;
+      toDate = `${endYr}-03-31`;
+    }
+  }
+
+  // Validate dates if present
+  let fromDateObj = null;
+  let toDateExclusive = null;
+  let toDateInclusiveObj = null;
+
+  if (fromDate) {
+    fromDateObj = parseDateToObj(fromDate, false);
+    if (!fromDateObj || isNaN(fromDateObj.getTime())) {
+      return { error: `Invalid fromDate format: '${fromDate}'. Expected YYYY-MM-DD or DD/MM/YYYY.` };
+    }
+  }
+
+  if (toDate) {
+    toDateInclusiveObj = parseDateToObj(toDate, true);
+    if (!toDateInclusiveObj || isNaN(toDateInclusiveObj.getTime())) {
+      return { error: `Invalid toDate format: '${toDate}'. Expected YYYY-MM-DD or DD/MM/YYYY.` };
+    }
+    const parts = parseDateParts(toDate);
+    if (parts) {
+      toDateExclusive = new Date(parts.year, parts.month - 1, parts.day + 1, 0, 0, 0, 0);
+    }
+  }
+
+  if (fromDateObj && toDateInclusiveObj && fromDateObj > toDateInclusiveObj) {
+    return { error: `Invalid date range: fromDate (${fromDate}) cannot be after toDate (${toDate}).` };
+  }
+
+  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 50));
+  const isExport = query.isExport === true || query.isExport === 'true';
+
+  return {
+    companyId,
+    customerId,
+    terminalId,
+    financialYear,
+    fromDate: fromDate || null,
+    toDate: toDate || null,
+    fromDateObj,
+    toDateExclusive,
+    toDateInclusiveObj,
+    serviceId,
+    tripType,
+    size,
+    contNo: contNo || null,
+    blNo: blNo || null,
+    search: search || null,
+    page,
+    limit,
+    isExport
+  };
+}
+
 module.exports = {
   parseDateParts,
   parseDateToObj,
   getIndianFiscalYear,
   getRecordFinancialYear,
   sanitizeSearchQuery,
+  normalizeAnalyticsFilters,
 };
 

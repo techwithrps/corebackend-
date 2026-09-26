@@ -1,24 +1,14 @@
 const cirService = require('../services/cirService');
 const { getConnectionStatus, getPool } = require('../config/db');
+const { normalizeAnalyticsFilters } = require('../utils/dateUtils');
 const XLSX = require('xlsx');
 
 async function getCIRReport(req, res) {
   try {
-    const filters = {
-      companyId: req.query.companyId,
-      terminalId: req.query.terminalId,
-      financialYear: req.query.financialYear,
-      size: req.query.size,
-      fromDate: req.query.fromDate,
-      toDate: req.query.toDate,
-      contNo: req.query.contNo,
-      blNo: req.query.blNo,
-      tripType: req.query.tripType,
-      customerId: req.query.customerId,
-      serviceId: req.query.serviceId,
-      search: req.query.search,
-      ...req.query
-    };
+    const filters = normalizeAnalyticsFilters(req.query);
+    if (filters.error) {
+      return res.status(400).json({ success: false, error: filters.error });
+    }
 
     const result = await cirService.getCIRReport(filters);
     return res.json({
@@ -26,57 +16,52 @@ async function getCIRReport(req, res) {
       ...result,
     });
   } catch (err) {
-    console.error('MSSQL live fetch delayed/failed, loading snapshot data:', err.message);
-    const fallback = cirService.getFallbackCIRReport(req.query);
-    return res.json({
-      success: true,
-      source: 'SNAPSHOT_BACKUP',
-      ...fallback,
+    console.error('Error executing CIR Report query:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch CIR report: ' + err.message
     });
   }
 }
 
 async function getFinancialAnalytics(req, res) {
   try {
-    const result = await cirService.getFinancialAnalytics();
+    const filters = normalizeAnalyticsFilters(req.query);
+    if (filters.error) {
+      return res.status(400).json({ success: false, error: filters.error });
+    }
+
+    const result = await cirService.getFinancialAnalytics(filters);
     return res.json({
       success: true,
       data: result
     });
   } catch (err) {
-    console.error('Error fetching financial analytics, loading fallback:', err.message);
-    const fallback = cirService.getFallbackFinancialAnalytics();
-    return res.json({
-      success: true,
-      source: 'SNAPSHOT_BACKUP',
-      data: fallback
+    console.error('Error fetching financial analytics:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to calculate financial analytics: ' + err.message
     });
   }
 }
 
 async function getContainers(req, res) {
   try {
-    const filters = {
-      search: req.query.search,
-      status: req.query.status,
-      terminalId: req.query.terminalId,
-      financialYear: req.query.financialYear,
-      contSize: req.query.contSize || req.query.size,
-      contType: req.query.contType,
-      ...req.query
-    };
+    const filters = normalizeAnalyticsFilters(req.query);
+    if (filters.error) {
+      return res.status(400).json({ success: false, error: filters.error });
+    }
+
     const result = await cirService.getContainersTracking(filters);
     return res.json({
       success: true,
       data: result
     });
   } catch (err) {
-    console.error('Error fetching containers, loading fallback:', err.message);
-    const fallback = cirService.getFallbackContainers(req.query);
-    return res.json({
-      success: true,
-      source: 'SNAPSHOT_BACKUP',
-      data: fallback
+    console.error('Error fetching containers:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch containers: ' + err.message
     });
   }
 }
@@ -162,19 +147,10 @@ async function checkHealth(req, res) {
 
 async function exportExcel(req, res) {
   try {
-    const filters = {
-      companyId: req.query.companyId,
-      terminalId: req.query.terminalId,
-      fromDate: req.query.fromDate,
-      toDate: req.query.toDate,
-      contNo: req.query.contNo,
-      blNo: req.query.blNo,
-      tripType: req.query.tripType,
-      customerId: req.query.customerId,
-      serviceId: req.query.serviceId,
-      search: req.query.search,
-      isExport: true,
-    };
+    const filters = normalizeAnalyticsFilters({ ...req.query, isExport: true });
+    if (filters.error) {
+      return res.status(400).json({ success: false, error: filters.error });
+    }
 
     const result = await cirService.getCIRReport(filters);
     let data = result.records || [];
