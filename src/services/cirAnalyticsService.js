@@ -184,7 +184,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
       let finalConts = ct.containers;
       let finalTeus = ct.teus;
 
-      if (financialYear && financialYear !== 'all' && financialYear !== 'ALL' && detailed?.fySummaries?.[financialYear]) {
+      if (financialYear && financialYear !== 'all' && financialYear !== 'ALL' && financialYear !== 'CUSTOM_RANGE' && financialYear !== 'Custom Date Range' && financialYear !== 'CUSTOM' && detailed?.fySummaries?.[financialYear]) {
         const fyGross = detailed.fySummaries[financialYear].grossSale || 0;
         const allGross = 38536360360.24;
         const ratio = allGross > 0 ? (fyGross / allGross) : 0.125;
@@ -230,7 +230,7 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
 
   if (isPureTerminalFY && detailed) {
     const hasTerm = terminalId && terminalId !== 'all' && terminalId !== 'ALL';
-    const hasFY = financialYear && financialYear !== 'all' && financialYear !== 'ALL';
+    const hasFY = financialYear && financialYear !== 'all' && financialYear !== 'ALL' && financialYear !== 'CUSTOM_RANGE' && financialYear !== 'Custom Date Range' && financialYear !== 'CUSTOM';
 
     let targetTermId = null;
     if (hasTerm) {
@@ -328,9 +328,9 @@ function calculateKPIs(rows, dbSummary = null, detailed = null, filterMeta = {})
   const locationBreakdown = {};
 
   rows.forEach(r => {
-    const amt = Number(r.AMOUNT) || 0;
-    const bill = Number(r.BILL_AMOUNT) || 0;
-    const tax = Number(r.TAX) || 0;
+    const amt = Number(r.AMOUNT) || Number(r.TOTAL_AMOUNT) || Number(r.BILL_AMOUNT) || 0;
+    const bill = Number(r.BILL_AMOUNT) || (amt ? Math.round((amt / 1.18) * 100) / 100 : 0);
+    const tax = Number(r.TAX_AMOUNT) || Number(r.TAX) || (amt - bill);
 
     const invKey = (r.INVOICE_REF_NO || r.INVOICE_NO || 'INV') + '__' + (r.CUSTOMER_ID || r.CUSTOMER_NAME || 'CUST');
     const contKey = r.CONT_NO || '';
