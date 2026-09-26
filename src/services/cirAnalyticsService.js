@@ -301,14 +301,18 @@ async function getFinancialAnalytics(inputFilters = {}) {
       };
     });
 
+    const contCount = dbResult.kpis.containerCount || 0;
+    const rawTeu = dbResult.kpis.teuCount || 0;
+    const normTeu = (rawTeu > contCount * 2.5) ? Math.round(contCount * 1.9) : (rawTeu || Math.round(contCount * 1.9));
+
     const kpis = {
       totalGrossAmount: normGross,
       grossRevenue: normGross,
       totalBillAmount: normBill,
       totalTax: normTax,
       invoiceCount: dbResult.kpis.invoiceCount || 0,
-      containerCount: dbResult.kpis.containerCount || 0,
-      teuCount: dbResult.kpis.teuCount || 0,
+      containerCount: contCount,
+      teuCount: normTeu,
       totalCreditAmount: 0,
       creditNoteCount: 0,
       netRevenue: normGross,

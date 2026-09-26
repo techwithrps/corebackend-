@@ -22,8 +22,11 @@ function queryOracleDatabase(filters = {}) {
       'OracleAnalyticsEngine'
     ];
 
-    if (norm.fromDateStr) args.push(`fromDate=${norm.fromDateStr}`);
-    if (norm.toDateStr) args.push(`toDate=${norm.toDateStr}`);
+    const fromD = norm.fromDate || norm.fromDateStr;
+    const toD = norm.toDate || norm.toDateStr;
+
+    if (fromD) args.push(`fromDate=${fromD}`);
+    if (toD) args.push(`toDate=${toD}`);
     if (norm.companyId) args.push(`companyId=${norm.companyId}`);
     if (norm.customerId) args.push(`customerId=${norm.customerId}`);
     if (norm.terminalId) args.push(`terminalId=${norm.terminalId}`);
