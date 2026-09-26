@@ -3,7 +3,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { sanitizeSearchQuery, getRecordFinancialYear } = require('../utils/dateUtils');
+const { sanitizeSearchQuery, getRecordFinancialYear, parseDateToObj } = require('../utils/dateUtils');
 
 let memoryContainers = null;
 let memoryDetailed = null;
@@ -164,8 +164,24 @@ async function getContainersTracking(filters = {}) {
     );
   }
 
-  // Filter by Financial Year
-  if (hasFY) {
+  // Filter by Financial Year / Date Range
+  const fDateStr = filters.fromDate || filters.customFromDate;
+  const tDateStr = filters.toDate || filters.customToDate;
+  const fromDateObj = fDateStr ? parseDateToObj(fDateStr, false) : null;
+  const toDateObj = tDateStr ? parseDateToObj(tDateStr, true) : null;
+  const isCustomRange = (hasFY && (financialYear === 'CUSTOM_RANGE' || financialYear === 'Custom Date Range' || financialYear === 'CUSTOM')) || (fromDateObj || toDateObj);
+
+  if (isCustomRange) {
+    rows = rows.filter(r => {
+      const recDate = r.joDate || r.icdInDate || r.createdDate;
+      if (!recDate) return true;
+      const dObj = parseDateToObj(String(recDate));
+      if (!dObj) return true;
+      if (fromDateObj && dObj < fromDateObj) return false;
+      if (toDateObj && dObj > toDateObj) return false;
+      return true;
+    });
+  } else if (hasFY) {
     rows = rows.filter(r => {
       const recFY = getRecordFinancialYear({
         INVOICE_DATE: r.joDate || r.icdInDate,

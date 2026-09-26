@@ -117,6 +117,20 @@ function getRecordFinancialYear(record) {
 }
 
 /**
+ * Safely parse date string into a JavaScript Date object (at 00:00:00 or 23:59:59)
+ */
+function parseDateToObj(dateStr, endOfDay = false) {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const parts = parseDateParts(dateStr);
+  if (!parts) return null;
+  const { year, month, day } = parts;
+  if (endOfDay) {
+    return new Date(year, month - 1, day, 23, 59, 59, 999);
+  }
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
+}
+
+/**
  * Safe search string sanitizer preventing ReDoS and excessive memory allocation
  */
 function sanitizeSearchQuery(query, maxLength = 80) {
@@ -127,7 +141,9 @@ function sanitizeSearchQuery(query, maxLength = 80) {
 
 module.exports = {
   parseDateParts,
+  parseDateToObj,
   getIndianFiscalYear,
   getRecordFinancialYear,
   sanitizeSearchQuery,
 };
+

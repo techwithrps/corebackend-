@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const { getRecordFinancialYear, sanitizeSearchQuery } = require('../utils/dateUtils');
+const { getRecordFinancialYear, sanitizeSearchQuery, parseDateToObj } = require('../utils/dateUtils');
 
 let companyMastersData = null;
 function getCompanyMasters() {
@@ -23,6 +23,10 @@ function filterCIRRows(rows, filters = {}) {
     companyId,
     terminalId,
     financialYear,
+    fromDate,
+    toDate,
+    customFromDate,
+    customToDate,
     size,
     tripType,
     customerId,
@@ -41,6 +45,12 @@ function filterCIRRows(rows, filters = {}) {
   const hasSize = size && size !== 'all' && size !== 'ALL';
   const hasContNo = contNo && contNo.trim() !== '';
   const hasBlNo = blNo && blNo.trim() !== '';
+
+  const fDateStr = fromDate || customFromDate;
+  const tDateStr = toDate || customToDate;
+  const fromDateObj = fDateStr ? parseDateToObj(fDateStr, false) : null;
+  const toDateObj = tDateStr ? parseDateToObj(tDateStr, true) : null;
+  const isCustomRange = (hasFY && (financialYear === 'CUSTOM_RANGE' || financialYear === 'Custom Date Range' || financialYear === 'CUSTOM')) || (fromDateObj || toDateObj);
 
   const cleanSearch = sanitizeSearchQuery(search);
   const cleanContNo = hasContNo ? sanitizeSearchQuery(contNo) : null;
@@ -107,8 +117,29 @@ function filterCIRRows(rows, filters = {}) {
       if (!match) return false;
     }
 
-    // 3. Financial Year Filter
-    if (hasFY) {
+    // 3. Financial Year / Date Range Filter
+    if (isCustomRange) {
+      const dateCandidates = [
+        item.INVOICE_DATE,
+        item.CREATED_DATE,
+        item.CREATED_ON,
+        item.LINE_HANDOVER_DATE,
+        item.joDate,
+        item.icdInDate,
+        item.GATE_IN_DATE,
+      ];
+      let recDateObj = null;
+      for (const candidate of dateCandidates) {
+        if (candidate) {
+          recDateObj = parseDateToObj(String(candidate));
+          if (recDateObj) break;
+        }
+      }
+      if (recDateObj) {
+        if (fromDateObj && recDateObj < fromDateObj) return false;
+        if (toDateObj && recDateObj > toDateObj) return false;
+      }
+    } else if (hasFY) {
       const recFY = getRecordFinancialYear(item);
       if (recFY !== financialYear) return false;
     }
