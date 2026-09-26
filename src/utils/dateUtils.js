@@ -148,7 +148,7 @@ function normalizeAnalyticsFilters(query = {}) {
   const companyId = (query.companyId && query.companyId !== 'ALL' && query.companyId !== 'all') ? String(query.companyId).trim() : null;
   const customerId = (query.customerId && query.customerId !== 'ALL' && query.customerId !== 'all') ? String(query.customerId).trim() : null;
   const terminalId = (query.terminalId && query.terminalId !== 'ALL' && query.terminalId !== 'all') ? String(query.terminalId).trim() : null;
-  const financialYear = (query.financialYear && query.financialYear !== 'ALL' && query.financialYear !== 'all') ? String(query.financialYear).trim() : null;
+  const financialYear = (query.financialYear && query.financialYear !== 'ALL' && query.financialYear !== 'all' && query.financialYear !== 'All Financial Years') ? String(query.financialYear).trim() : null;
 
   let fromDate = (query.fromDate || query.customFromDate || '').trim() || null;
   let toDate = (query.toDate || query.customToDate || '').trim() || null;
@@ -163,7 +163,7 @@ function normalizeAnalyticsFilters(query = {}) {
   const blNo = sanitizeSearchQuery(query.blNo);
   const search = sanitizeSearchQuery(query.search);
 
-  // If financialYear is specified and fromDate/toDate are not explicitly given, derive date boundaries
+  // If financialYear is specified (and not ALL/cumulative) and fromDate/toDate are not explicitly given, derive date boundaries
   if (financialYear && financialYear !== 'CUSTOM_RANGE' && financialYear !== 'Custom Date Range' && financialYear !== 'CUSTOM' && !fromDate && !toDate) {
     const fyMatch = financialYear.match(/(20\d{2})[-_]?(\d{2,4})/);
     if (fyMatch) {
@@ -202,6 +202,24 @@ function normalizeAnalyticsFilters(query = {}) {
     return { error: `Invalid date range: fromDate (${fromDate}) cannot be after toDate (${toDate}).` };
   }
 
+  // Ensure YYYY-MM-DD string formatting for SQL date boundaries
+  let fromDateStr = null;
+  let toDateStr = null;
+
+  if (fromDateObj) {
+    const y = fromDateObj.getFullYear();
+    const m = String(fromDateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(fromDateObj.getDate()).padStart(2, '0');
+    fromDateStr = `${y}-${m}-${d}`;
+  }
+
+  if (toDateExclusive) {
+    const y = toDateExclusive.getFullYear();
+    const m = String(toDateExclusive.getMonth() + 1).padStart(2, '0');
+    const d = String(toDateExclusive.getDate()).padStart(2, '0');
+    toDateStr = `${y}-${m}-${d}`;
+  }
+
   const page = Math.max(1, parseInt(query.page, 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 50));
   const isExport = query.isExport === true || query.isExport === 'true';
@@ -213,6 +231,8 @@ function normalizeAnalyticsFilters(query = {}) {
     financialYear,
     fromDate: fromDate || null,
     toDate: toDate || null,
+    fromDateStr,
+    toDateStr,
     fromDateObj,
     toDateExclusive,
     toDateInclusiveObj,
@@ -226,6 +246,7 @@ function normalizeAnalyticsFilters(query = {}) {
     limit,
     isExport
   };
+
 }
 
 module.exports = {

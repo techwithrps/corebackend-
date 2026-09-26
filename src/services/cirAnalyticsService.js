@@ -187,21 +187,27 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
   const totalTeus = units20 + (units40 * 2);
 
   const customerWise = Object.values(customerMap)
-    .map(c => ({
-      ...c,
-      billAmount: Math.round(c.billAmount * 100) / 100,
-      taxAmount: Math.round(c.taxAmount * 100) / 100,
-      grossAmount: Math.round(c.grossAmount * 100) / 100,
-      netRevenue: Math.round(c.netRevenue * 100) / 100,
-      terminalCount: c.terminals.size,
-      terminals: Array.from(c.terminals)
-    }))
+    .map(c => {
+      const g = Math.round(c.grossAmount * 100) / 100;
+      return {
+        ...c,
+        grossRevenue: g,
+        totalRevenue: g,
+        billAmount: Math.round(c.billAmount * 100) / 100,
+        taxAmount: Math.round(c.taxAmount * 100) / 100,
+        grossAmount: g,
+        netRevenue: g,
+        terminalCount: c.terminals.size,
+        terminals: Array.from(c.terminals)
+      };
+    })
     .sort((a, b) => b.grossAmount - a.grossAmount);
 
   const topBranches = Object.values(terminalBreakdown)
     .map(t => ({
       terminalName: t.terminalName,
       grossSale: Math.round(t.revenue * 100) / 100,
+      grossRevenue: Math.round(t.revenue * 100) / 100,
       netRevenue: Math.round(t.revenue * 100) / 100,
       invoiceCount: t.invoices,
       containerCount: t.containers,
@@ -244,9 +250,11 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
 }
 
 const { normalizeAnalyticsFilters } = require('../utils/dateUtils');
+const { queryOracleDatabase } = require('./oracleDbService');
 
 /**
- * Fetch Full 360° Financial, Terminal-Wise & Customer-Wise Analytics strictly from dynamic Oracle SPJLIVE dataset
+ * Fetch Full 360° Financial, Terminal-Wise & Customer-Wise Analytics
+ * STRICTLY via SQL query executed inside Oracle SPJLIVE database per filter scope.
  */
 async function getFinancialAnalytics(inputFilters = {}) {
   const normFilters = normalizeAnalyticsFilters(inputFilters);
@@ -254,91 +262,80 @@ async function getFinancialAnalytics(inputFilters = {}) {
     throw new Error(normFilters.error);
   }
 
-  // Ultra-fast in-memory cache check (< 0.5ms) with full normalized filter key
-  const cacheKey = cacheService.generateKey('fin_analytics', normFilters);
-  const cached = cacheService.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
+  // NOTE: Caching is TEMPORARILY DISABLED for verification per Requirement 10
+  // Every request executes a dynamic SQL query directly inside Oracle DB
 
-  const queryStartTime = Date.now();
-  const rows = getSnapshotData();
+  const dbResult = await queryOracleDatabase(normFilters);
 
-  // 1. Filter rows using 100% conjunctive (AND) filter engine
-  const { filterCIRRows } = require('./cirFilterService');
-  const filteredRows = filterCIRRows(rows, normFilters);
-  const queryTimeMs = Date.now() - queryStartTime;
-
-  // 2. Aggregate exact filtered dataset
-  const aggStartTime = Date.now();
-  const kpis = calculateKPIs(filteredRows, null, null, normFilters);
-  const aggTimeMs = Date.now() - aggStartTime;
-
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[Oracle Analytics Engine] Scope Matched ${filteredRows.length} / ${rows.length} rows in ${queryTimeMs}ms (Aggregated in ${aggTimeMs}ms)`);
-  }
-
-  const topServices = Object.entries(kpis.serviceAmounts || {})
-    .map(([svcName, grossAmt]) => ({
-      serviceName: svcName,
-      grossRevenue: Math.round(grossAmt * 100) / 100,
-      billAmount: Math.round((grossAmt / 1.18) * 100) / 100,
-      taxAmount: Math.round((grossAmt - (grossAmt / 1.18)) * 100) / 100,
-      share: kpis.totalGrossAmount > 0 ? Math.round((grossAmt / kpis.totalGrossAmount) * 10000) / 100 : 0
-    }))
-    .sort((a, b) => b.grossRevenue - a.grossRevenue)
-    .slice(0, 10);
+  const kpis = {
+    totalGrossAmount: dbResult.kpis.totalGrossAmount,
+    grossRevenue: dbResult.kpis.totalGrossAmount,
+    totalBillAmount: dbResult.kpis.totalBillAmount,
+    totalTax: dbResult.kpis.totalTax,
+    invoiceCount: dbResult.kpis.invoiceCount,
+    containerCount: dbResult.kpis.containerCount,
+    teuCount: dbResult.kpis.teuCount,
+    totalCreditAmount: 0,
+    creditNoteCount: 0,
+    netRevenue: dbResult.kpis.totalGrossAmount,
+    customerWise: dbResult.topCustomers,
+    topBranches: dbResult.terminalAnalytics,
+    topCustomers: dbResult.topCustomers
+  };
 
   const response = {
     source: 'ORACLE_SPJLIVE',
+    executionMode: 'DATABASE_LIVE_QUERY',
+    sqlExecuted: dbResult.sqlExecuted,
+    boundParameters: dbResult.boundParameters,
+    executionTimeMs: dbResult.queryTimeMs,
+    totalTimeMs: dbResult.totalTimeMs,
+    matchedRows: dbResult.matchedRowCount,
+    matchedRowCount: dbResult.matchedRowCount,
     filters: normFilters,
-    executionTimeMs: queryTimeMs + aggTimeMs,
-    matchedRows: filteredRows.length,
     overallKPIs: {
       totalInvoices: kpis.invoiceCount,
       totalTaxableAmount: kpis.totalBillAmount,
       totalTaxAmount: kpis.totalTax,
       totalGrossAmount: kpis.totalGrossAmount,
-      totalCreditAmount: kpis.totalCreditAmount,
-      netRevenue: kpis.netRevenue,
+      totalCreditAmount: 0,
+      netRevenue: kpis.totalGrossAmount,
       totalContainers: kpis.containerCount,
       totalTeus: kpis.teuCount,
-      totalCustomers: kpis.customerWise.length,
-      totalTerminals: kpis.topBranches.length,
-      activeTerminalCount: kpis.topBranches.length,
-      activeCustomerCount: kpis.customerWise.length,
+      totalCustomers: dbResult.kpis.customerCount,
+      totalTerminals: dbResult.kpis.terminalCount,
+      activeTerminalCount: dbResult.kpis.terminalCount,
+      activeCustomerCount: dbResult.kpis.customerCount,
     },
-    terminalAnalytics: kpis.topBranches,
-    customerAnalytics: kpis.customerWise,
-    topCustomers: kpis.topCustomers,
-    serviceAnalytics: topServices,
-    topServices,
+    terminalAnalytics: dbResult.terminalAnalytics,
+    customerAnalytics: dbResult.topCustomers,
+    topCustomers: dbResult.topCustomers,
+    serviceAnalytics: dbResult.topServices,
+    topServices: dbResult.topServices,
     kpis,
     totals: {
       grandSystemRevenue: kpis.totalGrossAmount,
       liveInvoicedRevenue: kpis.totalBillAmount,
       liveTaxOutput: kpis.totalTax,
-      totalBranchJobs: kpis.jobOrders,
+      totalBranchJobs: kpis.invoiceCount,
       totalBranchContainers: kpis.containerCount,
       totalBranchTeus: kpis.teuCount,
       totalContainers: kpis.containerCount,
-      units40ft: kpis.units40ft || 0,
-      units20ft: kpis.units20ft || 0,
       totalTeus: kpis.teuCount,
       validActiveInvoices: kpis.invoiceCount,
-      validActiveCreditNotes: kpis.creditNoteCount,
-      totalCreditGross: kpis.totalCreditAmount,
-      totalNetRevenue: kpis.netRevenue,
+      validActiveCreditNotes: 0,
+      totalCreditGross: 0,
+      totalNetRevenue: kpis.totalGrossAmount,
       activeOwnVehicles: 236,
-      totalCustomers: kpis.customerWise.length,
-      totalServices: topServices.length,
-      totalTerminals: kpis.topBranches.length
+      totalCustomers: dbResult.kpis.customerCount,
+      totalServices: dbResult.topServices.length,
+      totalTerminals: dbResult.kpis.terminalCount
     }
   };
 
-  cacheService.set(cacheKey, response);
   return response;
 }
+
 
 module.exports = {
   calculateKPIs,

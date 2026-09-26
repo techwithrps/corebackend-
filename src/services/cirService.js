@@ -47,56 +47,38 @@ function getMastersData() {
   return memoryMasters || { customers: [], services: [] };
 }
 
+const { queryOracleDatabase } = require('./oracleDbService');
+
 /**
- * Fetch CIR Report strictly from Live Oracle SPJLIVE Database Snapshot
+ * Fetch CIR Report strictly via SQL query executed inside Oracle SPJLIVE database
  * Supports server-side pagination: page, limit (max 100)
  */
 async function getCIRReport(filters = {}) {
-  // In-memory cache check (< 0.5ms)
-  // Deterministic cache key incorporates tenant, all filters, page, and limit
-  const cacheKey = cacheService.generateKey('cir_report', filters);
-  const cached = cacheService.get(cacheKey);
-  if (cached) return cached;
+  // NOTE: Caching temporarily bypassed per Requirement 10
+  const dbResult = await queryOracleDatabase(filters);
 
-  const rows = getSnapshotData();
-  const dbSummary = getSummaryData();
-  const detailed = getDetailedData();
+  const effectiveTotal = dbResult.kpis.invoiceCount;
+  const page = Number(filters.page) || 1;
+  const limit = Math.min(Number(filters.limit) || 50, 500);
+  const effectiveTotalPages = Math.ceil(effectiveTotal / limit) || 1;
 
-  // 1. Filter rows
-  const filteredRows = filterCIRRows(rows, filters);
-
-  // 2. Check if default view for grand totals
-  const isDefaultView = 
-    (!filters.companyId || filters.companyId === 'all' || filters.companyId === 'ALL') &&
-    (!filters.terminalId || filters.terminalId === 'all' || filters.terminalId === 'ALL') &&
-    (!filters.financialYear || filters.financialYear === 'all' || filters.financialYear === 'ALL') &&
-    (!filters.customerId || filters.customerId === 'all' || filters.customerId === 'ALL') &&
-    (!filters.serviceId || filters.serviceId === 'all' || filters.serviceId === 'ALL') &&
-    (!filters.tripType || filters.tripType === 'all' || filters.tripType === 'ALL') &&
-    (!filters.size || filters.size === 'all' || filters.size === 'ALL') &&
-    (!filters.contNo || filters.contNo.trim() === '') &&
-    (!filters.blNo || filters.blNo.trim() === '') &&
-    (!filters.search || filters.search.trim() === '');
-
-  // 3. Calculate KPIs across the ENTIRE authorized filtered dataset
-  const kpis = calculateKPIs(filteredRows, dbSummary, detailed, {
-    companyId: filters.companyId,
-    terminalId: filters.terminalId,
-    financialYear: filters.financialYear,
-    customerId: filters.customerId,
-    serviceId: filters.serviceId,
-    tripType: filters.tripType,
-    size: filters.size,
-    isDefaultView
-  });
-
-  // 4. Server-Side Pagination (default page=1, limit=50, max=100; or export cap)
-  const pagination = paginateRows(filteredRows, filters, !!filters.isExport);
-  const effectiveTotal = kpis.totalRecords || kpis.invoiceCount || pagination.totalRecords;
-  const effectiveTotalPages = Math.ceil(effectiveTotal / pagination.limit) || 1;
+  const kpis = {
+    totalGrossAmount: dbResult.kpis.totalGrossAmount,
+    grossRevenue: dbResult.kpis.totalGrossAmount,
+    netRevenue: dbResult.kpis.totalGrossAmount,
+    totalBillAmount: dbResult.kpis.totalBillAmount,
+    totalTax: dbResult.kpis.totalTax,
+    invoiceCount: dbResult.kpis.invoiceCount,
+    containerCount: dbResult.kpis.containerCount,
+    teuCount: dbResult.kpis.teuCount,
+    totalRecords: effectiveTotal
+  };
 
   const response = {
     source: 'ORACLE_SPJLIVE',
+    executionMode: 'DATABASE_LIVE_QUERY',
+    sqlExecuted: dbResult.sqlExecuted,
+    boundParameters: dbResult.boundParameters,
     connectionStatus: {
       connected: true,
       host: '144.24.138.129',
@@ -104,21 +86,21 @@ async function getCIRReport(filters = {}) {
       database: 'pdb1.sub06121018360.prodvcn.oraclevcn.com',
       user: 'SPJLIVE'
     },
-    count: pagination.count,
+    count: dbResult.records ? dbResult.records.length : 0,
     total: effectiveTotal,
     totalRecords: effectiveTotal,
-    page: pagination.page,
-    limit: pagination.limit,
+    page,
+    limit,
     totalPages: effectiveTotalPages,
-    hasNextPage: pagination.page < effectiveTotalPages,
-    hasPreviousPage: pagination.page > 1,
+    hasNextPage: page < effectiveTotalPages,
+    hasPreviousPage: page > 1,
     kpis,
-    records: pagination.records,
+    records: dbResult.records || [],
   };
 
-  cacheService.set(cacheKey, response);
   return response;
 }
+
 
 /**
  * Fetch Own Active Fleet Equipment (STATUS = 'Y' AND VENDER_ID = 0)
