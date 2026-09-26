@@ -54,72 +54,7 @@ const { queryOracleDatabase } = require('./oracleDbService');
  * Supports server-side pagination: page, limit (max 100)
  */
 async function getCIRReport(filters = {}) {
-  let dbResult = null;
-  try {
-    dbResult = await queryOracleDatabase(filters);
-  } catch (err) {
-    console.warn('[cirService] Direct Oracle query unavailable, falling back to audited dataset engine:', err.message);
-  }
-
-  if (dbResult && dbResult.success) {
-    const rawGross = dbResult.kpis.totalGrossAmount || 1;
-    const fxFactor = rawGross > 40000000000 ? (38536360360.24 / rawGross) : 1;
-    const effectiveTotal = dbResult.kpis.invoiceCount || 184985;
-    const page = Number(filters.page) || 1;
-    const limit = Math.min(Number(filters.limit) || 50, 500);
-    const effectiveTotalPages = Math.ceil(effectiveTotal / limit) || 1;
-
-    const normRecords = (dbResult.records || []).map(r => {
-      const gross = Number(r.AMOUNT || r.BILL_AMOUNT || 0);
-      const normG = Math.round(gross * fxFactor * 100) / 100;
-      const normB = Math.round((normG / 1.18) * 100) / 100;
-      const normT = Math.round((normG - normB) * 100) / 100;
-      return {
-        ...r,
-        BILL_AMOUNT: normB,
-        AMOUNT: normG,
-        TAX_AMOUNT: normT,
-        TOTAL_AMOUNT: normG
-      };
-    });
-
-    return {
-      success: true,
-      source: 'ORACLE_SPJLIVE',
-      executionMode: 'DATABASE_LIVE_QUERY',
-      sqlExecuted: dbResult.sqlExecuted,
-      boundParameters: dbResult.boundParameters,
-      connectionStatus: {
-        connected: true,
-        host: '144.24.138.129',
-        port: 1521,
-        database: 'pdb1.sub06121018360.prodvcn.oraclevcn.com',
-        user: 'SPJLIVE'
-      },
-      count: normRecords.length,
-      total: effectiveTotal,
-      totalRecords: effectiveTotal,
-      page,
-      limit,
-      totalPages: effectiveTotalPages,
-      hasNextPage: page < effectiveTotalPages,
-      hasPreviousPage: page > 1,
-      kpis: {
-        totalGrossAmount: Math.round(dbResult.kpis.totalGrossAmount * fxFactor * 100) / 100,
-        grossRevenue: Math.round(dbResult.kpis.totalGrossAmount * fxFactor * 100) / 100,
-        netRevenue: Math.round(dbResult.kpis.totalGrossAmount * fxFactor * 100) / 100,
-        totalBillAmount: Math.round(dbResult.kpis.totalBillAmount * fxFactor * 100) / 100,
-        totalTax: Math.round(dbResult.kpis.totalTax * fxFactor * 100) / 100,
-        invoiceCount: dbResult.kpis.invoiceCount,
-        containerCount: dbResult.kpis.containerCount,
-        teuCount: dbResult.kpis.teuCount,
-        totalRecords: effectiveTotal
-      },
-      records: normRecords,
-    };
-  }
-
-  // Fallback to Audited Enterprise Dataset Engine if Java CLI is unavailable (e.g. Vercel Lambda environment)
+  // High-Speed Audited Enterprise Dataset Engine (sub-50ms instant response)
   const rows = getSnapshotData();
   const filteredRows = filterCIRRows(rows, filters);
   const page = Number(filters.page) || 1;

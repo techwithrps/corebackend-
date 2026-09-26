@@ -262,12 +262,7 @@ async function getFinancialAnalytics(inputFilters = {}) {
     throw new Error(normFilters.error);
   }
 
-  let dbResult = null;
-  try {
-    dbResult = await queryOracleDatabase(normFilters);
-  } catch (err) {
-    console.warn('[cirAnalyticsService] Oracle direct query unavailable, falling back to audited enterprise engine:', err.message);
-  }
+
 
   const { filterCIRRows } = require('./cirFilterService');
   const rows = getSnapshotData();
