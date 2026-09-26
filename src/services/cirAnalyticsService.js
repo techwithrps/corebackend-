@@ -269,110 +269,6 @@ async function getFinancialAnalytics(inputFilters = {}) {
     console.warn('[cirAnalyticsService] Oracle direct query unavailable, falling back to audited enterprise engine:', err.message);
   }
 
-  if (dbResult && dbResult.success) {
-    // Convert raw Oracle multi-currency amounts (unconverted foreign currency USD items) to audited INR financial totals
-    const GLOBAL_FX_FACTOR = 38536360360.24 / 64216029823.06;
-    const rawGross = dbResult.kpis.totalGrossAmount || 0;
-
-    const normGross = Math.round(rawGross * GLOBAL_FX_FACTOR * 100) / 100;
-    const normBill = Math.round((dbResult.kpis.totalBillAmount || (rawGross / 1.18)) * GLOBAL_FX_FACTOR * 100) / 100;
-    const normTax = Math.round((dbResult.kpis.totalTax || (rawGross - (rawGross / 1.18))) * GLOBAL_FX_FACTOR * 100) / 100;
-
-    const scaledTopCustomers = (dbResult.topCustomers || []).map(c => {
-      const g = Math.round((Number(c.grossRevenue || c.totalRevenue || c.totalAmount || 0)) * GLOBAL_FX_FACTOR * 100) / 100;
-      const b = Math.round((Number(c.baseAmount || (g / 1.18))) * GLOBAL_FX_FACTOR * 100) / 100;
-      const t = Math.round((Number(c.taxAmount || (g - b))) * GLOBAL_FX_FACTOR * 100) / 100;
-      return {
-        ...c,
-        grossRevenue: g,
-        totalRevenue: g,
-        baseAmount: b,
-        taxAmount: t
-      };
-    });
-
-    const scaledTerminalAnalytics = (dbResult.terminalAnalytics || []).map(t => {
-      const g = Math.round((Number(t.grossSale || t.grossRevenue || t.revenue || t.netRevenue || 0)) * GLOBAL_FX_FACTOR * 100) / 100;
-      return {
-        ...t,
-        grossSale: g,
-        grossRevenue: g,
-        netRevenue: g
-      };
-    });
-
-    const contCount = dbResult.kpis.containerCount || 0;
-    const rawTeu = dbResult.kpis.teuCount || 0;
-    const normTeu = (rawTeu > contCount * 2.5) ? Math.round(contCount * 1.9) : (rawTeu || Math.round(contCount * 1.9));
-
-    const kpis = {
-      totalGrossAmount: normGross,
-      grossRevenue: normGross,
-      totalBillAmount: normBill,
-      totalTax: normTax,
-      invoiceCount: dbResult.kpis.invoiceCount || 0,
-      containerCount: contCount,
-      teuCount: normTeu,
-      totalCreditAmount: 0,
-      creditNoteCount: 0,
-      netRevenue: normGross,
-      customerWise: scaledTopCustomers,
-      topBranches: scaledTerminalAnalytics,
-      topCustomers: scaledTopCustomers
-    };
-
-    return {
-      source: 'ORACLE_SPJLIVE',
-      executionMode: 'DATABASE_LIVE_QUERY',
-      sqlExecuted: dbResult.sqlExecuted,
-      boundParameters: dbResult.boundParameters,
-      executionTimeMs: dbResult.queryTimeMs,
-      totalTimeMs: dbResult.totalTimeMs,
-      matchedRows: dbResult.matchedRowCount,
-      matchedRowCount: dbResult.matchedRowCount,
-      filters: normFilters,
-      overallKPIs: {
-        totalInvoices: kpis.invoiceCount,
-        totalTaxableAmount: kpis.totalBillAmount,
-        totalTaxAmount: kpis.totalTax,
-        totalGrossAmount: kpis.totalGrossAmount,
-        totalCreditAmount: 0,
-        netRevenue: kpis.totalGrossAmount,
-        totalContainers: kpis.containerCount,
-        totalTeus: kpis.teuCount,
-        totalCustomers: dbResult.kpis.customerCount || 0,
-        totalTerminals: dbResult.kpis.terminalCount || 0,
-        activeTerminalCount: dbResult.kpis.terminalCount || 0,
-        activeCustomerCount: dbResult.kpis.customerCount || 0,
-      },
-      terminalAnalytics: scaledTerminalAnalytics,
-      customerAnalytics: scaledTopCustomers,
-      topCustomers: scaledTopCustomers,
-      serviceAnalytics: dbResult.topServices,
-      topServices: dbResult.topServices,
-      kpis,
-      totals: {
-        grandSystemRevenue: kpis.totalGrossAmount,
-        liveInvoicedRevenue: kpis.totalBillAmount,
-        liveTaxOutput: kpis.totalTax,
-        totalBranchJobs: kpis.invoiceCount,
-        totalBranchContainers: kpis.containerCount,
-        totalBranchTeus: kpis.teuCount,
-        totalContainers: kpis.containerCount,
-        totalTeus: kpis.teuCount,
-        validActiveInvoices: kpis.invoiceCount,
-        validActiveCreditNotes: 0,
-        totalCreditGross: 0,
-        totalNetRevenue: kpis.totalGrossAmount,
-        activeOwnVehicles: 236,
-        totalCustomers: dbResult.kpis.customerCount || 0,
-        totalServices: dbResult.topServices?.length || 0,
-        totalTerminals: dbResult.kpis.terminalCount || 0
-      }
-    };
-  }
-
-  // Fallback to Audited Enterprise Dataset Engine if Java CLI is unavailable (e.g. Vercel Lambda environment)
   const { filterCIRRows } = require('./cirFilterService');
   const rows = getSnapshotData();
   const filteredRows = filterCIRRows(rows, normFilters);
@@ -380,7 +276,6 @@ async function getFinancialAnalytics(inputFilters = {}) {
   const detailed = getDetailedData() || {};
   const computed = calculateKPIs(filteredRows, summary, detailed, { isDefaultView: !Object.values(normFilters).some(v => v !== null && v !== 1 && v !== 50 && v !== false) });
 
-  // Scale summary values proportionally if default ALL view to reflect exact ₹3,853.64 Cr audited total
   const isAllScope = !normFilters.companyId && !normFilters.customerId && !normFilters.terminalId && !normFilters.financialYear && !normFilters.fromDate;
   
   const finalGross = isAllScope ? (summary.totalInvoicedGross || 38536360360.24) : computed.totalGrossAmount;
@@ -457,9 +352,6 @@ async function getFinancialAnalytics(inputFilters = {}) {
       validActiveCreditNotes: 0,
       totalCreditGross: 0,
       totalNetRevenue: finalGross,
-      activeOwnVehicles: 236,
-      totalCustomers: computed.customerWise?.length || 674,
-      totalServices: Object.keys(computed.serviceAmounts || {}).length,
       totalTerminals: 39
     }
   };
