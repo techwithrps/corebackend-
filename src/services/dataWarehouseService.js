@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const WAREHOUSE_FILE = path.join(__dirname, '../data/dataWarehouse.json');
-const ROOT_DIR = path.resolve(__dirname, '../../../');
+const TOOLS_ORACLE_DIR = path.resolve(__dirname, '../tools/oracle');
+const JAR_PATH = path.join(TOOLS_ORACLE_DIR, 'ojdbc11.jar');
+const CP_PATH = `.:${JAR_PATH}:${TOOLS_ORACLE_DIR}`;
 const cacheService = require('./cacheService');
 
 let cachedWarehouse = null;
@@ -53,10 +54,11 @@ function syncLiveOracle() {
 
     isSyncing = true;
     lastSyncError = null;
-    const cmd = 'java -cp ".:backend/src/tools/oracle/ojdbc11.jar:backend/src/tools/oracle:scratch/ojdbc11.jar:scratch" OracleWarehouseExporter';
+    const cmd = `java -cp "${CP_PATH}" OracleWarehouseExporter`;
+    const BACKEND_ROOT = path.resolve(__dirname, '../../');
 
     console.log('[DataWarehouse] Triggering live Oracle read-only warehouse sync...');
-    exec(cmd, { cwd: ROOT_DIR, timeout: 60000 }, (error, stdout, stderr) => {
+    exec(cmd, { cwd: BACKEND_ROOT, timeout: 60000 }, (error, stdout, stderr) => {
       isSyncing = false;
       if (error) {
         lastSyncError = error.message;

@@ -2,9 +2,9 @@ const path = require('path');
 const { execFile } = require('child_process');
 const { normalizeAnalyticsFilters } = require('../utils/dateUtils');
 
-const ROOT_DIR = path.resolve(__dirname, '../../../');
-const JAR_PATH = path.join(ROOT_DIR, 'backend/src/tools/oracle/ojdbc11.jar');
-const CP_PATH = `${JAR_PATH}:${path.join(ROOT_DIR, 'backend/src/tools/oracle')}`;
+const TOOLS_ORACLE_DIR = path.resolve(__dirname, '../tools/oracle');
+const JAR_PATH = path.join(TOOLS_ORACLE_DIR, 'ojdbc11.jar');
+const CP_PATH = `${JAR_PATH}:${TOOLS_ORACLE_DIR}`;
 
 /**
  * Execute dynamic real-time SQL queries directly on Oracle SPJLIVE database
@@ -45,7 +45,7 @@ function queryOracleDatabase(filters = {}) {
 
     const startTime = Date.now();
 
-    execFile('java', args, { cwd: ROOT_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 120000 }, (error, stdout, stderr) => {
+    execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 120000 }, (error, stdout, stderr) => {
       if (error) {
         console.error('[OracleDBService] Oracle execution error:', error.message, stderr);
         return reject(new Error('Oracle DB execution failed: ' + error.message));

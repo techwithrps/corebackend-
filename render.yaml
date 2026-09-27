@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: spj-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: standard
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 5001
+      - key: ORACLE_HOST
+        sync: false
+      - key: ORACLE_PORT
+        value: 1521
+      - key: ORACLE_SERVICE_NAME
+        sync: false
+      - key: ORACLE_USER
+        sync: false
+      - key: ORACLE_PASSWORD
+        sync: false
+      - key: ORACLE_JDBC_URL
+        sync: false
+      - key: FRONTEND_URL
+        value: https://spj-mauve.vercel.app
