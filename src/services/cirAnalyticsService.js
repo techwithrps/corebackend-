@@ -337,6 +337,24 @@ async function getFinancialAnalytics(inputFilters = {}) {
     const oracleResult = await queryOracleDatabase(normFilters);
     if (oracleResult && oracleResult.success && oracleResult.kpis) {
       const liveKpis = oracleResult.kpis;
+
+      // Enrich with real-time container movements & job orders from ALL_PARTY_ACCOUNT
+      let containerMovements = liveKpis.containerMovements || liveKpis.containerCount || 0;
+      let jobOrders = liveKpis.jobOrders || 0;
+      let physicalContainers = liveKpis.physicalContainers || liveKpis.containerCount || 0;
+      let teuCount = liveKpis.teuCount || 0;
+      try {
+        const kpiResult = await queryOracleDatabase({ ...normFilters, mode: 'kpis' });
+        if (kpiResult && kpiResult.success && kpiResult.kpis) {
+          containerMovements = kpiResult.kpis.containerMovements || containerMovements;
+          jobOrders = kpiResult.kpis.jobOrders || jobOrders;
+          physicalContainers = kpiResult.kpis.physicalContainers || physicalContainers;
+          teuCount = kpiResult.kpis.teuCount || teuCount;
+        }
+      } catch (e) {
+        console.log('[cirAnalyticsService] KPI enrichment query failed:', e.message);
+      }
+
       const resLive = {
         source: 'ORACLE_SPJLIVE_LIVE_STORED_PROCEDURE',
         executionMode: 'DIRECT_STORED_PROCEDURE_CALL',
@@ -350,12 +368,22 @@ async function getFinancialAnalytics(inputFilters = {}) {
           totalGrossAmount: liveKpis.totalGrossAmount,
           totalCreditAmount: 0,
           netRevenue: liveKpis.totalGrossAmount,
-          totalContainers: liveKpis.containerCount || liveKpis.invoiceCount,
-          totalTeus: liveKpis.teuCount || liveKpis.invoiceCount * 2,
+          totalContainers: physicalContainers,
+          containerMovements,
+          jobOrders,
+          totalTeus: teuCount,
           totalCustomers: oracleResult.topCustomers?.length || 0,
           totalTerminals: 1,
           activeTerminalCount: 1,
           activeCustomerCount: oracleResult.topCustomers?.length || 0,
+        },
+        kpis: {
+          ...liveKpis,
+          containerCount: physicalContainers,
+          containerMovements,
+          jobOrders,
+          teuCount,
+          physicalContainers,
         },
         terminalAnalytics: oracleResult.terminalAnalytics || [],
         customerAnalytics: oracleResult.topCustomers || [],

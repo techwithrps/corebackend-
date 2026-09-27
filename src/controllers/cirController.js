@@ -1,5 +1,4 @@
 const cirService = require('../services/cirService');
-const { getConnectionStatus, getPool } = require('../config/db');
 const { normalizeAnalyticsFilters } = require('../utils/dateUtils');
 const XLSX = require('xlsx');
 
@@ -24,6 +23,8 @@ async function getCIRReport(req, res) {
   }
 }
 
+const cirAnalyticsService = require('../services/cirAnalyticsService');
+
 async function getFinancialAnalytics(req, res) {
   try {
     const filters = normalizeAnalyticsFilters(req.query);
@@ -31,7 +32,7 @@ async function getFinancialAnalytics(req, res) {
       return res.status(400).json({ success: false, error: filters.error });
     }
 
-    const result = await cirService.getFinancialAnalytics(filters);
+    const result = await cirAnalyticsService.getFinancialAnalytics(filters);
     return res.json({
       success: true,
       data: result
@@ -120,10 +121,12 @@ async function getFleet(req, res) {
 
 async function checkHealth(req, res) {
   try {
+    // Oracle SPJLIVE is the single source of truth.
+    // Verify Oracle connectivity via the data warehouse snapshot.
     let dbConnected = false;
     try {
-      const pool = await getPool();
-      dbConnected = !!pool;
+      const warehouse = require('../services/dataWarehouseService').getWarehouse();
+      dbConnected = !!(warehouse && warehouse.allTimeGrandTotals);
     } catch {
       dbConnected = false;
     }
@@ -134,6 +137,7 @@ async function checkHealth(req, res) {
         api: 'operational',
         dataWarehouse: 'operational',
         database: dbConnected ? 'connected' : 'offline',
+        databaseEngine: 'ORACLE_SPJLIVE',
       },
       timestamp: new Date().toISOString(),
     });

@@ -9,6 +9,7 @@ const CP_PATH = `${JAR_PATH}:${path.join(ROOT_DIR, 'backend/src/tools/oracle')}`
 /**
  * Execute dynamic real-time SQL queries directly on Oracle SPJLIVE database
  * with WHERE predicates evaluated inside Oracle DB itself.
+ * Supports modes: invoice | containers | fleet | masters
  */
 function queryOracleDatabase(filters = {}) {
   return new Promise((resolve, reject) => {
@@ -17,9 +18,12 @@ function queryOracleDatabase(filters = {}) {
       return reject(new Error(norm.error));
     }
 
+    const mode = filters.mode || 'invoice';
+
     const args = [
       '-cp', CP_PATH,
-      'OracleAnalyticsEngine'
+      'OracleAnalyticsEngine',
+      `mode=${mode}`
     ];
 
     const fromD = norm.fromDate || norm.fromDateStr;
@@ -41,7 +45,7 @@ function queryOracleDatabase(filters = {}) {
 
     const startTime = Date.now();
 
-    execFile('java', args, { cwd: ROOT_DIR, maxBuffer: 10 * 1024 * 1024, timeout: 30000 }, (error, stdout, stderr) => {
+    execFile('java', args, { cwd: ROOT_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 120000 }, (error, stdout, stderr) => {
       if (error) {
         console.error('[OracleDBService] Oracle execution error:', error.message, stderr);
         return reject(new Error('Oracle DB execution failed: ' + error.message));
