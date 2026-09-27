@@ -333,6 +333,42 @@ async function getFinancialAnalytics(inputFilters = {}) {
     return cached;
   }
 
+  try {
+    const oracleResult = await queryOracleDatabase(normFilters);
+    if (oracleResult && oracleResult.success && oracleResult.kpis) {
+      const liveKpis = oracleResult.kpis;
+      const resLive = {
+        source: 'ORACLE_SPJLIVE_LIVE_STORED_PROCEDURE',
+        executionMode: 'DIRECT_STORED_PROCEDURE_CALL',
+        matchedRows: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
+        matchedRowCount: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
+        filters: normFilters,
+        overallKPIs: {
+          totalInvoices: liveKpis.invoiceCount,
+          totalTaxableAmount: liveKpis.totalBillAmount,
+          totalTaxAmount: liveKpis.totalTax,
+          totalGrossAmount: liveKpis.totalGrossAmount,
+          totalCreditAmount: 0,
+          netRevenue: liveKpis.totalGrossAmount,
+          totalContainers: liveKpis.containerCount || liveKpis.invoiceCount,
+          totalTeus: liveKpis.teuCount || liveKpis.invoiceCount * 2,
+          totalCustomers: oracleResult.topCustomers?.length || 0,
+          totalTerminals: 1,
+          activeTerminalCount: 1,
+          activeCustomerCount: oracleResult.topCustomers?.length || 0,
+        },
+        terminalAnalytics: oracleResult.terminalAnalytics || [],
+        customerAnalytics: oracleResult.topCustomers || [],
+        topCustomers: oracleResult.topCustomers || [],
+        records: oracleResult.records || []
+      };
+      cacheService.set(cacheKey, resLive, 300);
+      return resLive;
+    }
+  } catch (err) {
+    console.log('[cirAnalyticsService] Dynamic Oracle SP query fallback to snapshot:', err.message);
+  }
+
   const { filterCIRRows } = require('./cirFilterService');
   const rows = getSnapshotData();
   const filteredRows = filterCIRRows(rows, normFilters);
