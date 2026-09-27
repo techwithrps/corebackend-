@@ -334,14 +334,12 @@ async function getFinancialAnalytics(inputFilters = {}) {
   const detailed = getDetailedData() || {};
   const computed = calculateKPIs(filteredRows, summary, detailed, normFilters);
 
-  const isAllScope = !normFilters.companyId && !normFilters.customerId && !normFilters.terminalId && !normFilters.financialYear && !normFilters.fromDate;
-  
-  const finalGross = isAllScope ? (summary.totalInvoicedGross || 38536360360.24) : computed.totalGrossAmount;
-  const finalInvs = isAllScope ? (summary.validActiveInvoices || 184985) : computed.invoiceCount;
-  const finalConts = isAllScope ? (summary.totalContainers || 89245) : computed.containerCount;
-  const finalTeus = isAllScope ? (summary.totalTeus || 171976) : computed.teuCount;
-  const finalTax = isAllScope ? (summary.totalInvoicedTax || 5878427851.56) : computed.totalTax;
-  const finalBill = isAllScope ? (summary.totalInvoicedBillAmount || 32657932508.68) : computed.totalBillAmount;
+  const finalGross = computed.totalGrossAmount;
+  const finalInvs = computed.invoiceCount;
+  const finalConts = computed.containerCount;
+  const finalTeus = computed.teuCount;
+  const finalTax = computed.totalTax;
+  const finalBill = computed.totalBillAmount;
 
   const result = {
     source: 'AUDITED_ENTERPRISE_DB',
