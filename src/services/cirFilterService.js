@@ -106,6 +106,11 @@ function filterCIRRows(rows = [], inputFilters = {}) {
   }
 
   return rows.filter(item => {
+    // 0. Cancelled Invoices Exclusion (Strict legacy ERP parity)
+    if (item.CANCELLED === 'Y' || item.STATUS === 'CANCELLED' || item.IS_CANCELLED == 1 || item.INVOICE_STATUS === 'CANCELLED') {
+      return false;
+    }
+
     // 1. Company Filter
     if (hasCompany) {
       if (item.COMPANY_ID) {
@@ -134,9 +139,10 @@ function filterCIRRows(rows = [], inputFilters = {}) {
     }
 
     // 2b. Official ERP Service Type Filter (T, C, F, B, R, A, 0)
-    if (hasServiceType && targetServiceType !== 'A' && targetServiceType !== 'ALL') {
+    // Pass-through Ocean Freight (F) is ALWAYS EXCLUDED unless explicitly requested as 'ALL' or 'F'
+    if (targetServiceType !== 'A' && targetServiceType !== 'ALL') {
       const itemCode = getServiceTypeCode(item.SERVICE_NAME);
-      if (targetServiceType === '0' || targetServiceType === 'SELECT') {
+      if (!targetServiceType || targetServiceType === '0' || targetServiceType === 'SELECT') {
         if (itemCode === 'F') return false;
       } else if (itemCode !== targetServiceType) {
         return false;
