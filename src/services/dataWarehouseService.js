@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
+const WAREHOUSE_FILE = path.join(__dirname, '../data/dataWarehouse.json');
 const TOOLS_ORACLE_DIR = path.resolve(__dirname, '../tools/oracle');
 const JAR_PATH = path.join(TOOLS_ORACLE_DIR, 'ojdbc11.jar');
 const CP_PATH = `.:${JAR_PATH}:${TOOLS_ORACLE_DIR}`;
