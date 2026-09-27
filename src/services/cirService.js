@@ -57,9 +57,10 @@ async function getCIRReport(filters = {}) {
   // High-Speed Audited Enterprise Dataset Engine (sub-50ms instant response)
   const rows = getSnapshotData();
   const filteredRows = filterCIRRows(rows, filters);
+  const isExport = filters.isExport === true || String(filters.isExport) === 'true';
   const page = Number(filters.page) || 1;
-  const limit = Math.min(Number(filters.limit) || 50, 500);
-  const paginated = paginateRows(filteredRows, page, limit);
+  const limit = isExport ? 100000 : Math.min(Number(filters.limit) || 50, 500);
+  const paginated = paginateRows(filteredRows, { page, limit }, isExport, 100000);
 
   return {
     success: true,

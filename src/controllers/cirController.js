@@ -152,7 +152,7 @@ async function exportExcel(req, res) {
       return res.status(400).json({ success: false, error: filters.error });
     }
 
-    const result = await cirService.getCIRReport({ ...filters, page: 1, limit: 100000 });
+    const result = await cirService.getCIRReport({ ...filters, isExport: true, page: 1, limit: 100000 });
     let rawRecords = result.records || [];
 
     const formattedExport = rawRecords.map((r, idx) => {

@@ -249,7 +249,7 @@ function getRowTimestamp(item) {
  * Rules: Default page = 1, default limit = 50, maximum limit = 100
  * Ensures latest records by actual database date are ALWAYS at the top.
  */
-function paginateRows(rows, paginationParams = {}, isExport = false, maxExportLimit = 2000) {
+function paginateRows(rows, paginationParams = {}, isExport = false, maxExportLimit = 100000) {
   // Sort rows descending by actual database date & invoice ID
   const sortedRows = [...rows].sort((a, b) => {
     const tB = getRowTimestamp(b);
