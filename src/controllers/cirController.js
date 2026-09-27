@@ -152,34 +152,49 @@ async function exportExcel(req, res) {
       return res.status(400).json({ success: false, error: filters.error });
     }
 
-    const result = await cirService.getCIRReport(filters);
-    let data = result.records || [];
+    const result = await cirService.getCIRReport({ ...filters, page: 1, limit: 100000 });
+    let rawRecords = result.records || [];
 
-    // Excel Security Requirement: Enforce maximum export row cap to prevent memory amplification
-    const MAX_EXPORT_ROWS = 2000;
-    const totalRecordsFound = result.totalRecords || data.length;
-    let isCapped = false;
+    const formattedExport = rawRecords.map((r, idx) => {
+      const billAmt = Number(r.BILL_AMOUNT || 0);
+      const taxAmt = Number(r.TAX_AMOUNT || r.TAX || 0);
+      const totalAmt = Number(r.TOTAL_AMOUNT || r.AMOUNT || (billAmt + taxAmt));
+      const igst = Number(r.IGST || 0);
+      const cgst = Number(r.CGST || 0);
+      const sgst = Number(r.SGST || 0);
 
-    if (data.length > MAX_EXPORT_ROWS) {
-      data = data.slice(0, MAX_EXPORT_ROWS);
-      isCapped = true;
-    }
+      return {
+        'Sr. No': idx + 1,
+        'Customer': r.CUSTOMER_NAME || '',
+        'Shipper Inv No.': r.PARTY_INV_NO || r.CLIENT_INVOICE_NO || '',
+        'BL No': r.BL_NO || '',
+        'Handover Date': r.LINE_HANDOVER_DATE || r.INVOICE_DATE || '',
+        'SOB Date': r.SAILED || r.INVOICE_DATE || '',
+        'POD': r.PORT || r.TERMINAL_NAME || '',
+        'Invoice No': r.INVOICE_REF_NO || r.INVOICE_NO || '',
+        'Invoice Date': r.INVOICE_DATE || '',
+        'Service Type': r.SERVICE_NAME || r.SERVICE_TYPE || '',
+        'Ex Rate': r.BILL_QNTY || 1,
+        'Amount': billAmt,
+        'IGST': igst,
+        'CGST': cgst,
+        'SGST': sgst,
+        'Total': totalAmt
+      };
+    });
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    const worksheet = XLSX.utils.json_to_sheet(formattedExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'SPJ_Live_CIR_Report');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Invoice_Report_New');
 
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-    res.setHeader('Content-Disposition', 'attachment; filename="SPJ_Live_CIR_Report.xlsx"');
+    res.setHeader('Content-Disposition', 'attachment; filename="Invoice_Report_New_SPJ.xlsx"');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('X-Total-Records', String(totalRecordsFound));
-    res.setHeader('X-Export-Capped', isCapped ? 'true' : 'false');
-    if (isCapped) {
-      res.setHeader('X-Max-Allowed', String(MAX_EXPORT_ROWS));
-    }
+    res.setHeader('X-Total-Records', String(formattedExport.length));
     return res.send(buffer);
   } catch (err) {
+    console.error('exportExcel Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to export Excel report',
