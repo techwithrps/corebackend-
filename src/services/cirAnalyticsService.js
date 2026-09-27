@@ -111,10 +111,21 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
     '5': { id: 5, companyId: 5, code: 'PJ', name: 'PURAN JOSHI', grossRevenue: 0, invoiceCount: 0, containerCount: 0 },
   };
 
+  let totalIgst = 0;
+  let totalCgst = 0;
+  let totalSgst = 0;
+
   rows.forEach(r => {
     const amt = Number(r.AMOUNT) || Number(r.TOTAL_AMOUNT) || Number(r.BILL_AMOUNT) || 0;
     const bill = Number(r.BILL_AMOUNT) || (amt ? Math.round((amt / 1.18) * 100) / 100 : 0);
     const tax = Number(r.TAX_AMOUNT) || Number(r.TAX) || (amt - bill);
+    const igst = Number(r.IGST || 0);
+    const cgst = Number(r.CGST || 0);
+    const sgst = Number(r.SGST || 0);
+
+    totalIgst += igst;
+    totalCgst += cgst;
+    totalSgst += sgst;
 
     const invKey = (r.INVOICE_REF_NO || r.INVOICE_NO || 'INV') + '__' + (r.CUSTOMER_ID || r.CUSTOMER_NAME || 'CUST');
     const contKey = r.CONT_NO || '';
@@ -256,6 +267,9 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
     netRevenue,
     totalBillAmount,
     totalTax,
+    totalIgst: Math.round(totalIgst * 100) / 100,
+    totalCgst: Math.round(totalCgst * 100) / 100,
+    totalSgst: Math.round(totalSgst * 100) / 100,
     totalInvoiceAmount,
     totalCreditAmount,
     invoiceCount: distinctInvoices.size,
