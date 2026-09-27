@@ -334,12 +334,10 @@ async function getFinancialAnalytics(inputFilters = {}) {
   const detailed = getDetailedData() || {};
   const computed = calculateKPIs(filteredRows, summary, detailed, normFilters);
 
-  const isAllScope = !normFilters.companyId && !normFilters.customerId && !normFilters.terminalId && !normFilters.financialYear && !normFilters.fromDate;
-
   const finalGross = computed.totalGrossAmount;
-  const finalInvs = isAllScope ? (summary.validActiveInvoices || 184985) : computed.invoiceCount;
-  const finalConts = isAllScope ? (summary.totalContainers || 89245) : computed.containerCount;
-  const finalTeus = isAllScope ? (summary.totalTeus || 171976) : computed.teuCount;
+  const finalInvs = computed.invoiceCount;
+  const finalConts = computed.containerCount;
+  const finalTeus = computed.teuCount;
   const finalTax = computed.totalTax;
   const finalBill = computed.totalBillAmount;
 
