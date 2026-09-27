@@ -292,6 +292,12 @@ async function getFinancialAnalytics(inputFilters = {}) {
     throw new Error(normFilters.error);
   }
 
+  const cacheKey = cacheService.generateKey('fin_analytics', normFilters);
+  const cached = cacheService.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const { filterCIRRows } = require('./cirFilterService');
   const rows = getSnapshotData();
   const filteredRows = filterCIRRows(rows, normFilters);
@@ -308,7 +314,7 @@ async function getFinancialAnalytics(inputFilters = {}) {
   const finalTax = isAllScope ? (summary.totalInvoicedTax || 5878427851.56) : computed.totalTax;
   const finalBill = isAllScope ? (summary.totalInvoicedBillAmount || 32657932508.68) : computed.totalBillAmount;
 
-  return {
+  const result = {
     source: 'AUDITED_ENTERPRISE_DB',
     executionMode: 'DYNAMIC_ENGINE_QUERY',
     matchedRows: filteredRows.length,
@@ -380,6 +386,9 @@ async function getFinancialAnalytics(inputFilters = {}) {
       totalTerminals: 39
     }
   };
+
+  cacheService.set(cacheKey, result, 10 * 60 * 1000);
+  return result;
 }
 
 
