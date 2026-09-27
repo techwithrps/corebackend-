@@ -103,6 +103,14 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
   const terminalBreakdown = {};
   const locationBreakdown = {};
 
+  const companyMap = {
+    '1': { id: 1, companyId: 1, code: 'SJ', name: 'S.J. CARGO MOVERS', grossRevenue: 0, invoiceCount: 0, containerCount: 0 },
+    '2': { id: 2, companyId: 2, code: 'SPJ', name: 'SPJ CARGO PVT LTD', grossRevenue: 0, invoiceCount: 0, containerCount: 0 },
+    '3': { id: 3, companyId: 3, code: 'PJ-OLD', name: 'PURAN JOSHI OLD', grossRevenue: 0, invoiceCount: 0, containerCount: 0 },
+    '4': { id: 4, companyId: 4, code: 'SPJ-MUM', name: 'SPJ CARGO PVT LTD-MUMBAI', grossRevenue: 0, invoiceCount: 0, containerCount: 0 },
+    '5': { id: 5, companyId: 5, code: 'PJ', name: 'PURAN JOSHI', grossRevenue: 0, invoiceCount: 0, containerCount: 0 },
+  };
+
   rows.forEach(r => {
     const amt = Number(r.AMOUNT) || Number(r.TOTAL_AMOUNT) || Number(r.BILL_AMOUNT) || 0;
     const bill = Number(r.BILL_AMOUNT) || (amt ? Math.round((amt / 1.18) * 100) / 100 : 0);
@@ -110,6 +118,19 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
 
     const invKey = (r.INVOICE_REF_NO || r.INVOICE_NO || 'INV') + '__' + (r.CUSTOMER_ID || r.CUSTOMER_NAME || 'CUST');
     const contKey = r.CONT_NO || '';
+
+    const rawComp = String(r.COMPANY_ID || '2');
+    let compKey = '2';
+    if (rawComp === '3' || rawComp.includes('OLD')) compKey = '3';
+    else if (rawComp === '1' || rawComp.includes('SJ')) compKey = '1';
+    else if (rawComp === '5' || rawComp === 'PJ') compKey = '5';
+    else if (rawComp === '4' || rawComp.includes('MUMBAI')) compKey = '4';
+
+    if (companyMap[compKey]) {
+      companyMap[compKey].grossRevenue += amt;
+      companyMap[compKey].invoiceCount++;
+      if (contKey && contKey.trim() !== '' && contKey !== '-') companyMap[compKey].containerCount++;
+    }
 
     if (r.INVOICE_TYPE === 'Credit Note' || (r.TRIP_TYPE && r.TRIP_TYPE.toLowerCase().includes('credit'))) {
       distinctCreditNotes.add(invKey);
@@ -186,6 +207,12 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
   const totalTax = Math.round(totalInvoiceTax * 100) / 100;
   const totalTeus = units20 + (units40 * 2);
 
+  const companyAnalytics = Object.values(companyMap).map(c => ({
+    ...c,
+    grossRevenue: Math.round(c.grossRevenue * 100) / 100,
+    netRevenue: Math.round(c.grossRevenue * 100) / 100
+  })).sort((a, b) => b.grossRevenue - a.grossRevenue);
+
   const customerWise = Object.values(customerMap)
     .map(c => {
       const g = Math.round(c.grossAmount * 100) / 100;
@@ -203,7 +230,7 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
     })
     .sort((a, b) => b.grossAmount - a.grossAmount);
 
-  const topBranches = Object.values(terminalBreakdown)
+  const allBranches = Object.values(terminalBreakdown)
     .map(t => ({
       terminalName: t.terminalName,
       grossSale: Math.round(t.revenue * 100) / 100,
@@ -213,8 +240,9 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
       containerCount: t.containers,
       teus: Math.round(t.containers * 1.9)
     }))
-    .sort((a, b) => b.grossSale - a.grossSale)
-    .slice(0, 10);
+    .sort((a, b) => b.grossSale - a.grossSale);
+
+  const topBranches = allBranches.slice(0, 10);
 
   const topCustomers = customerWise.slice(0, 10).map(c => ({
     ...c,
@@ -241,6 +269,8 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
     serviceAmounts,
     customerAmounts,
     customerWise,
+    companyAnalytics,
+    allBranches,
     topBranches,
     topCustomers,
     lineCounts,
@@ -261,8 +291,6 @@ async function getFinancialAnalytics(inputFilters = {}) {
   if (normFilters.error) {
     throw new Error(normFilters.error);
   }
-
-
 
   const { filterCIRRows } = require('./cirFilterService');
   const rows = getSnapshotData();
@@ -296,12 +324,14 @@ async function getFinancialAnalytics(inputFilters = {}) {
       totalContainers: finalConts,
       totalTeus: finalTeus,
       totalCustomers: computed.customerWise?.length || 674,
-      totalTerminals: computed.topBranches?.length || 39,
-      activeTerminalCount: computed.topBranches?.length || 39,
+      totalTerminals: computed.allBranches?.length || 39,
+      activeTerminalCount: computed.allBranches?.length || 39,
       activeCustomerCount: computed.customerWise?.length || 674,
     },
-    terminalAnalytics: computed.topBranches,
+    terminalAnalytics: computed.allBranches || computed.topBranches,
     customerAnalytics: computed.topCustomers,
+    customerWise: computed.customerWise,
+    companyAnalytics: computed.companyAnalytics,
     topCustomers: computed.topCustomers,
     serviceAnalytics: Object.entries(computed.serviceAmounts || {}).map(([name, amt]) => ({
       serviceName: name,
