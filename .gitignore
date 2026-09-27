@@ -1,0 +1,6 @@
+node_modules/
+.env
+*.class
+!src/tools/oracle/ojdbc11.jar
+!src/tools/oracle/*.java
+*.log
