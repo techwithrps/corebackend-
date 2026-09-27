@@ -57,6 +57,15 @@ function filterCIRRows(rows = [], inputFilters = {}) {
   const custLower = hasCustomer ? customerId.toString().toLowerCase() : null;
   const servLower = hasService ? serviceId.toString().toLowerCase() : null;
 
+  let targetTerminalKeyword = null;
+  if (hasTerminal) {
+    const rawT = String(terminalId).toLowerCase().trim();
+    if (rawT === '51' || rawT.includes('dadri')) targetTerminalKeyword = 'dadri';
+    else if (rawT === '25' || rawT.includes('jry') || rawT.includes('kanpur')) targetTerminalKeyword = 'kanpur';
+    else if (rawT === '5' || rawT === '54' || rawT.includes('mumbai') || rawT.includes('nhava')) targetTerminalKeyword = 'nhava';
+    else targetTerminalKeyword = rawT;
+  }
+
   // Resolve target company metadata
   let targetCompanyId = null;
   let targetCompanyCusts = null;
@@ -104,10 +113,11 @@ function filterCIRRows(rows = [], inputFilters = {}) {
       }
     }
 
-    // 2. Terminal Filter (Handles ID or Name)
+    // 2. Terminal Filter (Handles ID, Name, or Terminal Keyword)
     if (hasTerminal) {
       const match = (item.TERMINAL_ID && item.TERMINAL_ID.toString().toLowerCase() === termLower) ||
-                    (item.TERMINAL_NAME && item.TERMINAL_NAME.toLowerCase().includes(termLower));
+                    (item.TERMINAL_NAME && item.TERMINAL_NAME.toLowerCase().includes(termLower)) ||
+                    (targetTerminalKeyword && item.TERMINAL_NAME && item.TERMINAL_NAME.toLowerCase().includes(targetTerminalKeyword));
       if (!match) return false;
     }
 
