@@ -133,10 +133,14 @@ function filterCIRRows(rows = [], inputFilters = {}) {
       if (!match) return false;
     }
 
-    // 2b. Official ERP Service Type Filter (T, C, F, B, R, A)
-    if (hasServiceType && targetServiceType !== 'A' && targetServiceType !== 'ALL' && targetServiceType !== '0') {
+    // 2b. Official ERP Service Type Filter (T, C, F, B, R, A, 0)
+    if (hasServiceType && targetServiceType !== 'A' && targetServiceType !== 'ALL') {
       const itemCode = getServiceTypeCode(item.SERVICE_NAME);
-      if (itemCode !== targetServiceType) return false;
+      if (targetServiceType === '0' || targetServiceType === 'SELECT') {
+        if (itemCode === 'F') return false;
+      } else if (itemCode !== targetServiceType) {
+        return false;
+      }
     }
 
     // 3. Date Range & Financial Year Filter (Inclusive / Exclusive date boundary logic)
