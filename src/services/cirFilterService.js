@@ -15,6 +15,15 @@ function getCompanyMasters() {
   return companyMastersData;
 }
 
+function getServiceTypeCode(serviceName) {
+  const s = String(serviceName || '').toLowerCase();
+  if (s.includes('freight') || s.includes('liner') || s.includes('bof') || s.includes('gri')) return 'F';
+  if (s.includes('transport') || s.includes('haulage') || s.includes('rail') || s.includes('road')) return 'T';
+  if (s.includes('surrender') || s.includes('manifest') || s.includes('document') || s.includes('courier') || s.includes('kyc') || s.includes('aifta') || s.includes('ams')) return 'B';
+  if (s.includes('rebate') || s.includes('discount')) return 'R';
+  return 'C';
+}
+
 /**
  * Filter CIR rows based on normalized request criteria
  * 100% Conjunctive (AND) Predicate Filter Engine
@@ -33,6 +42,7 @@ function filterCIRRows(rows = [], inputFilters = {}) {
     toDateInclusiveObj,
     size,
     tripType,
+    serviceType,
     customerId,
     serviceId,
     contNo,
@@ -45,6 +55,7 @@ function filterCIRRows(rows = [], inputFilters = {}) {
   const hasCustomer = !!customerId;
   const hasService = !!serviceId;
   const hasTrip = !!tripType;
+  const hasServiceType = !!serviceType;
   const hasSize = !!size;
   const cleanContNo = contNo ? sanitizeSearchQuery(contNo) : null;
   const cleanBlNo = blNo ? sanitizeSearchQuery(blNo) : null;
@@ -52,6 +63,7 @@ function filterCIRRows(rows = [], inputFilters = {}) {
 
   const targetSizeNum = hasSize ? String(size).replace(/[^0-9]/g, '') : null;
   const targetTripLower = hasTrip ? tripType.toLowerCase() : null;
+  const targetServiceType = hasServiceType ? serviceType.toUpperCase().trim() : null;
 
   const termLower = hasTerminal ? terminalId.toString().toLowerCase() : null;
   const custLower = hasCustomer ? customerId.toString().toLowerCase() : null;
@@ -119,6 +131,12 @@ function filterCIRRows(rows = [], inputFilters = {}) {
                     (item.TERMINAL_NAME && item.TERMINAL_NAME.toLowerCase().includes(termLower)) ||
                     (targetTerminalKeyword && item.TERMINAL_NAME && item.TERMINAL_NAME.toLowerCase().includes(targetTerminalKeyword));
       if (!match) return false;
+    }
+
+    // 2b. Official ERP Service Type Filter (T, C, F, B, R, A)
+    if (hasServiceType && targetServiceType !== 'A' && targetServiceType !== 'ALL' && targetServiceType !== '0') {
+      const itemCode = getServiceTypeCode(item.SERVICE_NAME);
+      if (itemCode !== targetServiceType) return false;
     }
 
     // 3. Date Range & Financial Year Filter (Inclusive / Exclusive date boundary logic)

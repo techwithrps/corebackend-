@@ -155,6 +155,7 @@ function normalizeAnalyticsFilters(query = {}) {
 
   const serviceId = (query.serviceId && query.serviceId !== 'ALL' && query.serviceId !== 'all') ? String(query.serviceId).trim() : null;
   const tripType = (query.tripType && query.tripType !== 'ALL' && query.tripType !== 'all') ? String(query.tripType).trim() : null;
+  const serviceType = (query.serviceType && query.serviceType !== 'ALL' && query.serviceType !== 'all') ? String(query.serviceType).trim() : null;
 
   const sizeRaw = (query.size || query.contSize || query.sizeId || '').toString().trim();
   const size = (sizeRaw && sizeRaw !== 'ALL' && sizeRaw !== 'all') ? sizeRaw : null;
@@ -238,6 +239,7 @@ function normalizeAnalyticsFilters(query = {}) {
     toDateInclusiveObj,
     serviceId,
     tripType,
+    serviceType,
     size,
     contNo: contNo || null,
     blNo: blNo || null,
