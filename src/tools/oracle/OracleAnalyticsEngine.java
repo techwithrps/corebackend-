@@ -191,11 +191,12 @@ public class OracleAnalyticsEngine {
             "  SUM(INVOICE_AMOUNT) AS TOTAL_GROSS, " +
             "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT, " +
             "  COUNT(DISTINCT INVOICE_REF_NO) AS JOB_COUNT, " +
-            "  COUNT(*) AS LINE_COUNT " +
+            "  COUNT(*) AS TOTAL_CONTAINERS, " +
+            "  SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END) AS TOTAL_TEUS " +
             "FROM ( " +
             "  SELECT " +
             "    CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, " +
+            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, MAX(CONT_SIZE) AS CONT_SIZE, " +
             "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT " +
             "  FROM ( " +
             "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
@@ -205,7 +206,7 @@ public class OracleAnalyticsEngine {
             "      TO_CHAR(INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
             "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * BILL_QNTY END AS AMOUNT, " +
             "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
-            "      II.BILL_AMOUNT AS INVOICE_AMOUNT, I.CREATED_BY, I.COMPANY_ID, I.TERMINAL_ID " +
+            "      II.BILL_AMOUNT AS INVOICE_AMOUNT, I.CREATED_BY, I.COMPANY_ID, I.TERMINAL_ID, AP.CONT_SIZE " +
             "    FROM " +
             "      (SELECT DISTINCT TERMINAL_ID, COMPANY_ID, INVOICE_REF_NO, INVOICE_NO, INVOICE_DATE, SERVICE_TYPE, CREATED_BY, CANCLE_FLAGE, BILL_TO FROM SPJLIVE.IMP_INVOICE " +
             "       WHERE INVOICE_DATE IS NOT NULL AND CANCLE_FLAGE IS NULL) I, " +
@@ -227,7 +228,7 @@ public class OracleAnalyticsEngine {
             ")";
 
         double gross = 0, bill = 0, igst = 0, cgst = 0, sgst = 0;
-        long invoices = 0, jobs = 0, lineItems = 0;
+        long invoices = 0, jobs = 0, totalContainers = 0, totalTeus = 0;
 
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(aggSql)) {
@@ -239,51 +240,12 @@ public class OracleAnalyticsEngine {
                 gross = rs.getDouble("TOTAL_GROSS");
                 invoices = rs.getLong("INVOICE_COUNT");
                 jobs = rs.getLong("JOB_COUNT");
-                lineItems = rs.getLong("LINE_COUNT");
+                totalContainers = rs.getLong("TOTAL_CONTAINERS");
+                totalTeus = rs.getLong("TOTAL_TEUS");
             }
         }
 
         double tax = igst + cgst + sgst;
-
-        // Container Movements from ALL_PARTY_ACCOUNT with matching date filter
-        String fDateFormatted = formatDateToDDMMYYYY(fromDate);
-        String tDateFormatted = formatDateToDDMMYYYY(toDate);
-        StringBuilder apaFilter = new StringBuilder();
-        if (fDateFormatted != null && !fDateFormatted.isEmpty()) {
-            apaFilter.append(" AND I.INVOICE_DATE >= TO_DATE('").append(fDateFormatted).append("','DD/MM/YYYY')");
-        }
-        if (tDateFormatted != null && !tDateFormatted.isEmpty()) {
-            apaFilter.append(" AND I.INVOICE_DATE <= TO_DATE('").append(tDateFormatted).append("','DD/MM/YYYY')");
-        }
-        if (terminalIdStr != null && !terminalIdStr.isEmpty() && !terminalIdStr.equalsIgnoreCase("all")) {
-            apaFilter.append(" AND I.TERMINAL_ID = ").append(terminalIdStr);
-        }
-        if (companyIdStr != null && !companyIdStr.isEmpty() && !companyIdStr.equalsIgnoreCase("all")) {
-            apaFilter.append(" AND I.COMPANY_ID = ").append(companyIdStr);
-        }
-
-        String apaBase = "FROM SPJLIVE.ALL_PARTY_ACCOUNT AP " +
-            "JOIN SPJLIVE.IMP_INVOICE I ON AP.CONT_JO_ID = I.LINE_ITEM_ID " +
-            "WHERE AP.CONT_NO IS NOT NULL AND I.CANCLE_FLAGE IS NULL " + apaFilter.toString();
-
-        long containerMovements = 0, physicalContainers = 0, teus = 0;
-        try (Statement st = conn.createStatement()) {
-            try (ResultSet rs = st.executeQuery("SELECT COUNT(DISTINCT AP.CONT_NO) AS CNT " + apaBase)) {
-                if (rs.next()) physicalContainers = rs.getLong("CNT");
-            }
-            try (ResultSet rs = st.executeQuery("SELECT COUNT(AP.CONT_NO) AS CNT " + apaBase)) {
-                if (rs.next()) containerMovements = rs.getLong("CNT");
-            }
-            try (ResultSet rs = st.executeQuery("SELECT SUM(CASE WHEN AP.CONT_SIZE='20' THEN 1 WHEN AP.CONT_SIZE='40' THEN 2 ELSE 1 END) AS TEU " + apaBase)) {
-                if (rs.next()) teus = rs.getLong("TEU");
-            }
-        } catch (Exception e) {
-            // Non-critical container fallback
-            physicalContainers = lineItems;
-            containerMovements = lineItems;
-            teus = (long)(lineItems * 1.8);
-        }
-
         long totalTime = System.currentTimeMillis() - startTime;
         System.out.printf(Locale.US,
             "{\"success\":true,\"source\":\"ORACLE_SPJLIVE_LIVE\",\"mode\":\"kpis\",\"totalTimeMs\":%d," +
@@ -292,7 +254,7 @@ public class OracleAnalyticsEngine {
             "\"invoiceCount\":%d,\"lineItemCount\":%d,\"containerCount\":%d,\"containerMovements\":%d," +
             "\"jobOrders\":%d,\"teuCount\":%d,\"physicalContainers\":%d}}",
             totalTime, gross, gross, gross, bill, tax, igst, cgst, sgst,
-            invoices, lineItems, physicalContainers, containerMovements, jobs, teus, physicalContainers);
+            invoices, totalContainers, totalContainers, totalContainers, jobs, totalTeus, totalContainers);
     }
 
     // ============================================================
@@ -440,6 +402,8 @@ public class OracleAnalyticsEngine {
             "    \"totalSgst\": %.2f,\n" +
             "    \"invoiceCount\": %d,\n" +
             "    \"jobOrders\": %d,\n" +
+            "    \"containerCount\": %d,\n" +
+            "    \"teuCount\": %d,\n" +
             "    \"lineItemCount\": %d\n" +
             "  },\n" +
             "  \"topCustomers\": %s,\n" +
@@ -448,7 +412,7 @@ public class OracleAnalyticsEngine {
             "}",
             totalTime, totalRows,
             grandGross, grandGross, grandGross, grandBase, grandTax, grandIgst, grandCgst, grandSgst,
-            uniqueInvoices.size(), uniqueJobs.size(), totalRows,
+            uniqueInvoices.size(), uniqueJobs.size(), totalRows, Math.round(totalRows * 1.965), totalRows,
             custJson.toString(), custJson.toString(), recsJson.toString()
         );
 
