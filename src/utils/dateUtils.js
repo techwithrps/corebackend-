@@ -11,18 +11,7 @@ function parseDateParts(dateStr) {
   const trimmed = dateStr.trim();
   if (!trimmed || trimmed === '-' || trimmed === 'null' || trimmed === 'undefined') return null;
 
-  // Format 1: DD/MM/YYYY or DD-MM-YYYY
-  const dmyMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (dmyMatch) {
-    const day = parseInt(dmyMatch[1], 10);
-    const month = parseInt(dmyMatch[2], 10);
-    const year = parseInt(dmyMatch[3], 10);
-    if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
-      return { day, month, year };
-    }
-  }
-
-  // Format 2: YYYY-MM-DD or YYYY/MM/DD
+  // Format 1: YYYY-MM-DD or YYYY/MM/DD
   const ymdMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
   if (ymdMatch) {
     const year = parseInt(ymdMatch[1], 10);
@@ -30,6 +19,27 @@ function parseDateParts(dateStr) {
     const day = parseInt(ymdMatch[3], 10);
     if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
       return { day, month, year };
+    }
+  }
+
+  // Format 2: DD/MM/YYYY or MM/DD/YYYY
+  const dmyMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dmyMatch) {
+    const part1 = parseInt(dmyMatch[1], 10);
+    const part2 = parseInt(dmyMatch[2], 10);
+    const year = parseInt(dmyMatch[3], 10);
+
+    // If part1 > 12, it must be DD/MM/YYYY (e.g., 28/09/2026)
+    if (part1 > 12 && part1 <= 31 && part2 >= 1 && part2 <= 12) {
+      return { day: part1, month: part2, year };
+    }
+    // If part2 > 12, it must be MM/DD/YYYY (e.g., 09/28/2026)
+    if (part2 > 12 && part2 <= 31 && part1 >= 1 && part1 <= 12) {
+      return { day: part2, month: part1, year };
+    }
+    // Default Indian format: DD/MM/YYYY (e.g., 01/09/2026 = 1st Sept 2026)
+    if (part1 >= 1 && part1 <= 31 && part2 >= 1 && part2 <= 12) {
+      return { day: part1, month: part2, year };
     }
   }
 
@@ -46,6 +56,7 @@ function parseDateParts(dateStr) {
 
   return null;
 }
+
 
 /**
  * Determine Indian Financial Year label (e.g., 'FY 2024-25', 'FY 2025-26')

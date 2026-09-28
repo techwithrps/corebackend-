@@ -26,8 +26,9 @@ function queryOracleDatabase(filters = {}) {
       `mode=${mode}`
     ];
 
-    const fromD = norm.fromDate || norm.fromDateStr;
-    const toD = norm.toDate || norm.toDateStr;
+    const fromD = norm.fromDateStr || norm.fromDate;
+    const toD = norm.toDateStr || norm.toDate;
+
 
     if (fromD) args.push(`fromDate=${fromD}`);
     if (toD) args.push(`toDate=${toD}`);
