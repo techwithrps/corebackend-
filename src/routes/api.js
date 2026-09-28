@@ -28,6 +28,11 @@ router.get('/masters', authenticate, enforceTenantScope, cirController.getMaster
 router.get('/fleet', authenticate, enforceTenantScope, cirController.getFleet);
 router.get('/operations', authenticate, enforceTenantScope, cirController.getOperations);
 
+// Live Vessel Engine & API Key Management Endpoints
+router.get('/vessel/schedules', authenticate, enforceTenantScope, cirController.getVesselSchedules);
+router.get('/vessel/config', authenticate, enforceTenantScope, cirController.getVesselConfig);
+router.post('/vessel/config', authenticate, enforceTenantScope, cirController.saveVesselConfig);
+
 // Excel export with authentication, tenant isolation, and rate limiting
 router.get('/export/excel', authenticate, enforceTenantScope, rateLimitExport, cirController.exportExcel);
 

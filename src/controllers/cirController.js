@@ -240,6 +240,37 @@ async function getWarehouseStatus(req, res) {
   }
 }
 
+async function getVesselSchedules(req, res) {
+  const vesselService = require('../services/vesselService');
+  try {
+    const result = await vesselService.getVesselSchedules(req.query);
+    return res.json(result);
+  } catch (err) {
+    console.error('Error fetching vessel schedules:', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+async function getVesselConfig(req, res) {
+  const vesselService = require('../services/vesselService');
+  try {
+    const config = vesselService.getVesselConfig();
+    return res.json({ success: true, config });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+async function saveVesselConfig(req, res) {
+  const vesselService = require('../services/vesselService');
+  try {
+    const updated = vesselService.saveVesselConfig(req.body);
+    return res.json({ success: true, message: 'Vessel API configuration saved successfully', config: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 module.exports = {
   getCIRReport,
   getFinancialAnalytics,
@@ -251,4 +282,7 @@ module.exports = {
   exportExcel,
   syncWarehouse,
   getWarehouseStatus,
+  getVesselSchedules,
+  getVesselConfig,
+  saveVesselConfig,
 };
