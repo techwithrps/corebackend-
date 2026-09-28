@@ -277,11 +277,12 @@ public class OracleAnalyticsEngine {
             "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT, " +
             "  COUNT(DISTINCT INVOICE_REF_NO) AS JOB_COUNT, " +
             "  COUNT(*) AS TOTAL_CONTAINERS, " +
+            "  COUNT(DISTINCT IMP_CONT_ID) AS DISTINCT_CONTAINERS, " +
             "  SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END) AS TOTAL_TEUS " +
             "FROM ( " +
             "  SELECT " +
             "    CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, MAX(CONT_SIZE) AS CONT_SIZE, " +
+            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, MAX(CONT_SIZE) AS CONT_SIZE, MAX(IMP_CONT_ID) AS IMP_CONT_ID, " +
             "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT " +
             "  FROM ( " +
             "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
@@ -313,7 +314,7 @@ public class OracleAnalyticsEngine {
             ")";
 
         double grandBase = 0, grandIgst = 0, grandCgst = 0, grandSgst = 0, grandGross = 0;
-        long uniqueInvoices = 0, uniqueJobs = 0, totalRows = 0, totalTeus = 0;
+        long uniqueInvoices = 0, uniqueJobs = 0, totalRows = 0, totalTeus = 0, distinctContainers = 0;
 
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(kpiSql)) {
             if (rs.next()) {
@@ -325,6 +326,7 @@ public class OracleAnalyticsEngine {
                 uniqueInvoices = rs.getLong("INVOICE_COUNT");
                 uniqueJobs = rs.getLong("JOB_COUNT");
                 totalRows = rs.getLong("TOTAL_CONTAINERS");
+                distinctContainers = rs.getLong("DISTINCT_CONTAINERS");
                 totalTeus = rs.getLong("TOTAL_TEUS");
             }
         }
@@ -481,6 +483,7 @@ public class OracleAnalyticsEngine {
             "    \"invoiceCount\": %d,\n" +
             "    \"jobOrders\": %d,\n" +
             "    \"containerCount\": %d,\n" +
+            "    \"distinctContainers\": %d,\n" +
             "    \"teuCount\": %d,\n" +
             "    \"lineItemCount\": %d\n" +
             "  },\n" +
@@ -490,7 +493,7 @@ public class OracleAnalyticsEngine {
             "}",
             totalTime, totalRows,
             grandGross, grandGross, grandGross, grandBase, grandTax, grandIgst, grandCgst, grandSgst,
-            uniqueInvoices, uniqueJobs, totalRows, totalTeus, totalRows,
+            uniqueInvoices, uniqueJobs, distinctContainers > 0 ? distinctContainers : totalRows, distinctContainers > 0 ? distinctContainers : totalRows, totalTeus, totalRows,
             custJson.toString(), custJson.toString(), recsJson.toString()
         );
 
