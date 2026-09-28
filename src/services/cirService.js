@@ -110,11 +110,11 @@ async function getCIRReport(filters = {}) {
       };
     }
   } catch (err) {
-    console.log('[cirService] Oracle live CIR query failed, falling back to snapshot:', err.message);
+    console.error('[cirService] Oracle live CIR query error:', err.message);
+    throw new Error('Oracle Live DB Query Failed: ' + err.message);
   }
 
-  // Fallback: snapshot dataset (only used if Oracle is unreachable)
-  const rows = getSnapshotData();
+  throw new Error('Oracle Live DB Query returned empty or invalid response');
   const filteredRows = filterCIRRows(rows, filters);
   const isExport = filters.isExport === true || String(filters.isExport) === 'true';
   const page = Number(filters.page) || 1;

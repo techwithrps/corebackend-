@@ -21,6 +21,7 @@ function queryOracleDatabase(filters = {}) {
     const mode = filters.mode || 'invoice';
 
     const args = [
+      '-Xmx2048m',
       '-cp', CP_PATH,
       'OracleAnalyticsEngine',
       `mode=${mode}`
@@ -28,7 +29,6 @@ function queryOracleDatabase(filters = {}) {
 
     const fromD = norm.fromDateStr || norm.fromDate;
     const toD = norm.toDateStr || norm.toDate;
-
 
     if (fromD) args.push(`fromDate=${fromD}`);
     if (toD) args.push(`toDate=${toD}`);
@@ -46,11 +46,12 @@ function queryOracleDatabase(filters = {}) {
 
     const startTime = Date.now();
 
-    execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 120000 }, (error, stdout, stderr) => {
+    execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 200 * 1024 * 1024, timeout: 300000 }, (error, stdout, stderr) => {
       if (error) {
         console.error('[OracleDBService] Oracle execution error:', error.message, stderr);
         return reject(new Error('Oracle DB execution failed: ' + error.message));
       }
+
 
       try {
         const json = JSON.parse(stdout.trim());

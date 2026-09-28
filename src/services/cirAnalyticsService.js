@@ -394,11 +394,12 @@ async function getFinancialAnalytics(inputFilters = {}) {
       return resLive;
     }
   } catch (err) {
-    console.log('[cirAnalyticsService] Dynamic Oracle SP query fallback to snapshot:', err.message);
+    console.error('[cirAnalyticsService] Dynamic Oracle SP query error:', err.message);
+    throw new Error('Oracle Live DB Query Failed: ' + err.message);
   }
 
-  const { filterCIRRows } = require('./cirFilterService');
-  const rows = getSnapshotData();
+  throw new Error('Oracle Live DB Query returned empty or unsuccessful payload');
+}
   const filteredRows = filterCIRRows(rows, normFilters);
   const summary = getSummaryData() || {};
   const detailed = getDetailedData() || {};
