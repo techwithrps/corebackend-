@@ -276,11 +276,12 @@ public class OracleAnalyticsEngine {
             "  SUM(INVOICE_AMOUNT) AS TOTAL_GROSS, " +
             "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT, " +
             "  COUNT(DISTINCT INVOICE_REF_NO) AS JOB_COUNT, " +
-            "  COUNT(*) AS TOTAL_CONTAINERS " +
+            "  COUNT(*) AS TOTAL_CONTAINERS, " +
+            "  SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END) AS TOTAL_TEUS " +
             "FROM ( " +
             "  SELECT " +
             "    CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, " +
+            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, MAX(CONT_SIZE) AS CONT_SIZE, " +
             "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT " +
             "  FROM ( " +
             "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
@@ -290,7 +291,7 @@ public class OracleAnalyticsEngine {
             "      TO_CHAR(INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
             "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * BILL_QNTY END AS AMOUNT, " +
             "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
-            "      II.BILL_AMOUNT AS INVOICE_AMOUNT " +
+            "      II.BILL_AMOUNT AS INVOICE_AMOUNT, AP.CONT_SIZE " +
             "    FROM " +
             "      (SELECT DISTINCT TERMINAL_ID, COMPANY_ID, INVOICE_REF_NO, INVOICE_NO, INVOICE_DATE, SERVICE_TYPE, CREATED_BY, CANCLE_FLAGE, BILL_TO FROM SPJLIVE.IMP_INVOICE " +
             "       WHERE INVOICE_DATE IS NOT NULL AND CANCLE_FLAGE IS NULL) I, " +
@@ -312,7 +313,7 @@ public class OracleAnalyticsEngine {
             ")";
 
         double grandBase = 0, grandIgst = 0, grandCgst = 0, grandSgst = 0, grandGross = 0;
-        long uniqueInvoices = 0, uniqueJobs = 0, totalRows = 0;
+        long uniqueInvoices = 0, uniqueJobs = 0, totalRows = 0, totalTeus = 0;
 
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(kpiSql)) {
             if (rs.next()) {
@@ -324,6 +325,7 @@ public class OracleAnalyticsEngine {
                 uniqueInvoices = rs.getLong("INVOICE_COUNT");
                 uniqueJobs = rs.getLong("JOB_COUNT");
                 totalRows = rs.getLong("TOTAL_CONTAINERS");
+                totalTeus = rs.getLong("TOTAL_TEUS");
             }
         }
         double grandTax = grandIgst + grandCgst + grandSgst;
@@ -488,7 +490,7 @@ public class OracleAnalyticsEngine {
             "}",
             totalTime, totalRows,
             grandGross, grandGross, grandGross, grandBase, grandTax, grandIgst, grandCgst, grandSgst,
-            uniqueInvoices, uniqueJobs, totalRows, Math.round(totalRows * 1.965), totalRows,
+            uniqueInvoices, uniqueJobs, totalRows, totalTeus, totalRows,
             custJson.toString(), custJson.toString(), recsJson.toString()
         );
 
