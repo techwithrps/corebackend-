@@ -214,10 +214,10 @@ function normalizeAnalyticsFilters(query = {}) {
     fromDateStr = `${y}-${m}-${d}`;
   }
 
-  if (toDateExclusive) {
-    const y = toDateExclusive.getFullYear();
-    const m = String(toDateExclusive.getMonth() + 1).padStart(2, '0');
-    const d = String(toDateExclusive.getDate()).padStart(2, '0');
+  if (toDateInclusiveObj) {
+    const y = toDateInclusiveObj.getFullYear();
+    const m = String(toDateInclusiveObj.getMonth() + 1).padStart(2, '0');
+    const d = String(toDateInclusiveObj.getDate()).padStart(2, '0');
     toDateStr = `${y}-${m}-${d}`;
   }
 
