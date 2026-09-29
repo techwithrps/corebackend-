@@ -1,232 +1,1110 @@
-[
-  {
-    "id": "JSB-EVG-01",
-    "carrier": "Evergreen",
-    "vesselName": "EVER GIVEN",
-    "vesselImo": "9811000",
-    "voyageNo": "1102-044E",
-    "viaNo": "VIA-INNSA-2026-9104",
-    "rotationNo": "ROT-INNSA-2026-401",
-    "terminalName": "GTI — Gateway Terminals India",
-    "pol": "GTIL — GATEWAY TERMINALS PVT LTD (JNPT)",
-    "pod": "Jakarta — JAKARTA (Indonesia)",
-    "etd": "01/10/2026 14:00",
-    "eta": "12/10/2026 08:00",
-    "gateOpenDate": "26/09/2026 06:00",
-    "gateCutoff": "30/09/2026 18:00",
-    "docCutoff": "30/09/2026 12:00",
-    "sbCutoff": "30/09/2026 16:00",
-    "transitDays": "11 Days",
-    "serviceName": "Evergreen Ocean Direct (POL-POD)",
-    "status": "OPEN FOR BOOKING",
-    "availability": "JSB Live Sync Verified",
-    "gpsPosition": { "latitude": "18.9500", "longitude": "72.8200", "speedKnots": "17.2 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-EVG-02",
-    "carrier": "Evergreen",
-    "vesselName": "EVER GENTLE",
-    "vesselImo": "9811012",
-    "voyageNo": "202602E",
-    "viaNo": "VIA-INNSA-2026-9105",
-    "rotationNo": "ROT-INNSA-2026-402",
-    "terminalName": "NSICT — Nhava Sheva International Container Terminal",
-    "pol": "NHAVA SHEVA — INNSA1 (India)",
-    "pod": "Jakarta — JAKARTA (Indonesia)",
-    "etd": "05/10/2026 18:00",
-    "eta": "18/10/2026 06:00",
-    "gateOpenDate": "29/09/2026 06:00",
-    "gateCutoff": "03/10/2026 18:00",
-    "docCutoff": "03/10/2026 12:00",
-    "sbCutoff": "03/10/2026 16:00",
-    "transitDays": "13 Days",
-    "serviceName": "Evergreen Ocean Direct (POL-POD)",
-    "status": "SPACE CONFIRMED",
-    "availability": "JSB Live Sync Verified",
-    "gpsPosition": { "latitude": "19.0100", "longitude": "72.8500", "speedKnots": "16.8 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-EVG-03",
-    "carrier": "Evergreen",
-    "vesselName": "EVER GLOBE",
-    "vesselImo": "9811024",
-    "voyageNo": "202603E",
-    "viaNo": "VIA-INNSA-2026-9106",
-    "rotationNo": "ROT-INNSA-2026-403",
-    "terminalName": "NSIGT — Nhava Sheva International Gateway Terminal",
-    "pol": "NHAVA SHEVA — INNSA1 (India)",
-    "pod": "Singapore — SINGAPORE",
-    "etd": "08/10/2026 10:00",
-    "eta": "16/10/2026 14:00",
-    "gateOpenDate": "02/10/2026 06:00",
-    "gateCutoff": "06/10/2026 18:00",
-    "docCutoff": "06/10/2026 12:00",
-    "sbCutoff": "06/10/2026 16:00",
-    "transitDays": "8 Days",
-    "serviceName": "Evergreen Far East Express",
-    "status": "SCHEDULED",
-    "availability": "JSB Live Sync Verified",
-    "gpsPosition": { "latitude": "18.8800", "longitude": "72.7800", "speedKnots": "18.1 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-HAP-01",
-    "carrier": "Hapag-Lloyd",
-    "vesselName": "EXPRESS BERLIN",
-    "vesselImo": "9484936",
-    "voyageNo": "2604E",
-    "viaNo": "VIA-INNSA-2026-9108",
-    "rotationNo": "ROT-INNSA-2026-405",
-    "terminalName": "NSIGT — Nhava Sheva International Gateway Terminal",
-    "pol": "NHAVA SHEVA — INNSA1 (India)",
-    "pod": "Alexandria — EGYPT",
-    "etd": "03/10/2026 18:00",
-    "eta": "15/10/2026 10:00",
-    "gateOpenDate": "28/09/2026 06:00",
-    "gateCutoff": "01/10/2026 18:00",
-    "docCutoff": "01/10/2026 12:00",
-    "sbCutoff": "01/10/2026 16:00",
-    "transitDays": "12 Days",
-    "serviceName": "Hapag-Lloyd Middle East Express",
-    "status": "OPEN FOR BOOKING",
-    "availability": "DCSA v3 / JSB Verified",
-    "gpsPosition": { "latitude": "19.1200", "longitude": "72.9000", "speedKnots": "16.5 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-HAP-02",
-    "carrier": "Hapag-Lloyd",
-    "vesselName": "VALPARAISO EXPRESS",
-    "vesselImo": "9777589",
-    "voyageNo": "2605E",
-    "viaNo": "VIA-INNSA-2026-9109",
-    "rotationNo": "ROT-INNSA-2026-406",
-    "terminalName": "BMCT — Bharat Mumbai Container Terminals",
-    "pol": "NHAVA SHEVA — INNSA1 (India)",
-    "pod": "Hamburg — GERMANY",
-    "etd": "07/10/2026 20:00",
-    "eta": "24/10/2026 12:00",
-    "gateOpenDate": "01/10/2026 06:00",
-    "gateCutoff": "05/10/2026 18:00",
-    "docCutoff": "05/10/2026 12:00",
-    "sbCutoff": "05/10/2026 16:00",
-    "transitDays": "17 Days",
-    "serviceName": "Hapag-Lloyd Europe Direct",
-    "status": "SPACE CONFIRMED",
-    "availability": "DCSA v3 / JSB Verified",
-    "gpsPosition": { "latitude": "18.9900", "longitude": "72.8100", "speedKnots": "17.5 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-MSC-01",
-    "carrier": "MSC",
-    "vesselName": "MSC ANNA",
-    "vesselImo": "9744685",
-    "voyageNo": "MS2609E",
-    "viaNo": "VIA-INNSA-2026-9112",
-    "rotationNo": "ROT-INNSA-2026-410",
-    "terminalName": "BMCT — Bharat Mumbai Container Terminals",
-    "pol": "MUNDRA PORT — INMUN1 (India)",
-    "pod": "Jebel Ali — UAE",
-    "etd": "04/10/2026 22:00",
-    "eta": "09/10/2026 06:00",
-    "gateOpenDate": "29/09/2026 06:00",
-    "gateCutoff": "02/10/2026 18:00",
-    "docCutoff": "02/10/2026 12:00",
-    "sbCutoff": "02/10/2026 16:00",
-    "transitDays": "5 Days",
-    "serviceName": "MSC Gulf Express Service",
-    "status": "OPEN FOR BOOKING",
-    "availability": "MSC Live API Synced",
-    "gpsPosition": { "latitude": "22.7500", "longitude": "69.7000", "speedKnots": "19.0 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-MSC-02",
-    "carrier": "MSC",
-    "vesselName": "MSC MAYA",
-    "vesselImo": "9708681",
-    "voyageNo": "MS2610E",
-    "viaNo": "VIA-INNSA-2026-9113",
-    "rotationNo": "ROT-INNSA-2026-411",
-    "terminalName": "GTI — Gateway Terminals India",
-    "pol": "NHAVA SHEVA — INNSA1 (India)",
-    "pod": "Umm Qasr North — IRAQ",
-    "etd": "06/10/2026 12:00",
-    "eta": "13/10/2026 18:00",
-    "gateOpenDate": "01/10/2026 06:00",
-    "gateCutoff": "04/10/2026 18:00",
-    "docCutoff": "04/10/2026 12:00",
-    "sbCutoff": "04/10/2026 16:00",
-    "transitDays": "7 Days",
-    "serviceName": "MSC Upper Gulf Direct",
-    "status": "SPACE CONFIRMED",
-    "availability": "MSC Live API Synced",
-    "gpsPosition": { "latitude": "18.9600", "longitude": "72.8300", "speedKnots": "17.0 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-MSK-01",
-    "carrier": "Maersk",
-    "vesselName": "MAERSK MC-KINNEY MOLLER",
-    "vesselImo": "9632064",
-    "voyageNo": "MK2612E",
-    "viaNo": "VIA-INMUN-2026-8801",
-    "rotationNo": "ROT-INMUN-2026-301",
-    "terminalName": "MICT — Mundra International Container Terminal",
-    "pol": "MUNDRA PORT — INMUN1 (India)",
-    "pod": "Rotterdam — NETHERLANDS",
-    "etd": "02/10/2026 16:00",
-    "eta": "18/10/2026 08:00",
-    "gateOpenDate": "27/09/2026 06:00",
-    "gateCutoff": "30/09/2026 18:00",
-    "docCutoff": "30/09/2026 12:00",
-    "sbCutoff": "30/09/2026 16:00",
-    "transitDays": "16 Days",
-    "serviceName": "Maersk AE7 Europe Express",
-    "status": "OPEN FOR BOOKING",
-    "availability": "Maersk Live API Synced",
-    "gpsPosition": { "latitude": "22.7400", "longitude": "69.7200", "speedKnots": "18.5 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-CMA-01",
-    "carrier": "CMA CGM",
-    "vesselName": "CMA CGM ANTOINE DE SAINT EXUPERY",
-    "vesselImo": "9776418",
-    "voyageNo": "CMA2605E",
-    "viaNo": "VIA-INMAA-2026-7704",
-    "rotationNo": "ROT-INMAA-2026-210",
-    "terminalName": "CCT — Chennai Container Terminal",
-    "pol": "CHENNAI PORT — INMAA1 (India)",
-    "pod": "Jeddah — SAUDI ARABIA",
-    "etd": "05/10/2026 14:00",
-    "eta": "14/10/2026 10:00",
-    "gateOpenDate": "30/09/2026 06:00",
-    "gateCutoff": "03/10/2026 18:00",
-    "docCutoff": "03/10/2026 12:00",
-    "sbCutoff": "03/10/2026 16:00",
-    "transitDays": "9 Days",
-    "serviceName": "CMA CGM Red Sea Express",
-    "status": "OPEN FOR BOOKING",
-    "availability": "CMA CGM Live API Synced",
-    "gpsPosition": { "latitude": "13.0800", "longitude": "80.2800", "speedKnots": "16.9 kts", "source": "aisstream.io Real-Time AIS" }
-  },
-  {
-    "id": "JSB-ONE-01",
-    "carrier": "ONE (Ocean Network Express)",
-    "vesselName": "ONE APUS",
-    "vesselImo": "9806079",
-    "voyageNo": "ONE2608E",
-    "viaNo": "VIA-INNSA-2026-9120",
-    "rotationNo": "ROT-INNSA-2026-425",
-    "terminalName": "GTI — Gateway Terminals India",
-    "pol": "NHAVA SHEVA — INNSA1 (India)",
-    "pod": "Tanjung Priok — INDONESIA",
-    "etd": "06/10/2026 20:00",
-    "eta": "17/10/2026 12:00",
-    "gateOpenDate": "01/10/2026 06:00",
-    "gateCutoff": "04/10/2026 18:00",
-    "docCutoff": "04/10/2026 12:00",
-    "sbCutoff": "04/10/2026 16:00",
-    "transitDays": "11 Days",
-    "serviceName": "ONE Ocean Direct Express",
-    "status": "SPACE CONFIRMED",
-    "availability": "ONE Live API Synced",
-    "gpsPosition": { "latitude": "18.9400", "longitude": "72.8100", "speedKnots": "17.8 kts", "source": "aisstream.io Real-Time AIS" }
+{
+  "success": true,
+  "data": {
+    "total": 189,
+    "page": 1,
+    "limit": 50,
+    "schedules": [
+      {
+        "vesselName": "HOUSTON EXPRESS ",
+        "vesselCode": "HOUSTON EXPRESS ",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "JEDDAH",
+          "code": "SAJED"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-10-16T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 351 ",
+        "vesselCode": "WAN HAI 351 ",
+        "voyageNumber": "E047",
+        "shippingLine": {
+          "name": "KMTC INDIA PVT LTD",
+          "code": "KMTC",
+          "logoUrl": null
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PORT KLANG",
+          "code": "MYPKG"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-10-09T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": null,
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "POTI",
+          "code": "GEPTI"
+        },
+        "portOfDischarge": {
+          "name": "POTI",
+          "code": "GEPTI"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-12-10T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": null,
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PORT SAID WEST",
+          "code": "EGPSD"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-11-15T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": null,
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "NSICT",
+          "code": "NSICT"
+        },
+        "portOfDischarge": {
+          "name": "ALEXANDRIA ( EL DEKHEILA ) Port",
+          "code": "EGEDK "
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-11-17T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "HOUSTON EXPRESS",
+        "vesselCode": "HNEX",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "POTI",
+          "code": "GEPTI"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-11-27T00:00:00.000Z",
+        "cutOffDateTime": "2026-09-28T14:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": null,
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "SALALAH",
+          "code": "OMSLL"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-10-04T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": null,
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "SALALAH",
+          "code": "OMSLL"
+        },
+        "portOfDischarge": {
+          "name": "SALALAH",
+          "code": "OMSLL"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-10-04T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": null,
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "NSICT",
+          "code": "NSICT"
+        },
+        "portOfDischarge": {
+          "name": "ALEXANDRIA",
+          "code": "EGALE"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-11-19T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "MAERSK COPENHAGEN",
+        "vesselCode": "MAERSK COPENHAGEN",
+        "voyageNumber": "637N",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "ALEXANDRIA",
+          "code": "EGALE"
+        },
+        "etd": "2026-09-30T00:00:00.000Z",
+        "eta": "2026-10-16T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "DP WORLD KOCHI ",
+        "vesselCode": "DP WORLD KOCHI ",
+        "voyageNumber": "006E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PORT KLANG",
+          "code": "MYPKG"
+        },
+        "etd": "2026-10-01T00:00:00.000Z",
+        "eta": "2026-10-10T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "MAERSK CABO VERDE",
+        "vesselCode": "MAERSK CABO VERDE",
+        "voyageNumber": "639W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "ABIDJAN",
+          "code": "CIABJ"
+        },
+        "etd": "2026-10-01T00:00:00.000Z",
+        "eta": "2026-11-02T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "REN JIAN 17",
+        "vesselCode": "RJ17",
+        "voyageNumber": "640S",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "KHOR AL FAKKAN",
+          "code": "AEKLF"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-15T00:00:00.000Z",
+        "cutOffDateTime": "2026-09-28T17:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "MAERSK SELETAR",
+        "vesselCode": "N/A",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "NSICT",
+          "code": "NSICT"
+        },
+        "portOfDischarge": {
+          "name": "PORT SAID WEST",
+          "code": "EGPSD"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-11-15T00:00:00.000Z",
+        "cutOffDateTime": "2026-09-30T16:30:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "INTERASIA TRIUMPH ",
+        "vesselCode": "INTERASIA TRIUMPH ",
+        "voyageNumber": "E016",
+        "shippingLine": {
+          "name": "WANHAI DELHI",
+          "code": "WHL",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/9d9464ea-8541-44ef-b2e9-43616dd69b93.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PORT KLANG",
+          "code": "MYPKG"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-15T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "REN JIAN 17",
+        "vesselCode": "N/A",
+        "voyageNumber": "640S",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "SOHAR",
+          "code": "OMSOH"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-19T00:00:00.000Z",
+        "cutOffDateTime": "2026-10-01T19:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "INTERASIA TRIUMPH ",
+        "vesselCode": "INTERASIA TRIUMPH ",
+        "voyageNumber": "E017",
+        "shippingLine": {
+          "name": "WANHAI DELHI",
+          "code": "WHL",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/9d9464ea-8541-44ef-b2e9-43616dd69b93.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PASIR GUDANG",
+          "code": "MYPGU"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-18T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "REN JIAN 17",
+        "vesselCode": "N/A",
+        "voyageNumber": "640S",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "JEBEL ALI",
+          "code": "AEJEA"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-22T00:00:00.000Z",
+        "cutOffDateTime": "2026-10-01T19:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "RDO GRACE",
+        "vesselCode": "RDGC",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "Bharat Mumbai Container Terminal",
+          "code": "BMCT"
+        },
+        "portOfDischarge": {
+          "name": "ABIDJAN",
+          "code": "CIABJ"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-11-14T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "REN JIAN 17",
+        "vesselCode": "RJ17",
+        "voyageNumber": "640S",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "MERSIN",
+          "code": "TRMER"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-11-14T00:00:00.000Z",
+        "cutOffDateTime": "2026-10-01T19:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "MAERSK SELETAR",
+        "vesselCode": "MAERSK SELETAR",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "JEDDAH",
+          "code": "SAJED"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-11T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "REN JIAN 17",
+        "vesselCode": "N/A",
+        "voyageNumber": "640S",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "Dar es Salaam",
+          "code": "TICTS "
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-18T00:00:00.000Z",
+        "cutOffDateTime": "2026-10-01T19:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "GFS GISELLE",
+        "vesselCode": "N/A",
+        "voyageNumber": "043W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "JEBEL ALI",
+          "code": "AEJEA"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-22T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "Maersk Florence",
+        "vesselCode": "Maersk Florence",
+        "voyageNumber": "638W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "POINT NOIRE",
+          "code": "CGPNR"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-19T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "REN JIAN 17",
+        "vesselCode": "RJ17",
+        "voyageNumber": "640S",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "SALALAH",
+          "code": "OMSLL"
+        },
+        "etd": "2026-10-02T00:00:00.000Z",
+        "eta": "2026-10-06T00:00:00.000Z",
+        "cutOffDateTime": "2026-10-01T19:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 507",
+        "vesselCode": "WH5507",
+        "voyageNumber": "E246",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "MANILA NORTH",
+          "code": "PHMNN"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-23T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 507",
+        "vesselCode": "WAHA507",
+        "voyageNumber": "E246",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PENANG",
+          "code": "MYPEN"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-12T00:00:00.000Z",
+        "cutOffDateTime": "2026-10-01T00:00:00.000Z",
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "HOUSTON EXPRESS",
+        "vesselCode": "HOUSTON EXPRESS",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "HAPAG LLYOD- Delhi",
+          "code": "HL-D",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/e82201c2-16ad-4abc-a559-41673effd12a.jpg"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "ALEXANDRIA",
+          "code": "EGALE"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-11-14T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "HOUSTON EXPRESS",
+        "vesselCode": "HOUSTON EXPRESS",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "HAPAG LLYOD- Delhi",
+          "code": "HL-D",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/e82201c2-16ad-4abc-a559-41673effd12a.jpg"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "MERSIN",
+          "code": "TRMER"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-11-14T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 516",
+        "vesselCode": "WH5516",
+        "voyageNumber": "E097",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "CEBU",
+          "code": "PHCEB"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-29T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 516",
+        "vesselCode": "WH5516",
+        "voyageNumber": "E097",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "Ho Chi Minh",
+          "code": "VNSGN"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-20T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 516",
+        "vesselCode": "WH5516",
+        "voyageNumber": "E097",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PASIR GUDANG",
+          "code": "MYPGU"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-16T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 507",
+        "vesselCode": "WH5507",
+        "voyageNumber": "E246",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "PASIR GUDANG",
+          "code": "MYPGU"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-16T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "HOUSTON EXPRESS",
+        "vesselCode": "HOUSTON EXPRESS",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "KHOR AL FAKKAN",
+          "code": "AEKLF"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-16T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "HOUSTON EXPRESS",
+        "vesselCode": "HOUSTON EXPRESS",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "POTI",
+          "code": "GEPTI"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-12-04T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "KASIF KALKAVAN",
+        "vesselCode": "KASIF KALKAVAN",
+        "voyageNumber": "IMS27W26",
+        "shippingLine": {
+          "name": "Arkas DL",
+          "code": "Arkas DL",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/660f5235-604e-4ae9-a2b4-24e28571cbdc.webp"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "POTI",
+          "code": "GEPTI"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-23T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "HOUSTON EXPRESS",
+        "vesselCode": "HOUSTON EXPRESS",
+        "voyageNumber": " 640W",
+        "shippingLine": {
+          "name": "HAPAG LLYOD- Delhi",
+          "code": "HL-D",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/e82201c2-16ad-4abc-a559-41673effd12a.jpg"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "MERSIN",
+          "code": "TRMER"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-11-14T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 507",
+        "vesselCode": "WH5507",
+        "voyageNumber": "E246",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "Ho Chi Minh",
+          "code": "VNSGN"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-20T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "WAN HAI 507",
+        "vesselCode": "WH5507",
+        "voyageNumber": "E246",
+        "shippingLine": {
+          "name": "WANHAI MUMBAI",
+          "code": "WANHAI",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "CEBU",
+          "code": "PHCEB"
+        },
+        "etd": "2026-10-03T00:00:00.000Z",
+        "eta": "2026-10-29T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "X-PRESS BARDSEY",
+        "vesselCode": "X-PRESS BARDSEY",
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "HAPAG LLYOD- Delhi",
+          "code": "HL-D",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/e82201c2-16ad-4abc-a559-41673effd12a.jpg"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "HAIPHONG",
+          "code": "VNHPH"
+        },
+        "etd": "2026-10-04T00:00:00.000Z",
+        "eta": "2026-10-23T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "KASIF KALKAVAN",
+        "vesselCode": "KASIF KALKAVAN",
+        "voyageNumber": "IMS27W26",
+        "shippingLine": {
+          "name": "Arkas DL",
+          "code": "Arkas DL",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/660f5235-604e-4ae9-a2b4-24e28571cbdc.webp"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "AQABA",
+          "code": "JOAQJ"
+        },
+        "etd": "2026-10-04T00:00:00.000Z",
+        "eta": "2026-10-25T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "INTERASIA TRIUMPH ",
+        "vesselCode": "INTERASIA TRIUMPH ",
+        "voyageNumber": "E017",
+        "shippingLine": {
+          "name": "KMTC INDIA PVT LTD",
+          "code": "KMTC",
+          "logoUrl": null
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "Jakarta",
+          "code": "Jakarta"
+        },
+        "etd": "2026-10-04T00:00:00.000Z",
+        "eta": "2026-10-16T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "INTERASIA TRIUMPH ",
+        "vesselCode": "INTERASIA TRIUMPH ",
+        "voyageNumber": "E017",
+        "shippingLine": {
+          "name": "WANHAI DELHI",
+          "code": "WHL",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/9d9464ea-8541-44ef-b2e9-43616dd69b93.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "HAIPHONG",
+          "code": "VNHPH"
+        },
+        "etd": "2026-10-04T00:00:00.000Z",
+        "eta": "2026-10-20T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "RDO GRACE",
+        "vesselCode": "RDGC",
+        "voyageNumber": "640W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "ABIDJAN",
+          "code": "CIABJ"
+        },
+        "etd": "2026-10-04T00:00:00.000Z",
+        "eta": "2026-11-14T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "KASIF KALKAVAN",
+        "vesselCode": "KASIF KALKAVAN",
+        "voyageNumber": "IMS27W26",
+        "shippingLine": {
+          "name": "Arkas DL",
+          "code": "Arkas DL",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/660f5235-604e-4ae9-a2b4-24e28571cbdc.webp"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "ALEXANDRIA",
+          "code": "EGALE"
+        },
+        "etd": "2026-10-04T00:00:00.000Z",
+        "eta": "2026-10-25T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "MAERSK SAN VICENTE",
+        "vesselCode": "MSVI",
+        "voyageNumber": "641W",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "PORT OF MUNDRA",
+          "code": "MDCC"
+        },
+        "portOfDischarge": {
+          "name": "PORT LOUIS",
+          "code": "MUPLU"
+        },
+        "etd": "2026-10-05T00:00:00.000Z",
+        "eta": "2026-10-26T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ARGOLIKOS",
+        "vesselCode": "N/A",
+        "voyageNumber": "641S",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "GATEWAY TERMINALS PVT LTD",
+          "code": "GTIL"
+        },
+        "portOfDischarge": {
+          "name": "Dar es Salaam",
+          "code": "TICTS "
+        },
+        "etd": "2026-10-05T00:00:00.000Z",
+        "eta": "2026-10-25T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": "ZGCS",
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "NSICT",
+          "code": "NSICT"
+        },
+        "portOfDischarge": {
+          "name": "PORT LOUIS",
+          "code": "MUPLU"
+        },
+        "etd": "2026-10-06T00:00:00.000Z",
+        "eta": "2026-10-26T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": "ZGCS",
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "NSICT",
+          "code": "NSICT"
+        },
+        "portOfDischarge": {
+          "name": "BEIRUT",
+          "code": "LBBEY"
+        },
+        "etd": "2026-10-06T00:00:00.000Z",
+        "eta": "2026-11-24T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      },
+      {
+        "vesselName": "ZHONG GU CHANG SHA",
+        "vesselCode": "N/A",
+        "voyageNumber": "640E",
+        "shippingLine": {
+          "name": "Maersk Line India Pvt. Ltd.",
+          "code": "Maersk A/S",
+          "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+        },
+        "portOfLoading": {
+          "name": "NSICT",
+          "code": "NSICT"
+        },
+        "portOfDischarge": {
+          "name": "PORT SAID WEST",
+          "code": "EGPSD"
+        },
+        "etd": "2026-10-06T00:00:00.000Z",
+        "eta": "2026-11-22T00:00:00.000Z",
+        "cutOffDateTime": null,
+        "status": "SCHEDULED"
+      }
+    ]
   }
-]
+}
