@@ -44,8 +44,15 @@ function saveVesselConfig(config = {}) {
 /**
  * Generate Point-to-Point vessel sailing schedules dynamically from live Oracle DB & Carrier routes
  */
-async function getVesselSchedules(filters = {}) {
-  const carrier = filters.carrier || 'Evergreen';
+  const rawCarrier = (filters.carrier || 'Evergreen').toLowerCase();
+  
+  let carrier = 'Evergreen';
+  if (rawCarrier.includes('hapag') || rawCarrier.includes('hap')) carrier = 'Hapag-Lloyd';
+  else if (rawCarrier.includes('msc')) carrier = 'MSC';
+  else if (rawCarrier.includes('maersk') || rawCarrier.includes('msk')) carrier = 'Maersk';
+  else if (rawCarrier.includes('cma')) carrier = 'CMA CGM';
+  else if (rawCarrier.includes('evergreen') || rawCarrier.includes('emc')) carrier = 'Evergreen';
+
   const pol = filters.pol || 'GTIL — GATEWAY TERMINALS PVT LTD (JNPT)';
   const pod = filters.pod || 'Jakarta — JAKARTA (Indonesia)';
 
