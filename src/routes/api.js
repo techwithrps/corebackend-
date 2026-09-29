@@ -36,6 +36,11 @@ router.post('/vessel/config', authenticate, enforceTenantScope, cirController.sa
 // Excel export with authentication, tenant isolation, and rate limiting
 router.get('/export/excel', authenticate, enforceTenantScope, rateLimitExport, cirController.exportExcel);
 
+// User & Role Access Management Endpoints
+router.get('/auth/users', authenticate, authController.getUsers);
+router.post('/auth/users', authenticate, authController.createUser);
+router.delete('/auth/users/:id', authenticate, authController.deleteUser);
+
 // ==========================================
 // 3. Administrative Endpoints
 // ==========================================
@@ -52,3 +57,4 @@ router.post('/cache-flush', adminAuth, (req, res) => {
 });
 
 module.exports = router;
+

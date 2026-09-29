@@ -265,7 +265,39 @@ function authenticateCredentials(username, password) {
     }
   }
 
-  // 2. Dynamic Lookup from Masters (Supports all 674+ Customers)
+  // 2. Check dynamic users file created by Admin
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const pDyn = path.join(__dirname, '../data/dynamicUsers.json');
+    if (fs.existsSync(pDyn)) {
+      const dynUsers = JSON.parse(fs.readFileSync(pDyn, 'utf8')) || [];
+      const dUser = dynUsers.find(
+        u => u.username.toLowerCase() === cleanUser || u.id.toLowerCase() === cleanUser
+      );
+      if (dUser && dUser.password === cleanPass) {
+        return {
+          id: dUser.id,
+          username: dUser.username,
+          name: dUser.name,
+          role: dUser.role || 'customer',
+          badge: dUser.badge || 'Enterprise Customer',
+          tenantScope: dUser.tenantScope || {
+            type: dUser.role === 'admin' ? 'ALL' : 'CUSTOMER',
+            customerId: dUser.customerId || dUser.id,
+            customerCode: dUser.customerCode || dUser.username.toUpperCase(),
+            customerName: dUser.customerName || dUser.name,
+            companyId: null,
+            terminalId: null,
+          }
+        };
+      }
+    }
+  } catch (e) {
+    console.error('[authService] Error reading dynamicUsers.json:', e.message);
+  }
+
+  // 3. Dynamic Lookup from Masters (Supports all 674+ Customers)
   try {
     const fs = require('fs');
     const path = require('path');
@@ -319,9 +351,115 @@ function authenticateCredentials(username, password) {
   return null;
 }
 
+function getDynamicUsers() {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const pDyn = path.join(__dirname, '../data/dynamicUsers.json');
+    if (fs.existsSync(pDyn)) {
+      return JSON.parse(fs.readFileSync(pDyn, 'utf8')) || [];
+    }
+  } catch (e) {
+    console.error('[authService] getDynamicUsers error:', e.message);
+  }
+  return [];
+}
+
+function getAllUsers() {
+  const dyn = getDynamicUsers();
+  const all = [...SERVER_USERS];
+  dyn.forEach(d => {
+    if (!all.some(u => u.id === d.id || u.username === d.username)) {
+      all.push(d);
+    }
+  });
+  return all.map(u => ({
+    id: u.id,
+    username: u.username,
+    name: u.name,
+    role: u.role,
+    badge: u.badge,
+    tenantScope: u.tenantScope,
+  }));
+}
+
+function createNewUser({ username, password, name, role = 'customer', customerId, customerName }) {
+  if (!username || !password || !name) {
+    throw new Error('Username, password, and name are required.');
+  }
+
+  const fs = require('fs');
+  const path = require('path');
+  const pDyn = path.join(__dirname, '../data/dynamicUsers.json');
+  const dyn = getDynamicUsers();
+
+  const cleanUser = username.trim().toLowerCase();
+  if (dyn.some(u => u.username.toLowerCase() === cleanUser) || SERVER_USERS.some(u => u.username.toLowerCase() === cleanUser)) {
+    throw new Error(`Username '${cleanUser}' already exists.`);
+  }
+
+  const id = `USER-${Date.now()}`;
+  const isCust = role === 'customer';
+
+  const newUser = {
+    id,
+    username: cleanUser,
+    password: password.trim(),
+    name: name.trim(),
+    role,
+    badge: role === 'admin' ? 'Master Admin' : (role === 'terminal_operator' ? 'Terminal Operator' : 'Enterprise Customer'),
+    tenantScope: isCust ? {
+      type: 'CUSTOMER',
+      customerId: String(customerId || id),
+      customerCode: cleanUser.toUpperCase(),
+      customerName: customerName || name.trim(),
+      companyId: null,
+      terminalId: null,
+    } : {
+      type: 'ALL',
+      customerId: null,
+      companyId: null,
+      terminalId: null,
+    }
+  };
+
+  dyn.push(newUser);
+  fs.writeFileSync(pDyn, JSON.stringify(dyn, null, 2), 'utf8');
+
+  return {
+    id: newUser.id,
+    username: newUser.username,
+    name: newUser.name,
+    role: newUser.role,
+    badge: newUser.badge,
+    tenantScope: newUser.tenantScope,
+  };
+}
+
+function deleteUser(userId) {
+  const fs = require('fs');
+  const path = require('path');
+  const pDyn = path.join(__dirname, '../data/dynamicUsers.json');
+  let dyn = getDynamicUsers();
+
+  const initLen = dyn.length;
+  dyn = dyn.filter(u => u.id !== userId && u.username !== userId);
+
+  if (dyn.length === initLen) {
+    return false;
+  }
+
+  fs.writeFileSync(pDyn, JSON.stringify(dyn, null, 2), 'utf8');
+  return true;
+}
+
 module.exports = {
   generateToken,
   verifyToken,
   authenticateCredentials,
+  getAllUsers,
+  createNewUser,
+  deleteUser,
   SERVER_USERS,
 };
+
