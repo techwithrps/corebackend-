@@ -112,12 +112,18 @@ async function getVesselSchedules(filters = {}) {
     };
   });
 
+  const activeConfig = getVesselConfig();
+  const isApifyActive = !!(activeConfig && activeConfig.apifyToken);
+
   return {
     success: true,
-    engine: 'SPJ Marine Engine v2.4 (Live Carrier DCSA / Oracle Sync)',
+    engine: isApifyActive 
+      ? `SPJ Marine Engine v2.4 (Apify Scraper Token Active: ${activeConfig.apifyToken.substring(0, 12)}...)`
+      : 'SPJ Marine Engine v2.4 (Live Carrier DCSA / Oracle Sync)',
     carrier,
     pol,
     pod,
+    apifyActive: isApifyActive,
     totalSchedules: schedules.length,
     schedules
   };
