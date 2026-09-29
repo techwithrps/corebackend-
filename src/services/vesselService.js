@@ -3,6 +3,18 @@ const path = require('path');
 const { queryOracleDatabase } = require('./oracleDbService');
 
 const CONFIG_FILE = path.join(__dirname, '../data/vesselConfig.json');
+const JSB_SCHEDULES_FILE = path.join(__dirname, '../data/jsbSchedules.json');
+
+function getJsbSchedules() {
+  try {
+    if (fs.existsSync(JSB_SCHEDULES_FILE)) {
+      return JSON.parse(fs.readFileSync(JSB_SCHEDULES_FILE, 'utf8'));
+    }
+  } catch (err) {
+    console.error('[VesselService] Error reading JSB schedules:', err.message);
+  }
+  return [];
+}
 
 /**
  * Default API configuration structure
@@ -182,6 +194,9 @@ function saveVesselConfig(config = {}) {
     engineDesc = `SPJ Marine Engine v2.4 (Apify Scraper Token Active: ${activeConfig.apifyToken.substring(0, 12)}...)`;
   }
 
+  const jsbSchedules = getJsbSchedules();
+  const allSchedules = [...jsbSchedules, ...schedules];
+
   return {
     success: true,
     engine: engineDesc,
@@ -190,8 +205,8 @@ function saveVesselConfig(config = {}) {
     pod,
     apifyActive: isApifyActive,
     aisStreamActive: isAisStreamActive,
-    totalSchedules: schedules.length,
-    schedules
+    totalSchedules: allSchedules.length,
+    schedules: allSchedules
   };
 }
 
