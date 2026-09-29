@@ -1,7 +1,7 @@
 {
     "success": true,
     "data": {
-        "total": 189,
+        "total": 193,
         "page": 1,
         "limit": 50,
         "schedules": [
@@ -4160,6 +4160,94 @@
                 },
                 "etd": "2027-01-02T00:00:00.000Z",
                 "eta": "2027-01-22T00:00:00.000Z",
+                "cutOffDateTime": null,
+                "status": "SCHEDULED"
+            },
+            {
+                "vesselName": "MAERSK SELETAR",
+                "vesselCode": "MSLT",
+                "voyageNumber": "641W",
+                "shippingLine": {
+                    "name": "Maersk Line India Pvt. Ltd.",
+                    "code": "Maersk A/S",
+                    "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/f540a936-5a14-4e9d-9afe-a3f29bb9d13d.png"
+                },
+                "portOfLoading": {
+                    "name": "PORT OF MUNDRA",
+                    "code": "MDCC"
+                },
+                "portOfDischarge": {
+                    "name": "JEBEL ALI",
+                    "code": "AEJEA"
+                },
+                "etd": "2026-10-07T00:00:00.000Z",
+                "eta": "2026-10-18T00:00:00.000Z",
+                "cutOffDateTime": "2026-10-05T18:00:00.000Z",
+                "status": "SCHEDULED"
+            },
+            {
+                "vesselName": "WAN HAI 516",
+                "vesselCode": "WH516",
+                "voyageNumber": "E098",
+                "shippingLine": {
+                    "name": "WANHAI MUMBAI",
+                    "code": "WANHAI",
+                    "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/05b9cb28-c545-42b9-b1dd-cbceb72349fa.png"
+                },
+                "portOfLoading": {
+                    "name": "GATEWAY TERMINALS PVT LTD",
+                    "code": "GTIL"
+                },
+                "portOfDischarge": {
+                    "name": "PORT KLANG",
+                    "code": "MYPKG"
+                },
+                "etd": "2026-10-08T00:00:00.000Z",
+                "eta": "2026-10-17T00:00:00.000Z",
+                "cutOffDateTime": null,
+                "status": "SCHEDULED"
+            },
+            {
+                "vesselName": "HOUSTON EXPRESS",
+                "vesselCode": "HNEX",
+                "voyageNumber": "641W",
+                "shippingLine": {
+                    "name": "HAPAG LLYOD- Delhi",
+                    "code": "HL-D",
+                    "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/e82201c2-16ad-4abc-a559-41673effd12a.jpg"
+                },
+                "portOfLoading": {
+                    "name": "PORT OF MUNDRA",
+                    "code": "MDCC"
+                },
+                "portOfDischarge": {
+                    "name": "ALEXANDRIA",
+                    "code": "EGALE"
+                },
+                "etd": "2026-10-09T00:00:00.000Z",
+                "eta": "2026-10-25T00:00:00.000Z",
+                "cutOffDateTime": "2026-10-07T12:00:00.000Z",
+                "status": "SCHEDULED"
+            },
+            {
+                "vesselName": "KASIF KALKAVAN",
+                "vesselCode": "KKAL",
+                "voyageNumber": "IMS28W26",
+                "shippingLine": {
+                    "name": "Arkas DL",
+                    "code": "Arkas DL",
+                    "logoUrl": "https://s3-freightflow-prod-v2.s3.ap-south-1.amazonaws.com/1a83bb4b-ec24-4348-8e56-97e38fe6acfe/master-logos/shipping-lines/660f5235-604e-4ae9-a2b4-24e28571cbdc.webp"
+                },
+                "portOfLoading": {
+                    "name": "GATEWAY TERMINALS PVT LTD",
+                    "code": "GTIL"
+                },
+                "portOfDischarge": {
+                    "name": "MERSIN",
+                    "code": "TRMER"
+                },
+                "etd": "2026-10-10T00:00:00.000Z",
+                "eta": "2026-10-28T00:00:00.000Z",
                 "cutOffDateTime": null,
                 "status": "SCHEDULED"
             }
