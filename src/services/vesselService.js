@@ -17,6 +17,7 @@ function getVesselConfig() {
   }
   return {
     apifyToken: '',
+    aisStreamKey: '',
     hapagClientId: '',
     evergreenKey: '',
     marineTrafficKey: '',
@@ -121,16 +122,25 @@ function saveVesselConfig(config = {}) {
 
   const activeConfig = getVesselConfig();
   const isApifyActive = !!(activeConfig && activeConfig.apifyToken);
+  const isAisStreamActive = !!(activeConfig && activeConfig.aisStreamKey);
+
+  let engineDesc = 'SPJ Marine Engine v2.4 (Live Carrier DCSA / Oracle Sync)';
+  if (isAisStreamActive && isApifyActive) {
+    engineDesc = `SPJ Marine Engine v2.4 (AISstream WebSocket & Apify Active)`;
+  } else if (isAisStreamActive) {
+    engineDesc = `SPJ Marine Engine v2.4 (AISstream WebSocket Live GPS Active: ${activeConfig.aisStreamKey.substring(0, 8)}...)`;
+  } else if (isApifyActive) {
+    engineDesc = `SPJ Marine Engine v2.4 (Apify Scraper Token Active: ${activeConfig.apifyToken.substring(0, 12)}...)`;
+  }
 
   return {
     success: true,
-    engine: isApifyActive 
-      ? `SPJ Marine Engine v2.4 (Apify Scraper Token Active: ${activeConfig.apifyToken.substring(0, 12)}...)`
-      : 'SPJ Marine Engine v2.4 (Live Carrier DCSA / Oracle Sync)',
+    engine: engineDesc,
     carrier,
     pol,
     pod,
     apifyActive: isApifyActive,
+    aisStreamActive: isAisStreamActive,
     totalSchedules: schedules.length,
     schedules
   };

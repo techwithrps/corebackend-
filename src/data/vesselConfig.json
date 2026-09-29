@@ -1,9 +1,10 @@
 {
   "apifyToken": "apify_api_A0TYIAddZv9AeMIJLhMGnZJHKB7Bf13sC0k4",
+  "aisStreamKey": "248c5e34a8d30e7c4a51c0c06f89d3c338eb4f06",
   "hapagClientId": "hl_dcsa_v3_live_client_spj",
   "evergreenKey": "emc_live_key_spj",
   "marineTrafficKey": "mt_live_key_rishabh_pratap",
   "dailySyncEnabled": true,
-  "lastSyncTimestamp": "2026-09-29T09:25:00.000Z",
-  "lastUpdated": "2026-09-29T09:25:00.000Z"
+  "lastSyncTimestamp": "2026-09-29T09:37:00.000Z",
+  "lastUpdated": "2026-09-29T09:37:00.000Z"
 }
