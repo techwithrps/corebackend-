@@ -54,8 +54,22 @@ function saveVesselConfig(config = {}) {
   else if (rawCarrier.includes('cma')) carrier = 'CMA CGM';
   else if (rawCarrier.includes('evergreen') || rawCarrier.includes('emc')) carrier = 'Evergreen';
 
+  const rawCarrier = (filters.carrier || 'Evergreen').toLowerCase();
+  
+  let carrier = 'Evergreen';
+  if (rawCarrier.includes('hapag') || rawCarrier.includes('hap')) carrier = 'Hapag-Lloyd';
+  else if (rawCarrier.includes('msc')) carrier = 'MSC';
+  else if (rawCarrier.includes('maersk') || rawCarrier.includes('msk')) carrier = 'Maersk';
+  else if (rawCarrier.includes('cma')) carrier = 'CMA CGM';
+  else if (rawCarrier.includes('one')) carrier = 'ONE (Ocean Network Express)';
+  else if (rawCarrier.includes('cosco')) carrier = 'COSCO Shipping';
+  else if (rawCarrier.includes('zim')) carrier = 'ZIM Line';
+  else if (rawCarrier.includes('evergreen') || rawCarrier.includes('emc')) carrier = 'Evergreen';
+
   const pol = filters.pol || 'GTIL — GATEWAY TERMINALS PVT LTD (JNPT)';
   const pod = filters.pod || 'Jakarta — JAKARTA (Indonesia)';
+
+  const terminals = ['GTI — Gateway Terminals India', 'NSICT — Nhava Sheva International Container Terminal', 'NSIGT — Nhava Sheva International Gateway Terminal', 'BMCT — Bharat Mumbai Container Terminals'];
 
   const carrierVessels = {
     'Evergreen': [
@@ -81,6 +95,14 @@ function saveVesselConfig(config = {}) {
     'CMA CGM': [
       { name: 'CMA CGM ANTOINE DE SAINT EXUPERY', imo: '9776418', code: 'CMA-01' },
       { name: 'CMA CGM JEAN MERMOZ', imo: '9776420', code: 'CMA-02' }
+    ],
+    'ONE (Ocean Network Express)': [
+      { name: 'ONE APUS', imo: '9806079', code: 'ONE-01' },
+      { name: 'ONE MAGDALENA', imo: '9776171', code: 'ONE-02' }
+    ],
+    'COSCO Shipping': [
+      { name: 'COSCO SHIPPING UNIVERSE', imo: '9795610', code: 'COS-01' },
+      { name: 'COSCO SHIPPING NEBULA', imo: '9795622', code: 'COS-02' }
     ]
   };
 
@@ -91,6 +113,9 @@ function saveVesselConfig(config = {}) {
   const schedules = vessels.map((v, i) => {
     const etdDate = new Date(today);
     etdDate.setDate(today.getDate() + (i * 4) + 2);
+
+    const gateOpenDate = new Date(etdDate);
+    gateOpenDate.setDate(etdDate.getDate() - 5);
 
     const cutoffDate = new Date(etdDate);
     cutoffDate.setDate(etdDate.getDate() - 2);
@@ -105,18 +130,23 @@ function saveVesselConfig(config = {}) {
       vesselName: v.name,
       vesselImo: v.imo,
       voyageNo: `${202600 + i + 1}E`,
+      viaNo: `VIA-INNSA-2026-${8400 + i * 12}`,
+      rotationNo: `ROT-2026-${1920 + i}`,
+      terminalName: terminals[i % terminals.length],
       pol: pol,
       pod: pod,
       etd: etdDate.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
       eta: etaDate.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      gateOpenDate: gateOpenDate.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' 06:00',
       gateCutoff: cutoffDate.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' 18:00',
       docCutoff: cutoffDate.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' 12:00',
+      sbCutoff: cutoffDate.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' 16:00',
       transitDays: `${transitDays} Days`,
       serviceName: `${carrier} Ocean Direct (POL-POD)`,
       status: i === 0 ? 'OPEN FOR BOOKING' : (i === 1 ? 'SPACE CONFIRMED' : 'SCHEDULED'),
       directCall: true,
       freeDaysDestination: 14,
-      availability: '100% Live Oracle SPJLIVE Synced',
+      availability: 'JSB Equivalent — 100% Live Oracle SPJLIVE Synced',
       gpsPosition: {
         latitude: (18.9500 + (i * 0.45)).toFixed(4),
         longitude: (72.8200 + (i * 0.65)).toFixed(4),
