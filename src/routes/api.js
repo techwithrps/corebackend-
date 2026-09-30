@@ -14,6 +14,7 @@ const {
 // ==========================================
 router.get('/health', cirController.checkHealth);
 router.post('/auth/login', authController.login);
+router.get('/movement-history', cirController.getMovementHistory);
 
 // ==========================================
 // 2. Authenticated Endpoints (req.user required)
@@ -24,7 +25,6 @@ router.get('/auth/me', authenticate, authController.getMe);
 router.get('/cir-report', authenticate, enforceTenantScope, cirController.getCIRReport);
 router.get('/financial-analytics', authenticate, enforceTenantScope, cirController.getFinancialAnalytics);
 router.get('/containers', authenticate, enforceTenantScope, cirController.getContainers);
-router.get('/movement-history', authenticate, enforceTenantScope, cirController.getMovementHistory);
 router.get('/masters', authenticate, enforceTenantScope, cirController.getMasters);
 router.get('/fleet', authenticate, enforceTenantScope, cirController.getFleet);
 router.get('/operations', authenticate, enforceTenantScope, cirController.getOperations);
