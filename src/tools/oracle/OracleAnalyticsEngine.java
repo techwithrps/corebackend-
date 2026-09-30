@@ -399,17 +399,24 @@ public class OracleAnalyticsEngine {
         String pageSql = 
             "SELECT * FROM ( " +
             "  SELECT " +
-            "    CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
+            "    CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
             "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, " +
             "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT, " +
-            "    ROW_NUMBER() OVER (ORDER BY SUM(INVOICE_AMOUNT) DESC) AS RN " +
+            "    ROW_NUMBER() OVER (ORDER BY INVOICE_NO DESC, SUM(INVOICE_AMOUNT) DESC) AS RN " +
             "  FROM ( " +
-            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
-            "      BL_NO, PARTY_INV_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
+            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, " +
+            "      AP.CONT_NO, AP.CONT_SIZE, I.INVOICE_REF_NO, I.INVOICE_NO, " +
+            "      AP.BL_NO, AP.PARTY_INV_NO, AP.LINE_HANDOVER_DATE, AP.SAILED, AP.PORT, " +
             "      DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
             "      DECODE(II.SERVICE_ID,4,II.BILL_QNTY,0) AS BILL_QNTY, " +
-            "      TO_CHAR(INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
-            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * BILL_QNTY END AS AMOUNT, " +
+            "      TO_CHAR(I.INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
+            "      CASE " +
+            "        WHEN AP.SAILED IS NOT NULL THEN 'Stage 4: Loaded & Sailed' " +
+            "        WHEN AP.LINE_HANDOVER_DATE IS NOT NULL THEN 'Stage 2: Customs Cleared & Staged' " +
+            "        WHEN AP.CONT_NO IS NOT NULL THEN 'Stage 1: Yard Gate-In & Factory Stuffing' " +
+            "        ELSE 'Stage 3: DFC Rail Transit' " +
+            "      END AS CONTAINER_STATUS, " +
+            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * II.BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * II.BILL_QNTY END AS AMOUNT, " +
             "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
             "      II.BILL_AMOUNT AS INVOICE_AMOUNT " +
             "    FROM " +
@@ -429,7 +436,7 @@ public class OracleAnalyticsEngine {
             "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
             "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
             "  ) " +
-            "  GROUP BY CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
+            "  GROUP BY CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
             ") WHERE RN BETWEEN " + startRow + " AND " + endRow;
 
         StringBuilder recsJson = new StringBuilder("[");
@@ -447,6 +454,9 @@ public class OracleAnalyticsEngine {
                 String blNo = rs.getString("BL_NO");
                 String port = rs.getString("PORT");
                 String partyInv = rs.getString("PARTY_INV_NO");
+                String contNo = rs.getString("CONT_NO");
+                String contSize = rs.getString("CONT_SIZE");
+                String contStatus = rs.getString("CONTAINER_STATUS");
                 double base = rs.getDouble("AMOUNT");
                 double igst = rs.getDouble("IGST");
                 double cgst = rs.getDouble("CGST");
@@ -454,16 +464,15 @@ public class OracleAnalyticsEngine {
                 double gross = rs.getDouble("INVOICE_AMOUNT");
 
                 recsJson.append(String.format(Locale.US,
-                    "{\"INVOICE_NO\":\"%s\",\"INVOICE_REF_NO\":\"%s\",\"CUSTOMER_NAME\":\"%s\",\"INVOICE_DATE\":\"%s\"," +
-                    "\"SERVICE_TYPE\":\"%s\",\"BL_NO\":\"%s\",\"PARTY_INV_NO\":\"%s\",\"PORT\":\"%s\",\"AMOUNT\":%.2f,\"IGST\":%.2f,\"CGST\":%.2f,\"SGST\":%.2f,\"INVOICE_AMOUNT\":%.2f}",
-                    escapeJson(invNo), escapeJson(invRef), escapeJson(custName), escapeJson(invDate),
-                    escapeJson(sType), escapeJson(blNo), escapeJson(partyInv), escapeJson(port), base, igst, cgst, sgst, gross
+                    "{\"INVOICE_NO\":\"%s\",\"INVOICE_REF_NO\":\"%s\",\"CUSTOMER_NAME\":\"%s\",\"INVOICE_DATE\":\"%s\",\"SERVICE_TYPE\":\"%s\",\"BL_NO\":\"%s\",\"PARTY_INV_NO\":\"%s\",\"PORT\":\"%s\",\"CONT_NO\":\"%s\",\"CONT_SIZE\":\"%s\",\"CONTAINER_STATUS\":\"%s\",\"AMOUNT\":%.2f,\"IGST\":%.2f,\"CGST\":%.2f,\"SGST\":%.2f,\"INVOICE_AMOUNT\":%.2f}",
+                    escapeJson(invNo), escapeJson(invRef), escapeJson(custName), escapeJson(invDate), escapeJson(sType),
+                    escapeJson(blNo), escapeJson(partyInv), escapeJson(port), escapeJson(contNo), escapeJson(contSize), escapeJson(contStatus),
+                    base, igst, cgst, sgst, gross
                 ));
             }
         }
-        recsJson.append("]");
-
         long totalTime = System.currentTimeMillis() - startTime;
+
 
         String finalJson = String.format(Locale.US,
             "{\n" +
