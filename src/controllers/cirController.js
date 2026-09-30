@@ -271,10 +271,33 @@ async function saveVesselConfig(req, res) {
   }
 }
 
+async function getMovementHistory(req, res) {
+  try {
+    const { queryOracleDatabase } = require('../services/oracleDbService');
+    const contNo = req.query.contNo || req.query.containerNo || req.query.search;
+    const result = await queryOracleDatabase({
+      mode: 'movement-history',
+      contNo: contNo,
+      search: req.query.search || req.query.blNo || req.query.partyInvNo
+    });
+    return res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    console.error('Error fetching movement history:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch movement history: ' + err.message
+    });
+  }
+}
+
 module.exports = {
   getCIRReport,
   getFinancialAnalytics,
   getContainers,
+  getMovementHistory,
   getMasters,
   getFleet,
   getOperations,
