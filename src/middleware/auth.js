@@ -59,13 +59,17 @@ function enforceTenantScope(req, res, next) {
   if (role === 'customer' || tenantScope.type === 'CUSTOMER') {
     const authorizedCustId = String(tenantScope.customerId || '').trim();
     const authorizedCustCode = String(tenantScope.customerCode || '').trim();
+    const authorizedCustName = String(tenantScope.customerName || '').trim();
     const requestedCustId = req.query.customerId || req.body?.customerId;
 
     if (requestedCustId && requestedCustId !== 'all' && requestedCustId !== 'ALL') {
       const cleanReq = String(requestedCustId).trim().toUpperCase();
       const match =
         cleanReq === authorizedCustId.toUpperCase() ||
-        (authorizedCustCode && cleanReq === authorizedCustCode.toUpperCase());
+        (authorizedCustCode && cleanReq === authorizedCustCode.toUpperCase()) ||
+        (authorizedCustCode && cleanReq.includes(authorizedCustCode.toUpperCase())) ||
+        (authorizedCustName && cleanReq.includes(authorizedCustName.toUpperCase())) ||
+        (authorizedCustName && authorizedCustName.toUpperCase().includes(cleanReq));
 
       if (!match) {
         // Rule 6: Client requested a different customer's data -> Reject immediately
@@ -74,9 +78,11 @@ function enforceTenantScope(req, res, next) {
           message: 'Access Denied: You are not authorized to view records for this customer account.',
         });
       }
+      // Ensure the query passed down to Oracle DB uses the searchable customer code or name
+      req.query.customerId = authorizedCustCode || authorizedCustName || authorizedCustId;
     } else {
-      // Rule 7: customerId omitted -> Force server-side tenant scope
-      req.query.customerId = authorizedCustId || authorizedCustCode;
+      // Rule 7: customerId omitted -> Force server-side tenant scope with searchable customer code
+      req.query.customerId = authorizedCustCode || authorizedCustName || authorizedCustId;
     }
   }
 

@@ -476,6 +476,7 @@ public class OracleAnalyticsEngine {
                 ));
             }
         }
+        recsJson.append("]");
         long totalTime = System.currentTimeMillis() - startTime;
 
 
