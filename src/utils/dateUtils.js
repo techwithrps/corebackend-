@@ -233,7 +233,7 @@ function normalizeAnalyticsFilters(query = {}) {
   }
 
   const page = Math.max(1, parseInt(query.page, 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 50));
+  const limit = Math.min(2000, Math.max(1, parseInt(query.limit, 10) || 50));
   const isExport = query.isExport === true || query.isExport === 'true';
 
   return {
