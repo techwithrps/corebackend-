@@ -14,7 +14,7 @@ const {
 // ==========================================
 router.get('/health', cirController.checkHealth);
 router.post('/auth/login', authController.login);
-router.get('/movement-history', cirController.getMovementHistory);
+router.get('/movement-history', authenticate, cirController.getMovementHistory);
 
 // ==========================================
 // 2. Authenticated Endpoints (req.user required)

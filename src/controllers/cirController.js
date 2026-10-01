@@ -275,11 +275,41 @@ async function getMovementHistory(req, res) {
   try {
     const { queryOracleDatabase } = require('../services/oracleDbService');
     const contNo = req.query.contNo || req.query.containerNo || req.query.search;
+    
+    // Server-side tenant isolation check
+    const user = req.user;
+    let customerFilter = null;
+    if (user && user.role === 'customer' && user.tenantScope) {
+      customerFilter = user.tenantScope.customerCode || user.tenantScope.customerName || user.tenantScope.customerId;
+    }
+
     const result = await queryOracleDatabase({
       mode: 'movement-history',
       contNo: contNo,
-      search: req.query.search || req.query.blNo || req.query.partyInvNo
+      search: req.query.search || req.query.blNo || req.query.partyInvNo,
+      customerId: customerFilter
     });
+
+    // If customer is logged in, verify container ownership
+    if (user && user.role === 'customer' && user.tenantScope && result && result.summary) {
+      const allowedCode = (user.tenantScope.customerCode || '').toUpperCase();
+      const allowedName = (user.tenantScope.customerName || '').toUpperCase();
+      const partyInv = String(result.summary.partyInvNo || '').toUpperCase();
+      const summaryCust = String(result.summary.customerName || '').toUpperCase();
+
+      const isOwned = 
+        (allowedCode && (partyInv.startsWith(allowedCode) || partyInv.includes(allowedCode))) ||
+        (allowedName && summaryCust.includes(allowedName)) ||
+        (summaryCust && allowedName.includes(summaryCust));
+
+      if (!isOwned && partyInv) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access Denied: You are not authorized to track containers belonging to another customer account.'
+        });
+      }
+    }
+
     return res.json({
       success: true,
       data: result
