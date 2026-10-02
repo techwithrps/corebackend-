@@ -57,5 +57,19 @@ router.post('/cache-flush', adminAuth, (req, res) => {
   res.json({ success: true, message: 'All in-memory cache flushed successfully' });
 });
 
+// ==========================================
+// 4. Panvaya Maritime Intelligence & Tracking Endpoints
+// ==========================================
+const panvayaController = require('../controllers/panvayaController');
+router.post('/panvaya/track', panvayaController.trackOcean);
+router.get('/panvaya/carriers', panvayaController.getCarriers);
+router.post('/panvaya/schedules', panvayaController.getSchedules);
+router.get('/panvaya/vessels', panvayaController.getVesselDetails);
+router.get('/panvaya/vessels/position', panvayaController.getVesselPosition);
+router.get('/panvaya/port-congestion', panvayaController.getPortCongestion);
+router.post('/panvaya/carbon', panvayaController.calculateCarbon);
+router.post('/panvaya/distance-time', panvayaController.calculateDistanceTime);
+router.get('/panvaya/usage', panvayaController.getUsage);
+
 module.exports = router;
 
