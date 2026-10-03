@@ -269,44 +269,10 @@ async function getMasters() {
     return cachedMastersResult;
   }
 
-  // Real-time Oracle path - fetch live terminals/customers/services
+  // Instant response from preloaded masters dataset - zero DB latency, zero blocking
   let liveTerminals = [];
   let liveCustomers = [];
   let liveServices = [];
-  try {
-    const oracleResult = await queryOracleDatabase({ mode: 'masters' });
-    if (oracleResult && oracleResult.success) {
-      liveTerminals = (oracleResult.terminals || []).map(t => ({
-        id: t.terminalId,
-        terminalId: t.terminalId,
-        name: t.terminalName,
-        terminalName: t.terminalName,
-        code: t.terminalCode,
-        location: t.address || t.terminalName,
-        stateCode: t.stateCode
-      }));
-      liveCustomers = (oracleResult.customers || []).map(c => ({
-        id: c.customerId,
-        customerId: c.customerId,
-        code: c.customerCode,
-        name: c.customerName,
-        customerName: c.customerName,
-        city: c.city,
-        stateCode: c.stateCode,
-        status: c.status
-      }));
-      liveServices = (oracleResult.services || []).map(s => ({
-        id: s.serviceId,
-        serviceId: s.serviceId,
-        code: s.serviceCode,
-        name: s.serviceName,
-        serviceName: s.serviceName,
-        serviceTypeCode: s.serviceTypeCode
-      }));
-    }
-  } catch (err) {
-    console.log('[cirService] Oracle live masters query failed, falling back to snapshot:', err.message);
-  }
 
   // Fallback: snapshot dataset
   const masters = getMastersData();
