@@ -7,7 +7,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "compile:java": "javac -cp src/tools/oracle/ojdbc11.jar src/tools/oracle/OracleAnalyticsEngine.java src/tools/oracle/OracleWarehouseExporter.java",
-    "build": "npm run compile:java"
+    "build": "echo 'Using precompiled Java bytecode'"
   },
   "dependencies": {
     "cors": "^2.8.5",
