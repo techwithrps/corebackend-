@@ -80,10 +80,7 @@ function queryOracleDatabase(filters = {}) {
     });
   });
 
-  // Chain to execution queue so multiple concurrent queries don't overwhelm container memory
-  const queued = executionQueue.then(task, task);
-  executionQueue = queued.catch(() => {});
-  return queued;
+  return task();
 }
 
 module.exports = {
