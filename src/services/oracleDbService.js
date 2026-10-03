@@ -11,8 +11,15 @@ const CP_PATH = `${JAR_PATH}:${TOOLS_ORACLE_DIR}`;
  * with WHERE predicates evaluated inside Oracle DB itself.
  * Supports modes: invoice | containers | fleet | masters
  */
+let executionQueue = Promise.resolve();
+
+/**
+ * Execute dynamic real-time SQL queries directly on Oracle SPJLIVE database
+ * with WHERE predicates evaluated inside Oracle DB itself.
+ * Serialized execution ensures Render 512MB container never runs out of memory.
+ */
 function queryOracleDatabase(filters = {}) {
-  return new Promise((resolve, reject) => {
+  const task = () => new Promise((resolve, reject) => {
     const norm = normalizeAnalyticsFilters(filters);
     if (norm.error) {
       return reject(new Error(norm.error));
@@ -21,7 +28,8 @@ function queryOracleDatabase(filters = {}) {
     const mode = filters.mode || 'invoice';
 
     const args = [
-      '-Xmx2048m',
+      '-Xmx384m',
+      '-Xms64m',
       '-cp', CP_PATH,
       'OracleAnalyticsEngine',
       `mode=${mode}`
@@ -46,7 +54,7 @@ function queryOracleDatabase(filters = {}) {
 
     const startTime = Date.now();
 
-    execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 200 * 1024 * 1024, timeout: 300000 }, (error, stdout, stderr) => {
+    execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 120000 }, (error, stdout, stderr) => {
       if (error) {
         console.error('[OracleDBService] Oracle execution error:', error.message, stderr);
         return reject(new Error('Oracle DB execution failed: ' + error.message));
@@ -70,6 +78,11 @@ function queryOracleDatabase(filters = {}) {
       }
     });
   });
+
+  // Chain to execution queue so multiple concurrent queries don't overwhelm container memory
+  const queued = executionQueue.then(task, task);
+  executionQueue = queued.catch(() => {});
+  return queued;
 }
 
 module.exports = {

@@ -266,11 +266,20 @@ async function getFleet(filters = {}) {
   };
 }
 
+let cachedMastersResult = null;
+let cachedMastersTimestamp = 0;
+const MASTERS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
 /**
  * Fetch Live Masters directly from DB and branch analytics
  * Real-time from Oracle TERMINAL_MASTER / CUSTOMER_MASTER / SERVICE_MASTER
+ * Cached in memory to ensure super-fast sub-millisecond response without spawning heavy processes
  */
 async function getMasters() {
+  if (cachedMastersResult && (Date.now() - cachedMastersTimestamp < MASTERS_CACHE_TTL)) {
+    return cachedMastersResult;
+  }
+
   // Real-time Oracle path - fetch live terminals/customers/services
   let liveTerminals = [];
   let liveCustomers = [];
@@ -512,7 +521,7 @@ async function getMasters() {
     }
   })();
 
-  return {
+  const finalResult = {
     source: liveTerminals.length > 0 ? 'ORACLE_SPJLIVE_LIVE' : 'AUDITED_ENTERPRISE_DB',
     companies: officialCompanies,
     companyCustomers: compData?.companyCustomers || {},
@@ -542,6 +551,10 @@ async function getMasters() {
       user: 'SPJLIVE'
     },
   };
+
+  cachedMastersResult = finalResult;
+  cachedMastersTimestamp = Date.now();
+  return finalResult;
 }
 
 /**
