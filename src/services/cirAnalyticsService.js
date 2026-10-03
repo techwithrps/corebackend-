@@ -317,6 +317,8 @@ function calculateKPIs(rows = [], dbSummary = null, detailed = null, filterMeta 
 const { normalizeAnalyticsFilters } = require('../utils/dateUtils');
 const { queryOracleDatabase } = require('./oracleDbService');
 
+const inFlightRequests = new Map();
+
 /**
  * Fetch Full 360° Financial, Terminal-Wise & Customer-Wise Analytics
  * STRICTLY via SQL query executed inside Oracle SPJLIVE database per filter scope.
@@ -333,60 +335,71 @@ async function getFinancialAnalytics(inputFilters = {}) {
     return cached;
   }
 
-  try {
-    const oracleResult = await queryOracleDatabase({ ...normFilters, mode: 'financial-analytics' });
-    if (oracleResult && oracleResult.success && oracleResult.kpis) {
-      const liveKpis = oracleResult.kpis;
-      const physicalContainers = liveKpis.containerCount || liveKpis.distinctContainers || 0;
-      const containerMovements = liveKpis.containerCount || 0;
-      const jobOrders = liveKpis.jobOrders || 0;
-      const teuCount = liveKpis.teuCount || Math.round(physicalContainers * 1.5);
-
-      const resLive = {
-        source: 'ORACLE_SPJLIVE_STORED_PROCEDURE',
-        executionMode: 'DIRECT_STORED_PROCEDURE_CALL',
-        matchedRows: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
-        matchedRowCount: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
-        filters: normFilters,
-        overallKPIs: {
-          totalInvoices: liveKpis.invoiceCount,
-          totalTaxableAmount: liveKpis.totalBillAmount,
-          totalTaxAmount: liveKpis.totalTax,
-          totalGrossAmount: liveKpis.totalGrossAmount,
-          totalCreditAmount: 0,
-          netRevenue: liveKpis.totalGrossAmount,
-          totalContainers: physicalContainers,
-          containerMovements,
-          jobOrders,
-          totalTeus: teuCount,
-          totalCustomers: oracleResult.topCustomers?.length || 0,
-          totalTerminals: 1,
-          activeTerminalCount: 1,
-          activeCustomerCount: oracleResult.topCustomers?.length || 0,
-        },
-        kpis: {
-          ...liveKpis,
-          containerCount: physicalContainers,
-          containerMovements,
-          jobOrders,
-          teuCount,
-          physicalContainers,
-        },
-        terminalAnalytics: oracleResult.terminalAnalytics || [],
-        customerAnalytics: oracleResult.topCustomers || [],
-        topCustomers: oracleResult.topCustomers || [],
-        records: oracleResult.records || []
-      };
-      // Cache for 15 minutes (15 * 60 * 1000 ms) so subsequent loads & filter changes return in < 1ms
-      cacheService.set(cacheKey, resLive, 15 * 60 * 1000);
-      return resLive;
-    }
-  } catch (err) {
-    console.error('[cirAnalyticsService] Dynamic Oracle SP query error:', err.message);
-    throw new Error('Oracle Live DB Query Failed: ' + err.message);
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey);
   }
 
-  throw new Error('Oracle Live DB Query returned empty or unsuccessful payload');
+  const fetchPromise = (async () => {
+    try {
+      const oracleResult = await queryOracleDatabase({ ...normFilters, mode: 'financial-analytics' });
+      if (oracleResult && oracleResult.success && oracleResult.kpis) {
+        const liveKpis = oracleResult.kpis;
+        const physicalContainers = liveKpis.containerCount || liveKpis.distinctContainers || 0;
+        const containerMovements = liveKpis.containerCount || 0;
+        const jobOrders = liveKpis.jobOrders || 0;
+        const teuCount = liveKpis.teuCount || Math.round(physicalContainers * 1.5);
+
+        const resLive = {
+          source: 'ORACLE_SPJLIVE_STORED_PROCEDURE',
+          executionMode: 'DIRECT_STORED_PROCEDURE_CALL',
+          matchedRows: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
+          matchedRowCount: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
+          filters: normFilters,
+          overallKPIs: {
+            totalInvoices: liveKpis.invoiceCount,
+            totalTaxableAmount: liveKpis.totalBillAmount,
+            totalTaxAmount: liveKpis.totalTax,
+            totalGrossAmount: liveKpis.totalGrossAmount,
+            totalCreditAmount: 0,
+            netRevenue: liveKpis.totalGrossAmount,
+            totalContainers: physicalContainers,
+            containerMovements,
+            jobOrders,
+            totalTeus: teuCount,
+            totalCustomers: oracleResult.topCustomers?.length || 0,
+            totalTerminals: 1,
+            activeTerminalCount: 1,
+            activeCustomerCount: oracleResult.topCustomers?.length || 0,
+          },
+          kpis: {
+            ...liveKpis,
+            containerCount: physicalContainers,
+            containerMovements,
+            jobOrders,
+            teuCount,
+            physicalContainers,
+          },
+          terminalAnalytics: oracleResult.terminalAnalytics || [],
+          customerAnalytics: oracleResult.topCustomers || [],
+          topCustomers: oracleResult.topCustomers || [],
+          records: oracleResult.records || []
+        };
+        // Cache for 15 minutes (15 * 60 * 1000 ms) so subsequent loads & filter changes return in < 1ms
+        cacheService.set(cacheKey, resLive, 15 * 60 * 1000);
+        return resLive;
+      }
+    } catch (err) {
+      console.error('[cirAnalyticsService] Dynamic Oracle SP query error:', err.message);
+      throw new Error('Oracle Live DB Query Failed: ' + err.message);
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+
+    throw new Error('Oracle Live DB Query returned empty or unsuccessful payload');
+  })();
+
+  inFlightRequests.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 module.exports = {
