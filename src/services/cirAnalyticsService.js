@@ -377,7 +377,8 @@ async function getFinancialAnalytics(inputFilters = {}) {
         topCustomers: oracleResult.topCustomers || [],
         records: oracleResult.records || []
       };
-      cacheService.set(cacheKey, resLive, 300);
+      // Cache for 15 minutes (15 * 60 * 1000 ms) so subsequent loads & filter changes return in < 1ms
+      cacheService.set(cacheKey, resLive, 15 * 60 * 1000);
       return resLive;
     }
   } catch (err) {

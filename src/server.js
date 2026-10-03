@@ -28,19 +28,15 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // Allow server-to-server / curl
-    const isAllowed = allowedOrigins.some(
-      allowed => allowed === origin || (allowed.endsWith('.vercel.app') && origin.endsWith('.vercel.app'))
-    );
-    if (isAllowed) return callback(null, true);
-    return callback(new Error('CORS policy: Not allowed by Access-Control-Allow-Origin.'));
-  },
+  origin: true,
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'x-admin-key'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'x-admin-key', 'Accept'],
+  exposedHeaders: ['*']
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Request logger
