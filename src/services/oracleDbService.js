@@ -28,8 +28,8 @@ function queryOracleDatabase(filters = {}) {
     const mode = filters.mode || 'invoice';
 
     const args = [
-      '-Xmx384m',
-      '-Xms64m',
+      '-Xmx160m',
+      '-Xms32m',
       '-cp', CP_PATH,
       'OracleAnalyticsEngine',
       `mode=${mode}`
@@ -61,7 +61,6 @@ function queryOracleDatabase(filters = {}) {
         return reject(new Error('Oracle DB execution failed: ' + error.message));
       }
 
-
       try {
         const json = JSON.parse(stdout.trim());
         if (!json.success) {
@@ -80,7 +79,11 @@ function queryOracleDatabase(filters = {}) {
     });
   });
 
-  return task();
+  // Strict serialization queue guarantees only 1 JVM process runs at any instant
+  // Preventing Render 512MB RAM container from ever running out of memory
+  const next = executionQueue.then(task, task);
+  executionQueue = next.catch(() => {});
+  return next;
 }
 
 module.exports = {
