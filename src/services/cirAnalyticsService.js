@@ -334,29 +334,16 @@ async function getFinancialAnalytics(inputFilters = {}) {
   }
 
   try {
-    const oracleResult = await queryOracleDatabase(normFilters);
+    const oracleResult = await queryOracleDatabase({ ...normFilters, mode: 'financial-analytics' });
     if (oracleResult && oracleResult.success && oracleResult.kpis) {
       const liveKpis = oracleResult.kpis;
-
-      // Enrich with real-time container movements & job orders from ALL_PARTY_ACCOUNT
-      let containerMovements = liveKpis.containerMovements || liveKpis.containerCount || 0;
-      let jobOrders = liveKpis.jobOrders || 0;
-      let physicalContainers = liveKpis.physicalContainers || liveKpis.containerCount || 0;
-      let teuCount = liveKpis.teuCount || 0;
-      try {
-        const kpiResult = await queryOracleDatabase({ ...normFilters, mode: 'kpis' });
-        if (kpiResult && kpiResult.success && kpiResult.kpis) {
-          containerMovements = kpiResult.kpis.containerMovements || containerMovements;
-          jobOrders = kpiResult.kpis.jobOrders || jobOrders;
-          physicalContainers = kpiResult.kpis.physicalContainers || physicalContainers;
-          teuCount = kpiResult.kpis.teuCount || teuCount;
-        }
-      } catch (e) {
-        console.log('[cirAnalyticsService] KPI enrichment query failed:', e.message);
-      }
+      const physicalContainers = liveKpis.containerCount || liveKpis.distinctContainers || 0;
+      const containerMovements = liveKpis.containerCount || 0;
+      const jobOrders = liveKpis.jobOrders || 0;
+      const teuCount = liveKpis.teuCount || Math.round(physicalContainers * 1.5);
 
       const resLive = {
-        source: 'ORACLE_SPJLIVE_LIVE_STORED_PROCEDURE',
+        source: 'ORACLE_SPJLIVE_STORED_PROCEDURE',
         executionMode: 'DIRECT_STORED_PROCEDURE_CALL',
         matchedRows: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
         matchedRowCount: oracleResult.matchedRowCount || liveKpis.lineItemCount || liveKpis.invoiceCount,
