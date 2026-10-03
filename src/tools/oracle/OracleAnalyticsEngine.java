@@ -140,11 +140,29 @@ public class OracleAnalyticsEngine {
         if (companyIdStr != null && !companyIdStr.equalsIgnoreCase("all")) {
             try { compId = Integer.parseInt(companyIdStr); } catch (Exception e) {}
         }
-        if (terminalIdStr != null && !terminalIdStr.equalsIgnoreCase("all")) {
-            try { termId = Integer.parseInt(terminalIdStr); } catch (Exception e) {}
+        if (terminalIdStr != null && !terminalIdStr.equalsIgnoreCase("all") && !terminalIdStr.isEmpty()) {
+            try { 
+                termId = Integer.parseInt(terminalIdStr); 
+            } catch (Exception e) {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT TERMINAL_ID FROM SPJLIVE.IMP_INVOICE WHERE LOWER(TERMINAL_NAME) LIKE ? AND ROWNUM <= 1")) {
+                    pstmt.setString(1, "%" + terminalIdStr.toLowerCase().trim() + "%");
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) termId = rs.getInt(1);
+                    }
+                } catch (Exception ex) {}
+            }
         }
-        if (customerIdStr != null && !customerIdStr.equalsIgnoreCase("all")) {
-            try { custId = Integer.parseInt(customerIdStr); } catch (Exception e) {}
+        if (customerIdStr != null && !customerIdStr.equalsIgnoreCase("all") && !customerIdStr.isEmpty()) {
+            try { 
+                custId = Integer.parseInt(customerIdStr); 
+            } catch (Exception e) {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT CUSTOMER_ID FROM SPJLIVE.CUSTOMER_MASTER WHERE LOWER(CUSTOMER_NAME) LIKE ? AND ROWNUM <= 1")) {
+                    pstmt.setString(1, "%" + customerIdStr.toLowerCase().trim() + "%");
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) custId = rs.getInt(1);
+                    }
+                } catch (Exception ex) {}
+            }
         }
         String svc = (serviceTypeStr != null && !serviceTypeStr.equalsIgnoreCase("all") && !serviceTypeStr.equals("0")) ? serviceTypeStr : "ALL";
 
