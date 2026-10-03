@@ -44,6 +44,7 @@ function queryOracleDatabase(filters = {}) {
     if (norm.customerId) args.push(`customerId=${norm.customerId}`);
     if (norm.terminalId) args.push(`terminalId=${norm.terminalId}`);
     if (norm.serviceId) args.push(`serviceId=${norm.serviceId}`);
+    if (norm.serviceType) args.push(`serviceType=${norm.serviceType}`);
     if (norm.tripType) args.push(`tripType=${norm.tripType}`);
     if (norm.size) args.push(`size=${norm.size}`);
     if (norm.contNo) args.push(`contNo=${norm.contNo}`);
