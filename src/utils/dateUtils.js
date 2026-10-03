@@ -213,7 +213,19 @@ function normalizeAnalyticsFilters(query = {}) {
   }
 
   if (fromDateObj && toDateInclusiveObj && fromDateObj > toDateInclusiveObj) {
-    return { error: `Invalid date range: fromDate (${fromDate}) cannot be after toDate (${toDate}).` };
+    // Gracefully swap inverted date boundaries instead of failing with HTTP 400
+    const tempObj = fromDateObj;
+    fromDateObj = toDateInclusiveObj;
+    toDateInclusiveObj = tempObj;
+
+    const tempStr = fromDate;
+    fromDate = toDate;
+    toDate = tempStr;
+
+    const parts = parseDateParts(toDate);
+    if (parts) {
+      toDateExclusive = new Date(parts.year, parts.month - 1, parts.day + 1, 0, 0, 0, 0);
+    }
   }
 
   // Ensure YYYY-MM-DD string formatting for SQL date boundaries
