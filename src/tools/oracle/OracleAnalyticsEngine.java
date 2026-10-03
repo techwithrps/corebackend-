@@ -473,7 +473,7 @@ public class OracleAnalyticsEngine {
         int endRow = page * limit;
 
         String pageSql = 
-            "SELECT * FROM ( " +
+            "SELECT /*+ PARALLEL(4) */ * FROM ( " +
             "  SELECT " +
             "    CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
             "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, " +
@@ -496,8 +496,7 @@ public class OracleAnalyticsEngine {
             "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
             "      II.BILL_AMOUNT AS INVOICE_AMOUNT " +
             "    FROM " +
-            "      (SELECT DISTINCT TERMINAL_ID, COMPANY_ID, INVOICE_REF_NO, INVOICE_NO, INVOICE_DATE, SERVICE_TYPE, CREATED_BY, CANCLE_FLAGE, BILL_TO FROM SPJLIVE.IMP_INVOICE " +
-            "       WHERE INVOICE_DATE IS NOT NULL AND CANCLE_FLAGE IS NULL) I, " +
+            "      SPJLIVE.IMP_INVOICE I, " +
             "      SPJLIVE.IMP_INVOICE_ITEMS II, " +
             "      SPJLIVE.CUSTOMER_MASTER CM, " +
             "      SPJLIVE.IMP_INVOICE_TAX IIT1, " +
@@ -510,6 +509,7 @@ public class OracleAnalyticsEngine {
             "      AND II.LINE_ITEM_ID = AP.CONT_JO_ID(+) " +
             "      AND IIT1.TAX_HEAD_ID = 5 AND IIT2.TAX_HEAD_ID = 6 AND IIT3.TAX_HEAD_ID = 7 " +
             "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
+            "      AND I.INVOICE_DATE IS NOT NULL " +
             "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
             "  ) " +
             "  GROUP BY CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
