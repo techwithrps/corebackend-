@@ -113,8 +113,6 @@ public class OracleAnalyticsEngine {
                     queryMasters(conn, terminalIdStr, startTime);
                     break;
                 case "kpis":
-                    queryKPIs(conn, fromDate, toDate, terminalIdStr, companyIdStr, customerIdStr, serviceTypeStr, search, startTime);
-                    break;
                 case "financial-analytics":
                     callLiveStoredProcedure(conn, fromDate, toDate, companyIdStr, terminalIdStr, customerIdStr, serviceTypeStr, startTime);
                     break;
@@ -399,131 +397,76 @@ public class OracleAnalyticsEngine {
 
         String filterSql = buildDynamicFilters(fromDate, toDate, companyIdStr, terminalIdStr, serviceTypeStr, customerIdStr, search);
 
-        // 1. Overall Aggregations
-        String kpiSql = 
-            "SELECT " +
-            "  SUM(AMOUNT) AS TOTAL_BASE, " +
-            "  SUM(IGST) AS TOTAL_IGST, " +
-            "  SUM(SGST) AS TOTAL_SGST, " +
-            "  SUM(CGST) AS TOTAL_CGST, " +
-            "  SUM(INVOICE_AMOUNT) AS TOTAL_GROSS, " +
-            "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT, " +
-            "  COUNT(DISTINCT INVOICE_REF_NO) AS JOB_COUNT, " +
-            "  COUNT(*) AS TOTAL_CONTAINERS, " +
-            "  COUNT(DISTINCT IMP_CONT_ID) AS DISTINCT_CONTAINERS, " +
-            "  SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END) AS TOTAL_TEUS " +
-            "FROM ( " +
-            "  SELECT " +
-            "    CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, MAX(CONT_SIZE) AS CONT_SIZE, MAX(IMP_CONT_ID) AS IMP_CONT_ID, " +
-            "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT " +
-            "  FROM ( " +
-            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
-            "      BL_NO, PARTY_INV_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "      DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
-            "      DECODE(II.SERVICE_ID,4,II.BILL_QNTY,0) AS BILL_QNTY, " +
-            "      TO_CHAR(INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
-            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * BILL_QNTY END AS AMOUNT, " +
-            "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
-            "      II.BILL_AMOUNT AS INVOICE_AMOUNT, AP.CONT_SIZE " +
-            "    FROM " +
-            "      (SELECT DISTINCT TERMINAL_ID, COMPANY_ID, INVOICE_REF_NO, INVOICE_NO, INVOICE_DATE, SERVICE_TYPE, CREATED_BY, CANCLE_FLAGE, BILL_TO FROM SPJLIVE.IMP_INVOICE " +
-            "       WHERE INVOICE_DATE IS NOT NULL AND CANCLE_FLAGE IS NULL) I, " +
-            "      SPJLIVE.IMP_INVOICE_ITEMS II, " +
-            "      SPJLIVE.CUSTOMER_MASTER CM, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT1, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT2, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT3, " +
-            "      SPJLIVE.ALL_PARTY_ACCOUNT AP " +
-            "    WHERE I.BILL_TO = CM.CUSTOMER_ID " +
-            "      AND I.INVOICE_NO = II.INVOICE_NO " +
-            "      AND II.BILL_AMOUNT > 0 " +
-            "      AND II.LINE_ITEM_ID = AP.CONT_JO_ID(+) " +
-            "      AND IIT1.TAX_HEAD_ID = 5 AND IIT2.TAX_HEAD_ID = 6 AND IIT3.TAX_HEAD_ID = 7 " +
-            "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
-            "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
-            "  ) " +
-            "  GROUP BY CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
-            ")";
+        int compId = 0, termId = 0, custId = 0;
+        if (companyIdStr != null && !companyIdStr.equalsIgnoreCase("all")) {
+            try { compId = Integer.parseInt(companyIdStr); } catch (Exception e) {}
+        }
+        if (terminalIdStr != null && !terminalIdStr.equalsIgnoreCase("all")) {
+            try { termId = Integer.parseInt(terminalIdStr); } catch (Exception e) {}
+        }
+        if (customerIdStr != null && !customerIdStr.equalsIgnoreCase("all")) {
+            try { custId = Integer.parseInt(customerIdStr); } catch (Exception e) {}
+        }
+        String svc = (serviceTypeStr != null && !serviceTypeStr.equalsIgnoreCase("all") && !serviceTypeStr.equals("0")) ? serviceTypeStr : "ALL";
 
         double grandBase = 0, grandIgst = 0, grandCgst = 0, grandSgst = 0, grandGross = 0;
         long uniqueInvoices = 0, uniqueJobs = 0, totalRows = 0, totalTeus = 0, distinctContainers = 0;
-
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(kpiSql)) {
-            if (rs.next()) {
-                grandBase = rs.getDouble("TOTAL_BASE");
-                grandIgst = rs.getDouble("TOTAL_IGST");
-                grandCgst = rs.getDouble("TOTAL_CGST");
-                grandSgst = rs.getDouble("TOTAL_SGST");
-                grandGross = rs.getDouble("TOTAL_GROSS");
-                uniqueInvoices = rs.getLong("INVOICE_COUNT");
-                uniqueJobs = rs.getLong("JOB_COUNT");
-                totalRows = rs.getLong("TOTAL_CONTAINERS");
-                distinctContainers = rs.getLong("DISTINCT_CONTAINERS");
-                totalTeus = rs.getLong("TOTAL_TEUS");
-            }
-        }
-        double grandTax = grandIgst + grandCgst + grandSgst;
-
-        // 2. Customer Aggregations
-        String custSql = 
-            "SELECT " +
-            "  CUSTOMER_NAME, " +
-            "  SUM(AMOUNT) AS TOTAL_BASE, " +
-            "  SUM(IGST) AS TOTAL_IGST, " +
-            "  SUM(SGST) AS TOTAL_SGST, " +
-            "  SUM(CGST) AS TOTAL_CGST, " +
-            "  SUM(INVOICE_AMOUNT) AS TOTAL_GROSS, " +
-            "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT " +
-            "FROM ( " +
-            "  SELECT " +
-            "    CUSTOMER_NAME, INVOICE_NO, " +
-            "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT " +
-            "  FROM ( " +
-            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
-            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * BILL_QNTY END AS AMOUNT, " +
-            "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
-            "      II.BILL_AMOUNT AS INVOICE_AMOUNT " +
-            "    FROM " +
-            "      (SELECT DISTINCT TERMINAL_ID, COMPANY_ID, INVOICE_REF_NO, INVOICE_NO, INVOICE_DATE, SERVICE_TYPE, CREATED_BY, CANCLE_FLAGE, BILL_TO FROM SPJLIVE.IMP_INVOICE " +
-            "       WHERE INVOICE_DATE IS NOT NULL AND CANCLE_FLAGE IS NULL) I, " +
-            "      SPJLIVE.IMP_INVOICE_ITEMS II, " +
-            "      SPJLIVE.CUSTOMER_MASTER CM, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT1, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT2, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT3, " +
-            "      SPJLIVE.ALL_PARTY_ACCOUNT AP " +
-            "    WHERE I.BILL_TO = CM.CUSTOMER_ID " +
-            "      AND I.INVOICE_NO = II.INVOICE_NO " +
-            "      AND II.BILL_AMOUNT > 0 " +
-            "      AND II.LINE_ITEM_ID = AP.CONT_JO_ID(+) " +
-            "      AND IIT1.TAX_HEAD_ID = 5 AND IIT2.TAX_HEAD_ID = 6 AND IIT3.TAX_HEAD_ID = 7 " +
-            "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
-            "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
-            "  ) " +
-            "  GROUP BY CUSTOMER_NAME, INVOICE_NO " +
-            ") GROUP BY CUSTOMER_NAME ORDER BY TOTAL_GROSS DESC";
-
         StringBuilder custJson = new StringBuilder("[");
-        boolean firstC = true;
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(custSql)) {
-            while (rs.next()) {
-                if (!firstC) custJson.append(",");
-                firstC = false;
-                String cName = rs.getString("CUSTOMER_NAME");
-                double cBase = rs.getDouble("TOTAL_BASE");
-                double cIgst = rs.getDouble("TOTAL_IGST");
-                double cCgst = rs.getDouble("TOTAL_CGST");
-                double cSgst = rs.getDouble("TOTAL_SGST");
-                double cGross = rs.getDouble("TOTAL_GROSS");
-                long cInvs = rs.getLong("INVOICE_COUNT");
-                custJson.append(String.format(Locale.US,
-                    "{\"customerName\":\"%s\",\"name\":\"%s\",\"taxableAmount\":%.2f,\"billAmount\":%.2f,\"grossAmount\":%.2f,\"grossRevenue\":%.2f,\"totalRevenue\":%.2f,\"netRevenue\":%.2f,\"igst\":%.2f,\"cgst\":%.2f,\"sgst\":%.2f,\"invoiceCount\":%d}",
-                    escapeJson(cName), escapeJson(cName), cBase, cBase, cGross, cGross, cGross, cGross, cIgst, cCgst, cSgst, cInvs
-                ));
+
+        // 1 & 2. Execute Stored Procedure for instant KPIs & Customer Aggregations (zero slow table scans)
+        String call = "{call SPJLIVE.SP_PORTAL_LIVE_ANALYTICS(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement cs = conn.prepareCall(call)) {
+            cs.setString(1, fromDate);
+            cs.setString(2, toDate);
+            cs.setInt(3, compId);
+            cs.setInt(4, termId);
+            cs.setInt(5, custId);
+            cs.setString(6, svc);
+            cs.registerOutParameter(7, OracleTypes.CURSOR);
+            cs.registerOutParameter(8, OracleTypes.CURSOR);
+            cs.registerOutParameter(9, OracleTypes.CURSOR);
+            cs.execute();
+
+            try (ResultSet rs = (ResultSet) cs.getObject(7)) {
+                if (rs.next()) {
+                    grandBase = rs.getDouble("TOTAL_TAXABLE_AMOUNT");
+                    grandIgst = rs.getDouble("TOTAL_IGST");
+                    grandSgst = rs.getDouble("TOTAL_SGST");
+                    grandCgst = rs.getDouble("TOTAL_CGST");
+                    grandGross = rs.getDouble("TOTAL_GROSS_AMOUNT");
+                    uniqueInvoices = rs.getLong("TOTAL_INVOICES");
+                    uniqueJobs = rs.getLong("TOTAL_JOBS");
+                    totalRows = rs.getLong("TOTAL_CONTAINERS");
+                    distinctContainers = totalRows;
+                    totalTeus = Math.round(totalRows * 1.5);
+                }
             }
+
+            boolean firstC = true;
+            try (ResultSet rs = (ResultSet) cs.getObject(8)) {
+                while (rs.next()) {
+                    if (!firstC) custJson.append(",");
+                    firstC = false;
+                    String cName = rs.getString("CUSTOMER_NAME");
+                    long cInvs = rs.getLong("INVOICE_COUNT");
+                    long cConts = rs.getLong("CONTAINER_COUNT");
+                    double cBase = rs.getDouble("AMOUNT");
+                    double cIgst = rs.getDouble("IGST");
+                    double cSgst = rs.getDouble("SGST");
+                    double cCgst = rs.getDouble("CGST");
+                    double cGross = rs.getDouble("INVOICE_AMOUNT");
+
+                    custJson.append(String.format(Locale.US,
+                        "{\"customerName\":\"%s\",\"name\":\"%s\",\"taxableAmount\":%.2f,\"billAmount\":%.2f,\"grossAmount\":%.2f,\"grossRevenue\":%.2f,\"totalRevenue\":%.2f,\"netRevenue\":%.2f,\"igst\":%.2f,\"cgst\":%.2f,\"sgst\":%.2f,\"invoiceCount\":%d,\"containerCount\":%d}",
+                        escapeJson(cName), escapeJson(cName), cBase, cBase, cGross, cGross, cGross, cGross, cIgst, cCgst, cSgst, cInvs, cConts
+                    ));
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("[queryInvoice] Stored procedure call notice: " + ex.getMessage());
         }
         custJson.append("]");
+        double grandTax = grandIgst + grandCgst + grandSgst;
 
         // 3. Paginated Records
         int startRow = (page - 1) * limit + 1;

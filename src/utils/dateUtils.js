@@ -187,12 +187,7 @@ function normalizeAnalyticsFilters(query = {}) {
     }
   }
 
-  // Safe default: If no specific dates or FY requested, scope to current financial year
-  // This prevents scanning all 70,000+ historical invoices across 10 years in a single run
-  if (!financialYear && !fromDate && !toDate) {
-    fromDate = '2026-04-01';
-    toDate = '2027-03-31';
-  }
+
 
   // Validate dates if present
   let fromDateObj = null;

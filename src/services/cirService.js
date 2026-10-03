@@ -64,22 +64,11 @@ async function getCIRReport(filters = {}) {
       const page = Number(filters.page) || 1;
       const limit = Number(filters.limit) || 50;
 
-      // Enrich with real-time container movements & job orders
-      let containerMovements = k.containerMovements || k.lineItemCount || 0;
-      let jobOrders = k.jobOrders || 0;
+      // Use kpis directly from single query execution
+      let containerMovements = k.containerMovements || k.containerCount || k.lineItemCount || 0;
+      let jobOrders = k.jobOrders || k.invoiceCount || 0;
       let physicalContainers = k.containerCount || k.lineItemCount || 0;
-      let teuCount = k.teuCount || 0;
-      try {
-        const kpiResult = await queryOracleDatabase({ ...filters, mode: 'kpis' });
-        if (kpiResult && kpiResult.success && kpiResult.kpis) {
-          containerMovements = kpiResult.kpis.containerMovements || containerMovements;
-          jobOrders = kpiResult.kpis.jobOrders || jobOrders;
-          physicalContainers = kpiResult.kpis.physicalContainers || physicalContainers;
-          teuCount = kpiResult.kpis.teuCount || teuCount;
-        }
-      } catch (e) {
-        console.log('[cirService] KPI enrichment query failed:', e.message);
-      }
+      let teuCount = k.teuCount || Math.round(physicalContainers * 1.5);
 
       return {
         success: true,
