@@ -27,17 +27,21 @@ const cirAnalyticsService = require('../services/cirAnalyticsService');
 
 async function getFinancialAnalytics(req, res) {
   try {
+    if (req.aborted || req.destroyed) return;
     const filters = normalizeAnalyticsFilters(req.query);
+    filters.isAborted = () => req.aborted || req.destroyed;
     if (filters.error) {
       return res.status(400).json({ success: false, error: filters.error });
     }
 
     const result = await cirAnalyticsService.getFinancialAnalytics(filters);
+    if (req.aborted || req.destroyed) return;
     return res.json({
       success: true,
       data: result
     });
   } catch (err) {
+    if (req.aborted || req.destroyed) return;
     console.error('Error fetching financial analytics:', err.message);
     return res.status(500).json({
       success: false,
