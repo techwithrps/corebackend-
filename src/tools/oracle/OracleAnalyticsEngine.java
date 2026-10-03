@@ -202,6 +202,8 @@ public class OracleAnalyticsEngine {
                 while (rs.next()) {
                     if (!firstC) custJson.append(",");
                     firstC = false;
+                    int cId = 0;
+                    try { cId = rs.getInt("CUSTOMER_ID"); } catch (Exception ex) {}
                     String cName = rs.getString("CUSTOMER_NAME");
                     long cInvs = rs.getLong("INVOICE_COUNT");
                     long cConts = rs.getLong("CONTAINER_COUNT");
@@ -212,8 +214,8 @@ public class OracleAnalyticsEngine {
                     double cGross = rs.getDouble("INVOICE_AMOUNT");
 
                     custJson.append(String.format(Locale.US,
-                        "{\"customerName\":\"%s\",\"name\":\"%s\",\"taxableAmount\":%.2f,\"billAmount\":%.2f,\"grossAmount\":%.2f,\"grossRevenue\":%.2f,\"totalRevenue\":%.2f,\"netRevenue\":%.2f,\"igst\":%.2f,\"cgst\":%.2f,\"sgst\":%.2f,\"invoiceCount\":%d,\"containerCount\":%d}",
-                        escapeJson(cName), escapeJson(cName), cBase, cBase, cGross, cGross, cGross, cGross, cIgst, cCgst, cSgst, cInvs, cConts
+                        "{\"customerId\":%d,\"id\":%d,\"customerName\":\"%s\",\"name\":\"%s\",\"taxableAmount\":%.2f,\"billAmount\":%.2f,\"grossAmount\":%.2f,\"grossRevenue\":%.2f,\"totalRevenue\":%.2f,\"netRevenue\":%.2f,\"igst\":%.2f,\"cgst\":%.2f,\"sgst\":%.2f,\"invoiceCount\":%d,\"containerCount\":%d}",
+                        cId, cId, escapeJson(cName), escapeJson(cName), cBase, cBase, cGross, cGross, cGross, cGross, cIgst, cCgst, cSgst, cInvs, cConts
                     ));
                 }
             }

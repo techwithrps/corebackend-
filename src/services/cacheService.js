@@ -14,7 +14,7 @@ class CacheService {
   generateKey(prefix, params = {}) {
     if (typeof params === 'string') return `${prefix}:${params}`;
     const sortedEntries = Object.entries(params)
-      .filter(([_, v]) => v !== undefined && v !== null && v !== '' && v !== 'all' && v !== 'ALL')
+      .filter(([_, v]) => v !== undefined && v !== null && v !== '' && v !== 'all' && v !== 'ALL' && typeof v !== 'object')
       .sort(([a], [b]) => a.localeCompare(b));
     const serialized = sortedEntries.map(([k, v]) => `${k}=${v}`).join('&');
     return serialized ? `${prefix}:${serialized}` : `${prefix}:default`;
