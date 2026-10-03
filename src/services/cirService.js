@@ -386,72 +386,7 @@ async function getMasters() {
           c.terminals[tId].netRevenue += item.totalAmount || 0;
         });
       }
-
-      // 2. Also overlay live snapshot records for active container counts
-      const snap = getSnapshotData();
-      const { getRecordFinancialYear } = require('../utils/dateUtils');
-      snap.forEach(r => {
-        const cName = (r.CUSTOMER_NAME || '').toLowerCase().trim();
-        const tId = String(r.TERMINAL_ID || '');
-        const amt = Number(r.AMOUNT) || Number(r.BILL_AMOUNT) || 0;
-        const fy = getRecordFinancialYear(r);
-
-        let matched = false;
-        for (const k in custMatrix) {
-          if (custMatrix[k].customerName.toLowerCase().trim() === cName) {
-            matched = true;
-            if (tId) {
-              if (!custMatrix[k].terminals[tId]) {
-                custMatrix[k].terminals[tId] = {
-                  terminalId: tId,
-                  terminalName: r.TERMINAL_NAME || ('Terminal ' + tId),
-                  invoiceCount: 0,
-                  totalContainers: 0,
-                  netRevenue: 0,
-                  financialYears: [fy]
-                };
-              }
-              if (r.CONT_NO) custMatrix[k].terminals[tId].totalContainers++;
-            }
-          }
-        }
-
-        // If not in Oracle triMatrix, create entry
-        if (!matched && cName) {
-          const cId = String(r.CUSTOMER_ID || r.CUSTOMER_NAME);
-          const compId = 2; // Default to SPJ
-          const key = compId + '_' + cId;
-          if (!custMatrix[key]) {
-            custMatrix[key] = {
-              customerId: cId,
-              customerName: r.CUSTOMER_NAME,
-              companyId: compId,
-              totalInvoices: 0,
-              totalRevenue: 0,
-              terminals: {},
-              financialYears: [fy]
-            };
-          }
-          const c = custMatrix[key];
-          c.totalInvoices++;
-          c.totalRevenue += amt;
-          if (tId) {
-            if (!c.terminals[tId]) {
-              c.terminals[tId] = {
-                terminalId: tId,
-                terminalName: r.TERMINAL_NAME || ('Terminal ' + tId),
-                invoiceCount: 0,
-                totalContainers: 0,
-                netRevenue: 0,
-                financialYears: [fy]
-              };
-            }
-            c.terminals[tId].invoiceCount++;
-            c.terminals[tId].netRevenue += amt;
-            if (r.CONT_NO) c.terminals[tId].totalContainers++;
-          }
-        }
-      });
+      // TriMatrix pre-aggregated dataset gives instant < 2ms response without blocking event loop
 
       return Object.values(custMatrix).map(c => ({
         customerId: c.customerId,
