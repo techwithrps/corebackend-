@@ -1,9 +1,3 @@
--- ============================================================================
--- ORACLE STORED PROCEDURE: SPJLIVE.SP_PORTAL_LIVE_ANALYTICS
--- Schema: SPJLIVE
--- Single Source of Truth for SPJ Logistics Financial & Operational Analytics
--- ============================================================================
-
 CREATE OR REPLACE PROCEDURE SPJLIVE.SP_PORTAL_LIVE_ANALYTICS (
     p_FROM_DATE     IN  VARCHAR2, 
     p_TO_DATE       IN  VARCHAR2, 
@@ -15,12 +9,9 @@ CREATE OR REPLACE PROCEDURE SPJLIVE.SP_PORTAL_LIVE_ANALYTICS (
     p_CUST_CURSOR   OUT SYS_REFCURSOR, 
     p_TERM_CURSOR   OUT SYS_REFCURSOR  
 ) AS 
-    v_from_date DATE := NULL;
-    v_to_date   DATE := NULL;
+    v_from_date DATE;
+    v_to_date   DATE;
 BEGIN
-    -- 100% Dynamic User-Driven Date Filtering:
-    -- If user provides date range, filter by it.
-    -- If no date range provided (or 'all' / null), dates remain NULL -> queries OVERALL / ALL-TIME data.
     IF p_FROM_DATE IS NOT NULL AND TRIM(p_FROM_DATE) IS NOT NULL AND LOWER(TRIM(p_FROM_DATE)) != 'null' AND LOWER(TRIM(p_FROM_DATE)) != 'all' AND LOWER(TRIM(p_FROM_DATE)) != 'undefined' THEN
         IF INSTR(p_FROM_DATE, '-') > 0 THEN
             v_from_date := TO_DATE(SUBSTR(TRIM(p_FROM_DATE), 1, 10), 'YYYY-MM-DD');
@@ -41,9 +32,7 @@ BEGIN
         v_to_date := NULL;
     END IF;
 
-    -- ========================================================
-    -- 1. OVERALL KPIS (Exact User Logic Matching To The Penny)
-    -- ========================================================
+    -- 1. OVERALL KPIS
     OPEN p_KPI_CURSOR FOR
         SELECT /*+ PARALLEL(4) */
             NVL(ROUND(SUM(AMOUNT), 2), 0)           AS TOTAL_TAXABLE_AMOUNT,
@@ -85,11 +74,10 @@ BEGIN
               AND (p_SERVICE_TYPE IS NULL OR p_SERVICE_TYPE = 'ALL' OR p_SERVICE_TYPE = '0' OR I.SERVICE_TYPE = p_SERVICE_TYPE)
         );
 
-    -- =================================================================
-    -- 2. CUSTOMER LEADERBOARD (Exact User DBeaver Query Matching)
-    -- =================================================================
+    -- 2. CUSTOMER LEADERBOARD
     OPEN p_CUST_CURSOR FOR
         SELECT /*+ PARALLEL(4) */
+            MAX(CUSTOMER_ID)      AS CUSTOMER_ID,
             CUSTOMER_NAME,
             COUNT(INVOICE_REF_NO) AS INVOICE_COUNT,
             COUNT(IMP_CONT_ID)    AS CONTAINER_COUNT,
@@ -100,6 +88,7 @@ BEGIN
             SUM(INVOICE_AMOUNT)   AS INVOICE_AMOUNT
         FROM (
             SELECT 
+                MAX(CUSTOMER_ID) AS CUSTOMER_ID,
                 CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE,
                 MAX(IMP_CONT_ID) AS IMP_CONT_ID,
                 SUM(AMOUNT) AS AMOUNT,
@@ -108,7 +97,7 @@ BEGIN
                 SUM(CGST) AS CGST,
                 SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT
             FROM (
-                SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, BL_NO, PARTY_INV_NO, LINE_HANDOVER_DATE, SAILED, PORT,
+                SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, BL_NO, PARTY_INV_NO, LINE_HANDOVER_DATE, SAILED, PORT,
                     DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE,
                     DECODE(II.SERVICE_ID,4,II.BILL_QNTY,0) AS BILL_QNTY,
                     TO_CHAR(I.INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE,
@@ -142,9 +131,7 @@ BEGIN
         GROUP BY CUSTOMER_NAME
         ORDER BY INVOICE_AMOUNT DESC;
 
-    -- ========================================================
-    -- 3. TERMINAL BREAKDOWN (Exact User Logic)
-    -- ========================================================
+    -- 3. TERMINAL BREAKDOWN
     OPEN p_TERM_CURSOR FOR
         SELECT /*+ PARALLEL(4) */
             SUB.TERMINAL_ID,
