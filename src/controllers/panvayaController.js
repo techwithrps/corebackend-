@@ -6,7 +6,7 @@
 const PANVAYA_BASE_URL = 'https://api.panvaya.com/api/v1';
 
 function getApiKey(req) {
-  return req.headers['x-api-key'] || process.env.PANVAYA_API_KEY || 'pv_live_0AXCMLfCcPCHAsJMx4uPVmPZEPTH4oS4';
+  return req.headers['x-api-key'] || process.env.PANVAYA_API_KEY || 'pv_live_vl0c1h6iAcCAx9895LIouCDNtmW3BjQJ';
 }
 
 async function panvayaFetch(endpoint, options = {}, req) {
