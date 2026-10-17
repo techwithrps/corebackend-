@@ -16,10 +16,18 @@ let executionQueue = Promise.resolve();
 /**
  * Execute dynamic real-time SQL queries directly on Oracle SPJLIVE database
  * with WHERE predicates evaluated inside Oracle DB itself.
- * Serialized execution ensures Render 512MB container never runs out of memory.
+ * Serialized execution ensures Render 512MB container never runs out of memory,
+ * with active signal-based abortion to eliminate orphaned hanging tasks.
  */
 function queryOracleDatabase(filters = {}) {
   const task = () => new Promise((resolve, reject) => {
+    // 1. If already aborted by client before entering execution queue, exit immediately
+    if (filters.signal && filters.signal.aborted) {
+      const err = new Error('Query aborted by client before execution');
+      err.name = 'AbortError';
+      return reject(err);
+    }
+
     const norm = normalizeAnalyticsFilters(filters);
     if (norm.error) {
       return reject(new Error(norm.error));
@@ -54,9 +62,19 @@ function queryOracleDatabase(filters = {}) {
     if (norm.limit) args.push(`limit=${norm.limit}`);
 
     const startTime = Date.now();
+    let isSettled = false;
 
-    execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 120000 }, (error, stdout, stderr) => {
+    const child = execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 60000 }, (error, stdout, stderr) => {
+      if (cleanupAbort) cleanupAbort();
+      if (isSettled) return;
+      isSettled = true;
+
       if (error) {
+        if (filters.signal?.aborted || error.killed) {
+          const abortErr = new Error('Query cancelled by client');
+          abortErr.name = 'AbortError';
+          return reject(abortErr);
+        }
         console.error('[OracleDBService] Oracle execution error:', error.message, stderr);
         return reject(new Error('Oracle DB execution failed: ' + error.message));
       }
@@ -77,6 +95,30 @@ function queryOracleDatabase(filters = {}) {
         reject(new Error('Invalid Oracle output format: ' + e.message));
       }
     });
+
+    let cleanupAbort = null;
+    if (filters.signal) {
+      const abortListener = () => {
+        if (isSettled) return;
+        isSettled = true;
+        try {
+          child.kill('SIGTERM');
+          setTimeout(() => {
+            try { child.kill('SIGKILL'); } catch (e) {}
+          }, 300);
+        } catch (e) {}
+        const err = new Error('Query aborted by client');
+        err.name = 'AbortError';
+        reject(err);
+      };
+
+      filters.signal.addEventListener('abort', abortListener, { once: true });
+      cleanupAbort = () => {
+        try {
+          filters.signal.removeEventListener('abort', abortListener);
+        } catch (e) {}
+      };
+    }
   });
 
   // Strict serialization queue guarantees only 1 JVM process runs at any instant

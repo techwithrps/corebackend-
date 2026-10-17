@@ -341,7 +341,7 @@ async function getFinancialAnalytics(inputFilters = {}) {
 
   const fetchPromise = (async () => {
     try {
-      const oracleResult = await queryOracleDatabase({ ...normFilters, mode: 'financial-analytics' });
+      const oracleResult = await queryOracleDatabase({ ...normFilters, signal: inputFilters.signal, mode: 'financial-analytics' });
       if (oracleResult && oracleResult.success && oracleResult.kpis) {
         const liveKpis = oracleResult.kpis;
         const physicalContainers = liveKpis.containerCount || liveKpis.distinctContainers || 0;

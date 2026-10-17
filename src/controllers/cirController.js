@@ -4,7 +4,10 @@ const XLSX = require('xlsx');
 
 async function getCIRReport(req, res) {
   try {
+    const abortCtrl = new AbortController();
+    req.on('close', () => abortCtrl.abort());
     const filters = normalizeAnalyticsFilters(req.query);
+    filters.signal = abortCtrl.signal;
     if (filters.error) {
       return res.status(400).json({ success: false, error: filters.error });
     }
@@ -28,8 +31,11 @@ const cirAnalyticsService = require('../services/cirAnalyticsService');
 async function getFinancialAnalytics(req, res) {
   try {
     if (req.aborted || req.destroyed) return;
+    const abortCtrl = new AbortController();
+    req.on('close', () => abortCtrl.abort());
     const filters = normalizeAnalyticsFilters(req.query);
     filters.isAborted = () => req.aborted || req.destroyed;
+    filters.signal = abortCtrl.signal;
     if (filters.error) {
       return res.status(400).json({ success: false, error: filters.error });
     }
