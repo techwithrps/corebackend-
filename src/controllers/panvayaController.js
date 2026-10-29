@@ -5,33 +5,47 @@
 
 const PANVAYA_BASE_URL = 'https://api.panvaya.com/api/v1';
 
-function getApiKey(req) {
-  return req.headers['x-api-key'] || process.env.PANVAYA_API_KEY || 'pv_live_-Pve3LVsqFSuwHgHjSjn9Yzncz_DlWse';
-}
+const PANVAYA_KEY_POOL = [
+  process.env.PANVAYA_API_KEY,
+  'pv_live_zEl1Qp4N0numSqxybM9hGmUReRlJufah', // Fresh 100 credits
+  'pv_live_-Pve3LVsqFSuwHgHjSjn9Yzncz_DlWse'   // Backup 58 credits
+].filter(Boolean);
 
 async function panvayaFetch(endpoint, options = {}, req) {
-  const apiKey = getApiKey(req);
-  const url = `${PANVAYA_BASE_URL}${endpoint}`;
-  
-  const headers = {
-    'X-API-Key': apiKey,
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
+  const customKey = req?.headers?.['x-api-key'];
+  const keysToTry = customKey 
+    ? [customKey, ...PANVAYA_KEY_POOL.filter(k => k !== customKey)]
+    : PANVAYA_KEY_POOL;
 
-  const response = await fetch(url, {
-    ...options,
-    headers
-  });
+  let lastResult = null;
+  for (const apiKey of keysToTry) {
+    const url = `${PANVAYA_BASE_URL}${endpoint}`;
+    const headers = {
+      'X-API-Key': apiKey,
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    };
 
-  const contentType = response.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) {
-    const data = await response.json();
-    return { status: response.status, ok: response.ok, data };
-  } else {
-    const text = await response.text();
-    return { status: response.status, ok: response.ok, data: text };
+    try {
+      const response = await fetch(url, { ...options, headers });
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json')
+        ? await response.json()
+        : await response.text();
+
+      lastResult = { status: response.status, ok: response.ok, data };
+
+      // Return if successful or regular client validation error
+      if (response.ok || (response.status !== 401 && response.status !== 403 && response.status !== 429)) {
+        return lastResult;
+      }
+      console.warn(`[Panvaya] Key hit status ${response.status}. Switching to backup key in pool...`);
+    } catch (e) {
+      console.error(`[Panvaya] Key request failed:`, e.message);
+    }
   }
+
+  return lastResult || { status: 500, ok: false, data: { error: 'All Panvaya API keys failed' } };
 }
 
 // 1. Sea Tracking (POST /track/ocean)

@@ -93,35 +93,48 @@ async function getContainersTracking(filters = {}) {
   try {
     const { queryOracleDatabase } = require('./oracleDbService');
     const oracleResult = await queryOracleDatabase({ ...filters, mode: 'containers' });
-    if (oracleResult && oracleResult.success && oracleResult.records) {
-      const rawRows = oracleResult.records;
+    if (oracleResult && oracleResult.success && (oracleResult.containers || oracleResult.records)) {
+      const rawRows = oracleResult.containers || oracleResult.records;
       const page = Number(filters.page) || 1;
       const limit = Math.min(Number(filters.limit) || 25, 100);
 
       // Map Oracle rows to the frontend container shape
-      let rows = rawRows.map(r => ({
-        contNo: r.CONT_NO || '-',
-        contSize: String(r.CONT_SIZE || '40').replace(/[^0-9]/g, '') || '40',
-        contType: r.CONT_TYPE || 'RF',
-        tripType: r.TRIP_TYPE === 'I' ? 'Import' : (r.TRIP_TYPE === 'E' ? 'Export' : (r.TRIP_TYPE || 'Import')),
-        joNo: r.PARTY_INV_NO || r.BL_NO || '-',
-        joDate: r.LINE_HANDOVER_DATE || '-',
-        customerName: r.CUSTOMER_NAME || '',
-        customerId: r.CUSTOMER_ID || '',
-        lineOperator: 'SPJ LOGISTICS',
-        bookingNo: r.PARTY_INV_NO || '-',
-        sealNo: 'SPJ-' + (r.BL_NO || '000'),
-        icdInDate: r.LINE_HANDOVER_DATE || '-',
-        icdOutDate: r.SAILED || '-',
-        terminalName: 'TRANSWORLD-DADRI',
-        terminalId: r.TERMINAL_ID || 31,
-        tareWeight: 2200,
-        cargoWeight: 14000,
-        status: r.SAILED ? 'Dispatched / Sailed' : 'Active / In Yard',
-        chamberNo: '-',
-        temperature: 'Ambient',
-        companyId: r.COMPANY_ID || 2
-      }));
+      let rows = rawRows.map(r => {
+        const contNo = r.contNo || r.CONT_NO || '-';
+        const contSize = String(r.size || r.CONT_SIZE || '40').replace(/[^0-9]/g, '') || '40';
+        const contType = r.type || r.CONT_TYPE || 'RF';
+        const tripType = r.tripType || (r.TRIP_TYPE === 'I' ? 'Import' : (r.TRIP_TYPE === 'E' ? 'Export' : (r.TRIP_TYPE || 'Import')));
+        const joNo = r.blNo || r.BL_NO || r.invoiceNo || r.INVOICE_NO || '-';
+        const joDate = r.handoverDate || r.LINE_HANDOVER_DATE || r.invoiceDate || r.INVOICE_DATE || '-';
+        const customerName = r.customerName || r.CUSTOMER_NAME || '';
+        const customerId = r.customerId || r.CUSTOMER_ID || '';
+        const sailed = r.sailedDate || r.SAILED;
+        const handover = r.handoverDate || r.LINE_HANDOVER_DATE;
+
+        return {
+          contNo,
+          contSize,
+          contType,
+          tripType,
+          joNo,
+          joDate,
+          customerName,
+          customerId,
+          lineOperator: 'SPJ LOGISTICS',
+          bookingNo: r.invoiceNo || r.INVOICE_NO || '-',
+          sealNo: 'SPJ-' + (r.blNo || r.BL_NO || '000'),
+          icdInDate: handover || '-',
+          icdOutDate: sailed || '-',
+          terminalName: 'TRANSWORLD-DADRI',
+          terminalId: r.terminalId || r.TERMINAL_ID || 31,
+          tareWeight: 2200,
+          cargoWeight: 14000,
+          status: sailed ? 'Dispatched / Sailed' : 'Active / In Yard',
+          chamberNo: '-',
+          temperature: 'Ambient',
+          companyId: r.companyId || r.COMPANY_ID || 2
+        };
+      });
 
       // Apply client-side filters that Oracle didn't handle
       if (contType && contType !== 'all' && contType !== 'ALL') {
@@ -136,11 +149,20 @@ async function getContainersTracking(filters = {}) {
 
       const total = oracleResult.total || rows.length;
       const totalPages = Math.ceil(total / limit) || 1;
-      const startIndex = (page - 1) * limit;
-      const paginatedContainers = rows.slice(startIndex, startIndex + limit);
+      const paginatedContainers = rows;
 
-      const units40ft = rows.filter(r => String(r.contSize).includes('40')).length;
-      const units20ft = rows.filter(r => String(r.contSize).includes('20')).length;
+      const stats = oracleResult.stats || {
+        totalDBJobs: total,
+        totalDBContainers: oracleResult.distinctCount || total,
+        distinctContainers: oracleResult.distinctCount || total,
+        totalDBTeus: Math.round(total * 1.5),
+        units20ft: rows.filter(r => String(r.contSize).includes('20')).length,
+        units40ft: rows.filter(r => String(r.contSize).includes('40')).length,
+        filteredContainers: total,
+        inYard: rows.filter(r => r.status.includes('Active')).length,
+        dispatched: rows.filter(r => r.status.includes('Dispatched')).length,
+        registered: 0
+      };
 
       return {
         source: 'ORACLE_SPJLIVE_LIVE',
@@ -152,17 +174,7 @@ async function getContainersTracking(filters = {}) {
         count: paginatedContainers.length,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
-        stats: {
-          totalDBJobs: total,
-          totalDBContainers: total,
-          totalDBTeus: units40ft * 2 + units20ft,
-          units20ft,
-          units40ft,
-          filteredContainers: total,
-          inYard: rows.filter(r => r.status.includes('Active')).length,
-          dispatched: rows.filter(r => r.status.includes('Dispatched')).length,
-          registered: 0
-        },
+        stats,
         containers: paginatedContainers
       };
     }

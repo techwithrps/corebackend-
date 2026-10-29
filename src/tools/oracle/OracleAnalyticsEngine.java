@@ -125,7 +125,7 @@ public class OracleAnalyticsEngine {
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {
             switch (mode) {
                 case "containers":
-                    queryContainers(conn, terminalIdStr, customerIdStr, companyIdStr, search, contNo, blNo, tripType, size, page, limit, startTime);
+                    queryContainers(conn, fromDate, toDate, terminalIdStr, customerIdStr, companyIdStr, search, contNo, blNo, tripType, size, page, limit, startTime);
                     break;
                 case "movement-history":
                 case "container-history":
@@ -655,9 +655,9 @@ public class OracleAnalyticsEngine {
     // ============================================================
     // CONTAINER TRACKING MODE
     // ============================================================
-    private static void queryContainers(Connection conn, String terminalIdStr, String customerIdStr,
-            String companyIdStr, String search, String contNo, String blNo, String tripType, String size,
-            int page, int limit, long startTime) throws Exception {
+    private static void queryContainers(Connection conn, String fromDate, String toDate,
+            String terminalIdStr, String customerIdStr, String companyIdStr, String search,
+            String contNo, String blNo, String tripType, String size, int page, int limit, long startTime) throws Exception {
 
         StringBuilder sql = new StringBuilder(
             "SELECT AP.CONT_NO, AP.CONT_SIZE, AP.CONT_TYPE, AP.TRIP_TYPE, AP.PORT, AP.LINE_HANDOVER_DATE, AP.SAILED, " +
@@ -668,6 +668,19 @@ public class OracleAnalyticsEngine {
             "LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
             "WHERE AP.CONT_NO IS NOT NULL AND I.CANCLE_FLAGE IS NULL "
         );
+
+        if (fromDate != null && !fromDate.trim().isEmpty() && !fromDate.equalsIgnoreCase("all") && !fromDate.equalsIgnoreCase("null")) {
+            String fDateFormatted = formatDateToDDMMYYYY(fromDate);
+            if (fDateFormatted != null && !fDateFormatted.isEmpty()) {
+                sql.append(" AND I.INVOICE_DATE >= TO_DATE('").append(fDateFormatted).append("','DD/MM/YYYY') ");
+            }
+        }
+        if (toDate != null && !toDate.trim().isEmpty() && !toDate.equalsIgnoreCase("all") && !toDate.equalsIgnoreCase("null")) {
+            String tDateFormatted = formatDateToDDMMYYYY(toDate);
+            if (tDateFormatted != null && !tDateFormatted.isEmpty()) {
+                sql.append(" AND I.INVOICE_DATE <= TO_DATE('").append(tDateFormatted).append(" 23:59:59','DD/MM/YYYY HH24:MI:SS') ");
+            }
+        }
 
         if (terminalIdStr != null && !terminalIdStr.isEmpty() && !terminalIdStr.equalsIgnoreCase("all")) {
             sql.append(" AND I.TERMINAL_ID = ").append(terminalIdStr);
@@ -700,27 +713,42 @@ public class OracleAnalyticsEngine {
                .append("%' OR LOWER(CM.CUSTOMER_NAME) LIKE '%").append(s).append("%')");
         }
 
-        sql.append(" ORDER BY AP.LINE_HANDOVER_DATE DESC NULLS LAST");
+        long totalMoves = 0;
+        long distinctContainers = 0;
+        long units40ft = 0;
+        long units20ft = 0;
 
-        long totalCount = 0;
-        String countSql = "SELECT COUNT(*) FROM (" + sql.toString().replace("ORDER BY AP.LINE_HANDOVER_DATE DESC NULLS LAST", "") + ")";
+        String whereClause = sql.substring(sql.indexOf("WHERE"));
+        String statsSql = "SELECT COUNT(*), COUNT(DISTINCT AP.CONT_NO), " +
+            "COUNT(CASE WHEN AP.CONT_SIZE LIKE '%40%' THEN 1 END), " +
+            "COUNT(CASE WHEN AP.CONT_SIZE LIKE '%20%' THEN 1 END) " +
+            "FROM SPJLIVE.ALL_PARTY_ACCOUNT AP " +
+            "JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON AP.CONT_JO_ID = II.LINE_ITEM_ID " +
+            "JOIN SPJLIVE.IMP_INVOICE I ON II.INVOICE_NO = I.INVOICE_NO " +
+            "LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
+            whereClause;
+
         try (Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(countSql)) {
-            if (rs.next()) totalCount = rs.getLong(1);
+             ResultSet rs = st.executeQuery(statsSql)) {
+            if (rs.next()) {
+                totalMoves = rs.getLong(1);
+                distinctContainers = rs.getLong(2);
+                units40ft = rs.getLong(3);
+                units20ft = rs.getLong(4);
+            }
         }
 
         int offset = (page - 1) * limit;
-        String pagedSql = "SELECT * FROM (" + sql.toString() + ") WHERE ROWNUM <= " + (offset + limit);
+        String pagedSql = "SELECT * FROM (SELECT a.*, ROWNUM rnum FROM (" +
+            sql.toString() + " ORDER BY I.INVOICE_DATE DESC NULLS LAST, AP.LINE_HANDOVER_DATE DESC NULLS LAST" +
+            ") a WHERE ROWNUM <= " + (offset + limit) + ") WHERE rnum > " + offset;
 
         StringBuilder recsJson = new StringBuilder("[");
         boolean first = true;
-        int rowIdx = 0;
 
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(pagedSql)) {
             while (rs.next()) {
-                rowIdx++;
-                if (rowIdx <= offset) continue;
 
                 if (!first) recsJson.append(",");
                 first = false;
@@ -747,8 +775,12 @@ public class OracleAnalyticsEngine {
 
         long totalTime = System.currentTimeMillis() - startTime;
         System.out.printf(Locale.US,
-            "{\"success\":true,\"source\":\"ORACLE_SPJLIVE_CONTAINERS\",\"totalTimeMs\":%d,\"total\":%d,\"page\":%d,\"limit\":%d,\"containers\":%s}\n",
-            totalTime, totalCount, page, limit, recsJson.toString());
+            "{\"success\":true,\"source\":\"ORACLE_SPJLIVE_CONTAINERS\",\"totalTimeMs\":%d,\"total\":%d,\"distinctCount\":%d," +
+            "\"stats\":{\"totalDBJobs\":%d,\"totalDBContainers\":%d,\"distinctContainers\":%d,\"totalDBTeus\":%d,\"units40ft\":%d,\"units20ft\":%d}," +
+            "\"page\":%d,\"limit\":%d,\"containers\":%s}\n",
+            totalTime, totalMoves, distinctContainers,
+            totalMoves, distinctContainers, distinctContainers, (units40ft * 2 + units20ft), units40ft, units20ft,
+            page, limit, recsJson.toString());
     }
 
     // ============================================================
