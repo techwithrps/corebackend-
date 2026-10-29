@@ -2,7 +2,7 @@ import java.sql.*;
 
 public class TestInvoice {
     public static void main(String[] args) {
-        String url = "jdbc:oracle:thin:@//144.24.138.129:1521/pdb1.sub06121018360.prodvcn.oraclevcn.com";
+        String url = "jdbc:oracle:thin:@//141.148.207.57:1521/pdb1.sub10181056240.elogisolpublicv.oraclevcn.com";
         String user = "SPJLIVE";
         String pass = "SPjlive_0112#";
 

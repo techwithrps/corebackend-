@@ -54,9 +54,15 @@ public class OracleAnalyticsEngine {
     }
 
     public static void main(String[] args) {
-        String url = "jdbc:oracle:thin:@//144.24.138.129:1521/pdb1.sub06121018360.prodvcn.oraclevcn.com";
-        String user = "SPJLIVE";
-        String pass = "SPjlive_0112#";
+        String url = (System.getenv("ORACLE_JDBC_URL") != null && !System.getenv("ORACLE_JDBC_URL").trim().isEmpty())
+            ? System.getenv("ORACLE_JDBC_URL").trim()
+            : "jdbc:oracle:thin:@//141.148.207.57:1521/pdb1.sub10181056240.elogisolpublicv.oraclevcn.com";
+        String user = (System.getenv("ORACLE_USER") != null && !System.getenv("ORACLE_USER").trim().isEmpty())
+            ? System.getenv("ORACLE_USER").trim()
+            : "SPJLIVE";
+        String pass = (System.getenv("ORACLE_PASSWORD") != null && !System.getenv("ORACLE_PASSWORD").trim().isEmpty())
+            ? System.getenv("ORACLE_PASSWORD").trim()
+            : "SPjlive_0112#";
 
         String mode = "invoice";
         String fromDate = null;

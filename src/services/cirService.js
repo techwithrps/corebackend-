@@ -435,9 +435,9 @@ async function getMasters() {
     ],
     status: {
       connected: true,
-      host: '144.24.138.129',
+      host: '141.148.207.57',
       port: 1521,
-      database: 'pdb1.sub06121018360.prodvcn.oraclevcn.com',
+      database: 'pdb1.sub10181056240.elogisolpublicv.oraclevcn.com',
       user: 'SPJLIVE'
     },
   };

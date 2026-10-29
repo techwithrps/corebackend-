@@ -23,12 +23,12 @@ npm run build     # Compiles OracleAnalyticsEngine.java and OracleWarehouseExpor
 ### 2. Configure Environment (.env)
 ```env
 PORT=5001
-ORACLE_HOST=144.24.138.129
+ORACLE_HOST=141.148.207.57
 ORACLE_PORT=1521
-ORACLE_SERVICE_NAME=pdb1.sub06121018360.prodvcn.oraclevcn.com
+ORACLE_SERVICE_NAME=pdb1.sub10181056240.elogisolpublicv.oraclevcn.com
 ORACLE_USER=SPJLIVE
 ORACLE_PASSWORD=SPjlive_0112#
-ORACLE_JDBC_URL=jdbc:oracle:thin:@//144.24.138.129:1521/pdb1.sub06121018360.prodvcn.oraclevcn.com
+ORACLE_JDBC_URL=jdbc:oracle:thin:@//141.148.207.57:1521/pdb1.sub10181056240.elogisolpublicv.oraclevcn.com
 FRONTEND_URL=https://spj-mauve.vercel.app
 ```
 
