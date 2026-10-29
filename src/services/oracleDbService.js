@@ -64,7 +64,23 @@ function queryOracleDatabase(filters = {}) {
     const startTime = Date.now();
     let isSettled = false;
 
-    const child = execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 60000 }, (error, stdout, stderr) => {
+    const childEnv = {
+      ...process.env,
+      ORACLE_JDBC_URL: process.env.ORACLE_JDBC_URL && !process.env.ORACLE_JDBC_URL.includes("144.24.138.129")
+        ? process.env.ORACLE_JDBC_URL
+        : "jdbc:oracle:thin:@//141.148.207.57:1521/pdb1.sub10181056240.elogisolpublicv.oraclevcn.com",
+      ORACLE_HOST: process.env.ORACLE_HOST && !process.env.ORACLE_HOST.includes("144.24.138.129")
+        ? process.env.ORACLE_HOST
+        : "141.148.207.57",
+      ORACLE_PORT: "1521",
+      ORACLE_SERVICE_NAME: process.env.ORACLE_SERVICE_NAME && !process.env.ORACLE_SERVICE_NAME.includes("sub06121018360")
+        ? process.env.ORACLE_SERVICE_NAME
+        : "pdb1.sub10181056240.elogisolpublicv.oraclevcn.com",
+      ORACLE_USER: "SPJLIVE",
+      ORACLE_PASSWORD: "SPjlive_0112#",
+    };
+
+    const child = execFile('java', args, { cwd: TOOLS_ORACLE_DIR, maxBuffer: 50 * 1024 * 1024, timeout: 60000, env: childEnv }, (error, stdout, stderr) => {
       if (cleanupAbort) cleanupAbort();
       if (isSettled) return;
       isSettled = true;

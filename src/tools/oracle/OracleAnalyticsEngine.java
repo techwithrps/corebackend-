@@ -54,15 +54,35 @@ public class OracleAnalyticsEngine {
     }
 
     public static void main(String[] args) {
-        String url = (System.getenv("ORACLE_JDBC_URL") != null && !System.getenv("ORACLE_JDBC_URL").trim().isEmpty())
-            ? System.getenv("ORACLE_JDBC_URL").trim()
-            : "jdbc:oracle:thin:@//141.148.207.57:1521/pdb1.sub10181056240.elogisolpublicv.oraclevcn.com";
-        String user = (System.getenv("ORACLE_USER") != null && !System.getenv("ORACLE_USER").trim().isEmpty())
-            ? System.getenv("ORACLE_USER").trim()
-            : "SPJLIVE";
-        String pass = (System.getenv("ORACLE_PASSWORD") != null && !System.getenv("ORACLE_PASSWORD").trim().isEmpty())
-            ? System.getenv("ORACLE_PASSWORD").trim()
-            : "SPjlive_0112#";
+        String defaultHost = "141.148.207.57";
+        String defaultService = "pdb1.sub10181056240.elogisolpublicv.oraclevcn.com";
+        String defaultUrl = "jdbc:oracle:thin:@//141.148.207.57:1521/pdb1.sub10181056240.elogisolpublicv.oraclevcn.com";
+        String defaultUser = "SPJLIVE";
+        String defaultPass = "SPjlive_0112#";
+
+        String envUrl = System.getenv("ORACLE_JDBC_URL");
+        String envHost = System.getenv("ORACLE_HOST");
+
+        String url = defaultUrl;
+        if (envUrl != null && !envUrl.trim().isEmpty() && !envUrl.contains("144.24.138.129")) {
+            url = envUrl.trim();
+        } else if (envHost != null && !envHost.trim().isEmpty() && !envHost.contains("144.24.138.129")) {
+            String port = System.getenv("ORACLE_PORT") != null ? System.getenv("ORACLE_PORT").trim() : "1521";
+            String svc = System.getenv("ORACLE_SERVICE_NAME") != null ? System.getenv("ORACLE_SERVICE_NAME").trim() : defaultService;
+            url = "jdbc:oracle:thin:@//" + envHost.trim() + ":" + port + "/" + svc;
+        }
+
+        String user = defaultUser;
+        String envUser = System.getenv("ORACLE_USER");
+        if (envUser != null && !envUser.trim().isEmpty()) {
+            user = envUser.trim();
+        }
+
+        String pass = defaultPass;
+        String envPass = System.getenv("ORACLE_PASSWORD");
+        if (envPass != null && !envPass.trim().isEmpty()) {
+            pass = envPass.trim();
+        }
 
         String mode = "invoice";
         String fromDate = null;
