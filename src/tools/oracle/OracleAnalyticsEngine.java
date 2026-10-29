@@ -337,47 +337,30 @@ public class OracleAnalyticsEngine {
 
         String aggSql = 
             "SELECT " +
-            "  SUM(AMOUNT) AS TOTAL_BASE, " +
-            "  SUM(IGST) AS TOTAL_IGST, " +
-            "  SUM(SGST) AS TOTAL_SGST, " +
-            "  SUM(CGST) AS TOTAL_CGST, " +
-            "  SUM(INVOICE_AMOUNT) AS TOTAL_GROSS, " +
+            "  NVL(SUM(AMOUNT), 0) AS TOTAL_BASE, " +
+            "  NVL(SUM(IGST), 0) AS TOTAL_IGST, " +
+            "  NVL(SUM(SGST), 0) AS TOTAL_SGST, " +
+            "  NVL(SUM(CGST), 0) AS TOTAL_CGST, " +
+            "  NVL(SUM(INVOICE_AMOUNT), 0) AS TOTAL_GROSS, " +
             "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT, " +
             "  COUNT(DISTINCT INVOICE_REF_NO) AS JOB_COUNT, " +
             "  COUNT(*) AS TOTAL_CONTAINERS, " +
-            "  SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END) AS TOTAL_TEUS " +
+            "  NVL(SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END), 0) AS TOTAL_TEUS " +
             "FROM ( " +
             "  SELECT " +
-            "    CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, MAX(CONT_SIZE) AS CONT_SIZE, " +
-            "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT " +
-            "  FROM ( " +
-            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
-            "      BL_NO, PARTY_INV_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "      DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
-            "      DECODE(II.SERVICE_ID,4,II.BILL_QNTY,0) AS BILL_QNTY, " +
-            "      TO_CHAR(INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
-            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * BILL_QNTY END AS AMOUNT, " +
-            "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
-            "      II.BILL_AMOUNT AS INVOICE_AMOUNT, I.CREATED_BY, I.COMPANY_ID, I.TERMINAL_ID, AP.CONT_SIZE " +
-            "    FROM " +
-            "      (SELECT DISTINCT TERMINAL_ID, COMPANY_ID, INVOICE_REF_NO, INVOICE_NO, INVOICE_DATE, SERVICE_TYPE, CREATED_BY, CANCLE_FLAGE, BILL_TO FROM SPJLIVE.IMP_INVOICE " +
-            "       WHERE INVOICE_DATE IS NOT NULL AND CANCLE_FLAGE IS NULL) I, " +
-            "      SPJLIVE.IMP_INVOICE_ITEMS II, " +
-            "      SPJLIVE.CUSTOMER_MASTER CM, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT1, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT2, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT3, " +
-            "      SPJLIVE.ALL_PARTY_ACCOUNT AP " +
-            "    WHERE I.BILL_TO = CM.CUSTOMER_ID " +
-            "      AND I.INVOICE_NO = II.INVOICE_NO " +
-            "      AND II.BILL_AMOUNT > 0 " +
-            "      AND II.LINE_ITEM_ID = AP.CONT_JO_ID(+) " +
-            "      AND IIT1.TAX_HEAD_ID = 5 AND IIT2.TAX_HEAD_ID = 6 AND IIT3.TAX_HEAD_ID = 7 " +
-            "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
-            "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
-            "  ) " +
-            "  GROUP BY CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
+            "    I.INVOICE_NO, I.INVOICE_REF_NO, " +
+            "    NVL(II.CONT_SIZE, NVL(AP.CONT_SIZE, '40')) AS CONT_SIZE, " +
+            "    NVL(II.BILL_AMOUNT, 0) AS AMOUNT, " +
+            "    CASE WHEN CM.STATE_CODE != '07' AND CM.STATE_CODE != '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 100), 2) ELSE 0 END AS IGST, " +
+            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS CGST, " +
+            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS SGST, " +
+            "    ROUND(II.BILL_AMOUNT * (1 + (NVL(II.TAX_PERC, 18) / 100)), 2) AS INVOICE_AMOUNT " +
+            "  FROM SPJLIVE.IMP_INVOICE I " +
+            "  JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON I.INVOICE_NO = II.INVOICE_NO " +
+            "  LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
+            "  LEFT JOIN SPJLIVE.ALL_PARTY_ACCOUNT AP ON II.LINE_ITEM_ID = AP.CONT_JO_ID " +
+            "  WHERE I.INVOICE_DATE IS NOT NULL " +
+            "    AND I.CANCLE_FLAGE IS NULL " + filterSql +
             ")";
 
         double gross = 0, bill = 0, igst = 0, cgst = 0, sgst = 0;
@@ -513,46 +496,39 @@ public class OracleAnalyticsEngine {
         int endRow = page * limit;
 
         String pageSql = 
-            "SELECT /*+ PARALLEL(4) */ * FROM ( " +
+            "SELECT * FROM ( " +
             "  SELECT " +
-            "    CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
-            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, " +
-            "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT, " +
-            "    ROW_NUMBER() OVER (ORDER BY INVOICE_NO DESC, SUM(INVOICE_AMOUNT) DESC) AS RN " +
-            "  FROM ( " +
-            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, " +
-            "      AP.CONT_NO, AP.CONT_SIZE, I.INVOICE_REF_NO, I.INVOICE_NO, " +
-            "      AP.BL_NO, AP.PARTY_INV_NO, AP.LINE_HANDOVER_DATE, AP.SAILED, AP.PORT, " +
-            "      DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
-            "      DECODE(II.SERVICE_ID,4,II.BILL_QNTY,0) AS BILL_QNTY, " +
-            "      TO_CHAR(I.INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
-            "      CASE " +
-            "        WHEN AP.SAILED IS NOT NULL THEN 'Stage 4: Loaded & Sailed' " +
-            "        WHEN AP.LINE_HANDOVER_DATE IS NOT NULL THEN 'Stage 2: Customs Cleared & Staged' " +
-            "        WHEN AP.CONT_NO IS NOT NULL THEN 'Stage 1: Yard Gate-In & Factory Stuffing' " +
-            "        ELSE 'Stage 3: DFC Rail Transit' " +
-            "      END AS CONTAINER_STATUS, " +
-            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * II.BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * II.BILL_QNTY END AS AMOUNT, " +
-            "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
-            "      II.BILL_AMOUNT AS INVOICE_AMOUNT " +
-            "    FROM " +
-            "      SPJLIVE.IMP_INVOICE I, " +
-            "      SPJLIVE.IMP_INVOICE_ITEMS II, " +
-            "      SPJLIVE.CUSTOMER_MASTER CM, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT1, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT2, " +
-            "      SPJLIVE.IMP_INVOICE_TAX IIT3, " +
-            "      SPJLIVE.ALL_PARTY_ACCOUNT AP " +
-            "    WHERE I.BILL_TO = CM.CUSTOMER_ID " +
-            "      AND I.INVOICE_NO = II.INVOICE_NO " +
-            "      AND II.BILL_AMOUNT > 0 " +
-            "      AND II.LINE_ITEM_ID = AP.CONT_JO_ID(+) " +
-            "      AND IIT1.TAX_HEAD_ID = 5 AND IIT2.TAX_HEAD_ID = 6 AND IIT3.TAX_HEAD_ID = 7 " +
-            "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
-            "      AND I.INVOICE_DATE IS NOT NULL " +
-            "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
-            "  ) " +
-            "  GROUP BY CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
+            "    NVL(CM.CUSTOMER_NAME, 'CLIENT #' || I.BILL_TO) AS CUSTOMER_NAME, " +
+            "    NVL(II.CONT_NO, NVL(AP.CONT_NO, '-')) AS CONT_NO, " +
+            "    NVL(II.CONT_SIZE, NVL(AP.CONT_SIZE, '40')) AS CONT_SIZE, " +
+            "    CASE " +
+            "      WHEN AP.SAILED IS NOT NULL THEN 'Stage 4: Loaded & Sailed' " +
+            "      WHEN AP.LINE_HANDOVER_DATE IS NOT NULL THEN 'Stage 2: Customs Cleared & Staged' " +
+            "      WHEN AP.CONT_NO IS NOT NULL THEN 'Stage 1: Yard Gate-In & Factory Stuffing' " +
+            "      ELSE 'Stage 3: DFC Rail Transit' " +
+            "    END AS CONTAINER_STATUS, " +
+            "    NVL(AP.BL_NO, '-') AS BL_NO, " +
+            "    NVL(AP.PARTY_INV_NO, '-') AS PARTY_INV_NO, " +
+            "    I.INVOICE_REF_NO, " +
+            "    TO_CHAR(AP.LINE_HANDOVER_DATE, 'DD/MM/YYYY') AS LINE_HANDOVER_DATE, " +
+            "    TO_CHAR(AP.SAILED, 'DD/MM/YYYY') AS SAILED, " +
+            "    NVL(AP.PORT, 'NHAVA SHEVA') AS PORT, " +
+            "    I.INVOICE_NO, " +
+            "    TO_CHAR(I.INVOICE_DATE, 'DD/MM/YYYY') AS INVOICE_DATE, " +
+            "    NVL(II.BILL_QNTY, 1) AS BILL_QNTY, " +
+            "    DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
+            "    NVL(II.BILL_AMOUNT, 0) AS AMOUNT, " +
+            "    CASE WHEN CM.STATE_CODE != '07' AND CM.STATE_CODE != '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 100), 2) ELSE 0 END AS IGST, " +
+            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS CGST, " +
+            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS SGST, " +
+            "    ROUND(II.BILL_AMOUNT * (1 + (NVL(II.TAX_PERC, 18) / 100)), 2) AS INVOICE_AMOUNT, " +
+            "    ROW_NUMBER() OVER (ORDER BY I.INVOICE_DATE DESC, I.INVOICE_NO DESC) AS RN " +
+            "  FROM SPJLIVE.IMP_INVOICE I " +
+            "  JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON I.INVOICE_NO = II.INVOICE_NO " +
+            "  LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
+            "  LEFT JOIN SPJLIVE.ALL_PARTY_ACCOUNT AP ON II.LINE_ITEM_ID = AP.CONT_JO_ID " +
+            "  WHERE I.INVOICE_DATE IS NOT NULL " +
+            "    AND I.CANCLE_FLAGE IS NULL " + filterSql +
             ") WHERE RN BETWEEN " + startRow + " AND " + endRow;
 
         StringBuilder recsJson = new StringBuilder("[");

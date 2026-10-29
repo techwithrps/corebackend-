@@ -59,6 +59,16 @@ app.get('/', (req, res) => {
   });
 });
 
+
+// Render Free-tier keepalive (pings /api/health every 12 mins to avoid cold-start sleep)
+const keepAliveUrl = process.env.RENDER_EXTERNAL_URL || "https://spj-backend.onrender.com";
+setInterval(() => {
+  try {
+    const httpModule = keepAliveUrl.startsWith("https") ? require("https") : require("http");
+    httpModule.get(`${keepAliveUrl}/api/health`, () => {}).on("error", () => {});
+  } catch (e) {}
+}, 12 * 60 * 1000);
+
 app.listen(PORT, () => {
   console.log(`=============================================`);
   console.log(`🚀 SPJ Cargo API running on http://localhost:${PORT}`);
