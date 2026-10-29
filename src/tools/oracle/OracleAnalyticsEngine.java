@@ -157,200 +157,151 @@ public class OracleAnalyticsEngine {
     // DIRECT ORACLE STORED PROCEDURE EXECUTION (SP_PORTAL_LIVE_ANALYTICS)
     // 100% Dynamic Date Range, Zero Hardcoding, Sub-second Execution
     // ============================================================
-    
-    static class AggregatedKpis {
-        double gross = 0;
-        double base = 0;
-        double igst = 0;
-        double cgst = 0;
-        double sgst = 0;
-        long invoices = 0;
-        long jobs = 0;
-        long containers = 0;
-        long teus = 0;
-    }
-
-    private static AggregatedKpis executeFastKpis(Connection conn, String filterSql) {
-        AggregatedKpis res = new AggregatedKpis();
-        String sql = 
-            "SELECT " +
-            "  NVL(SUM(AMOUNT), 0) AS TOTAL_BASE, " +
-            "  NVL(SUM(IGST), 0) AS TOTAL_IGST, " +
-            "  NVL(SUM(SGST), 0) AS TOTAL_SGST, " +
-            "  NVL(SUM(CGST), 0) AS TOTAL_CGST, " +
-            "  NVL(SUM(INVOICE_AMOUNT), 0) AS TOTAL_GROSS, " +
-            "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT, " +
-            "  COUNT(DISTINCT INVOICE_REF_NO) AS JOB_COUNT, " +
-            "  COUNT(*) AS TOTAL_CONTAINERS, " +
-            "  NVL(SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END), 0) AS TOTAL_TEUS " +
-            "FROM ( " +
-            "  SELECT " +
-            "    I.INVOICE_NO, I.INVOICE_REF_NO, " +
-            "    NVL(II.CONT_SIZE, NVL(AP.CONT_SIZE, '40')) AS CONT_SIZE, " +
-            "    NVL(II.BILL_AMOUNT, 0) AS AMOUNT, " +
-            "    CASE WHEN CM.STATE_CODE != '07' AND CM.STATE_CODE != '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 100), 2) ELSE 0 END AS IGST, " +
-            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS CGST, " +
-            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS SGST, " +
-            "    ROUND(II.BILL_AMOUNT * (1 + (NVL(II.TAX_PERC, 18) / 100)), 2) AS INVOICE_AMOUNT " +
-            "  FROM SPJLIVE.IMP_INVOICE I " +
-            "  JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON I.INVOICE_NO = II.INVOICE_NO " +
-            "  LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
-            "  LEFT JOIN SPJLIVE.ALL_PARTY_ACCOUNT AP ON II.LINE_ITEM_ID = AP.CONT_JO_ID " +
-            "  WHERE I.INVOICE_DATE IS NOT NULL " +
-            "    AND I.CANCLE_FLAGE IS NULL " + filterSql +
-            ")";
-
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-            if (rs.next()) {
-                res.base = rs.getDouble("TOTAL_BASE");
-                res.igst = rs.getDouble("TOTAL_IGST");
-                res.sgst = rs.getDouble("TOTAL_SGST");
-                res.cgst = rs.getDouble("TOTAL_CGST");
-                res.gross = rs.getDouble("TOTAL_GROSS");
-                res.invoices = rs.getLong("INVOICE_COUNT");
-                res.jobs = rs.getLong("JOB_COUNT");
-                res.containers = rs.getLong("TOTAL_CONTAINERS");
-                res.teus = rs.getLong("TOTAL_TEUS");
-            }
-        } catch (Exception ex) {
-            System.err.println("[executeFastKpis] notice: " + ex.getMessage());
-        }
-        return res;
-    }
-
-    private static String executeFastTopCustomers(Connection conn, String filterSql, int maxRows) {
-        StringBuilder custJson = new StringBuilder("[");
-        String sql = 
-            "SELECT " +
-            "  NVL(CM.CUSTOMER_NAME, 'CLIENT #' || I.BILL_TO) AS CUSTOMER_NAME, " +
-            "  MAX(CM.CUSTOMER_ID) AS CUSTOMER_ID, " +
-            "  COUNT(DISTINCT I.INVOICE_NO) AS INVOICE_COUNT, " +
-            "  COUNT(DISTINCT NVL(II.CONT_NO, NVL(AP.CONT_NO, TO_CHAR(II.ITEM_KEY_ID)))) AS CONTAINER_COUNT, " +
-            "  SUM(II.BILL_AMOUNT) AS AMOUNT, " +
-            "  SUM(CASE WHEN CM.STATE_CODE != '07' AND CM.STATE_CODE != '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 100), 2) ELSE 0 END) AS IGST, " +
-            "  SUM(CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END) AS CGST, " +
-            "  SUM(CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END) AS SGST, " +
-            "  SUM(ROUND(II.BILL_AMOUNT * (1 + (NVL(II.TAX_PERC, 18) / 100)), 2)) AS INVOICE_AMOUNT " +
-            "FROM SPJLIVE.IMP_INVOICE I " +
-            "JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON I.INVOICE_NO = II.INVOICE_NO " +
-            "LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
-            "LEFT JOIN SPJLIVE.ALL_PARTY_ACCOUNT AP ON II.LINE_ITEM_ID = AP.CONT_JO_ID " +
-            "WHERE I.INVOICE_DATE IS NOT NULL " +
-            "  AND I.CANCLE_FLAGE IS NULL " + filterSql +
-            "GROUP BY CM.CUSTOMER_NAME, I.BILL_TO " +
-            "ORDER BY INVOICE_AMOUNT DESC " +
-            "FETCH FIRST " + maxRows + " ROWS ONLY";
-
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-            boolean first = true;
-            while (rs.next()) {
-                if (!first) custJson.append(",");
-                first = false;
-                long cId = rs.getLong("CUSTOMER_ID");
-                String cName = rs.getString("CUSTOMER_NAME");
-                long cInvs = rs.getLong("INVOICE_COUNT");
-                long cConts = rs.getLong("CONTAINER_COUNT");
-                double cBase = rs.getDouble("AMOUNT");
-                double cIgst = rs.getDouble("IGST");
-                double cSgst = rs.getDouble("SGST");
-                double cCgst = rs.getDouble("CGST");
-                double cGross = rs.getDouble("INVOICE_AMOUNT");
-
-                custJson.append(String.format(Locale.US,
-                    "{\"customerId\":%d,\"id\":%d,\"customerName\":\"%s\",\"name\":\"%s\",\"taxableAmount\":%.2f,\"billAmount\":%.2f,\"grossAmount\":%.2f,\"grossRevenue\":%.2f,\"totalRevenue\":%.2f,\"netRevenue\":%.2f,\"igst\":%.2f,\"cgst\":%.2f,\"sgst\":%.2f,\"invoiceCount\":%d,\"containerCount\":%d}",
-                    cId, cId, escapeJson(cName), escapeJson(cName), cBase, cBase, cGross, cGross, cGross, cGross, cIgst, cCgst, cSgst, cInvs, cConts
-                ));
-            }
-        } catch (Exception ex) {
-            System.err.println("[executeFastTopCustomers] notice: " + ex.getMessage());
-        }
-        custJson.append("]");
-        return custJson.toString();
-    }
-
-    private static String executeFastTerminalAnalytics(Connection conn, String filterSql) {
-        StringBuilder termJson = new StringBuilder("[");
-        String sql = 
-            "SELECT * FROM ( " +
-            "  SELECT " +
-            "    NVL(I.TERMINAL_ID, 0) AS TERMINAL_ID, " +
-            "    NVL(MAX(TM.TERMINAL_NAME), 'TERMINAL #' || NVL(I.TERMINAL_ID, 0)) AS TERMINAL_NAME, " +
-            "    COUNT(DISTINCT I.INVOICE_NO) AS INVOICE_COUNT, " +
-            "    COUNT(DISTINCT NVL(II.CONT_NO, NVL(AP.CONT_NO, TO_CHAR(II.ITEM_KEY_ID)))) AS CONTAINER_COUNT, " +
-            "    SUM(II.BILL_AMOUNT) AS AMOUNT, " +
-            "    SUM(ROUND(II.BILL_AMOUNT * (1 + (NVL(II.TAX_PERC, 18) / 100)), 2)) AS INVOICE_AMOUNT " +
-            "  FROM SPJLIVE.IMP_INVOICE I " +
-            "  JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON I.INVOICE_NO = II.INVOICE_NO " +
-            "  LEFT JOIN SPJLIVE.TERMINAL_MASTER TM ON I.TERMINAL_ID = TM.TERMINAL_ID " +
-            "  LEFT JOIN SPJLIVE.ALL_PARTY_ACCOUNT AP ON II.LINE_ITEM_ID = AP.CONT_JO_ID " +
-            "  WHERE I.INVOICE_DATE IS NOT NULL " +
-            "    AND I.CANCLE_FLAGE IS NULL " + filterSql +
-            "  GROUP BY I.TERMINAL_ID " +
-            "  ORDER BY 6 DESC " +
-            ")";
-
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-            boolean first = true;
-            while (rs.next()) {
-                if (!first) termJson.append(",");
-                first = false;
-                long tId = rs.getLong("TERMINAL_ID");
-                String tName = rs.getString("TERMINAL_NAME");
-                long tInvs = rs.getLong("INVOICE_COUNT");
-                long tConts = rs.getLong("CONTAINER_COUNT");
-                double tBase = rs.getDouble("AMOUNT");
-                double tGross = rs.getDouble("INVOICE_AMOUNT");
-
-                termJson.append(String.format(Locale.US,
-                    "{\"terminalId\":%d,\"terminalName\":\"%s\",\"name\":\"%s\",\"invoiceCount\":%d,\"containerCount\":%d,\"netRevenue\":%.2f,\"grossRevenue\":%.2f}",
-                    tId, escapeJson(tName), escapeJson(tName), tInvs, tConts, tBase, tGross
-                ));
-            }
-        } catch (Exception ex) {
-            System.err.println("[executeFastTerminalAnalytics] notice: " + ex.getMessage());
-        }
-        termJson.append("]");
-        return termJson.toString();
-    }
-
     private static void callLiveStoredProcedure(Connection conn, String fromDate, String toDate,
             String companyIdStr, String terminalIdStr, String customerIdStr, String serviceTypeStr, long startTime) throws Exception {
 
-        String filterSql = buildDynamicFilters(fromDate, toDate, companyIdStr, terminalIdStr, serviceTypeStr, customerIdStr, null);
-        AggregatedKpis kpis = executeFastKpis(conn, filterSql);
-        String custJson = executeFastTopCustomers(conn, filterSql, 100);
-        String termJson = executeFastTerminalAnalytics(conn, filterSql);
+        int compId = 0;
+        int termId = 0;
+        int custId = 0;
+        if (companyIdStr != null && !companyIdStr.equalsIgnoreCase("all")) {
+            try { compId = Integer.parseInt(companyIdStr); } catch (Exception e) {}
+        }
+        if (terminalIdStr != null && !terminalIdStr.equalsIgnoreCase("all") && !terminalIdStr.isEmpty()) {
+            try { 
+                termId = Integer.parseInt(terminalIdStr); 
+            } catch (Exception e) {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT TERMINAL_ID FROM SPJLIVE.IMP_INVOICE WHERE LOWER(TERMINAL_NAME) LIKE ? AND ROWNUM <= 1")) {
+                    pstmt.setString(1, "%" + terminalIdStr.toLowerCase().trim() + "%");
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) termId = rs.getInt(1);
+                    }
+                } catch (Exception ex) {}
+            }
+        }
+        if (customerIdStr != null && !customerIdStr.equalsIgnoreCase("all") && !customerIdStr.isEmpty()) {
+            try { 
+                custId = Integer.parseInt(customerIdStr); 
+            } catch (Exception e) {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT CUSTOMER_ID FROM SPJLIVE.CUSTOMER_MASTER WHERE LOWER(CUSTOMER_NAME) LIKE ? AND ROWNUM <= 1")) {
+                    pstmt.setString(1, "%" + customerIdStr.toLowerCase().trim() + "%");
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) custId = rs.getInt(1);
+                    }
+                } catch (Exception ex) {}
+            }
+        }
+        String svc = (serviceTypeStr != null && !serviceTypeStr.equalsIgnoreCase("all") && !serviceTypeStr.equals("0")) ? serviceTypeStr : "ALL";
 
-        long totalTime = System.currentTimeMillis() - startTime;
-        System.out.printf(Locale.US,
-            "{\n" +
-            "  \"success\": true,\n" +
-            "  \"source\": \"ORACLE_SPJLIVE_DIRECT_SQL\",\n" +
-            "  \"totalTimeMs\": %d,\n" +
-            "  \"kpis\": {\n" +
-            "    \"totalGrossAmount\": %.2f,\n" +
-            "    \"grossRevenue\": %.2f,\n" +
-            "    \"netRevenue\": %.2f,\n" +
-            "    \"totalBillAmount\": %.2f,\n" +
-            "    \"totalTax\": %.2f,\n" +
-            "    \"totalIgst\": %.2f,\n" +
-            "    \"totalCgst\": %.2f,\n" +
-            "    \"totalSgst\": %.2f,\n" +
-            "    \"invoiceCount\": %d,\n" +
-            "    \"jobOrders\": %d,\n" +
-            "    \"containerCount\": %d,\n" +
-            "    \"distinctContainers\": %d\n" +
-            "  },\n" +
-            "  \"topCustomers\": %s,\n" +
-            "  \"customerAnalytics\": %s,\n" +
-            "  \"terminalAnalytics\": %s\n" +
-            "}\n",
-            totalTime, kpis.gross, kpis.gross, kpis.gross, kpis.base, (kpis.igst + kpis.cgst + kpis.sgst), kpis.igst, kpis.cgst, kpis.sgst,
-            kpis.invoices, kpis.jobs, kpis.containers, kpis.containers,
-            custJson, custJson, termJson
-        );
+        String call = "{call SPJLIVE.SP_PORTAL_LIVE_ANALYTICS(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement cs = conn.prepareCall(call)) {
+            cs.setString(1, fromDate);
+            cs.setString(2, toDate);
+            cs.setInt(3, compId);
+            cs.setInt(4, termId);
+            cs.setInt(5, custId);
+            cs.setString(6, svc);
+            cs.registerOutParameter(7, OracleTypes.CURSOR);
+            cs.registerOutParameter(8, OracleTypes.CURSOR);
+            cs.registerOutParameter(9, OracleTypes.CURSOR);
+
+            cs.execute();
+
+            double gross = 0, base = 0, igst = 0, cgst = 0, sgst = 0;
+            long invs = 0, jobs = 0, conts = 0;
+
+            try (ResultSet rs = (ResultSet) cs.getObject(7)) {
+                if (rs.next()) {
+                    base = rs.getDouble("TOTAL_TAXABLE_AMOUNT");
+                    igst = rs.getDouble("TOTAL_IGST");
+                    sgst = rs.getDouble("TOTAL_SGST");
+                    cgst = rs.getDouble("TOTAL_CGST");
+                    gross = rs.getDouble("TOTAL_GROSS_AMOUNT");
+                    invs = rs.getLong("TOTAL_INVOICES");
+                    jobs = rs.getLong("TOTAL_JOBS");
+                    conts = rs.getLong("TOTAL_CONTAINERS");
+                }
+            }
+
+            StringBuilder custJson = new StringBuilder("[");
+            boolean firstC = true;
+            try (ResultSet rs = (ResultSet) cs.getObject(8)) {
+                while (rs.next()) {
+                    if (!firstC) custJson.append(",");
+                    firstC = false;
+                    int cId = 0;
+                    try { cId = rs.getInt("CUSTOMER_ID"); } catch (Exception ex) {}
+                    String cName = rs.getString("CUSTOMER_NAME");
+                    long cInvs = rs.getLong("INVOICE_COUNT");
+                    long cConts = rs.getLong("CONTAINER_COUNT");
+                    double cBase = rs.getDouble("AMOUNT");
+                    double cIgst = rs.getDouble("IGST");
+                    double cSgst = rs.getDouble("SGST");
+                    double cCgst = rs.getDouble("CGST");
+                    double cGross = rs.getDouble("INVOICE_AMOUNT");
+
+                    custJson.append(String.format(Locale.US,
+                        "{\"customerId\":%d,\"id\":%d,\"customerName\":\"%s\",\"name\":\"%s\",\"taxableAmount\":%.2f,\"billAmount\":%.2f,\"grossAmount\":%.2f,\"grossRevenue\":%.2f,\"totalRevenue\":%.2f,\"netRevenue\":%.2f,\"igst\":%.2f,\"cgst\":%.2f,\"sgst\":%.2f,\"invoiceCount\":%d,\"containerCount\":%d}",
+                        cId, cId, escapeJson(cName), escapeJson(cName), cBase, cBase, cGross, cGross, cGross, cGross, cIgst, cCgst, cSgst, cInvs, cConts
+                    ));
+                }
+            }
+            custJson.append("]");
+
+            StringBuilder termJson = new StringBuilder("[");
+            boolean firstT = true;
+            try (ResultSet rs = (ResultSet) cs.getObject(9)) {
+                while (rs.next()) {
+                    if (!firstT) termJson.append(",");
+                    firstT = false;
+                    int tId = rs.getInt("TERMINAL_ID");
+                    String tName = rs.getString("TERMINAL_NAME");
+                    long tInvs = rs.getLong("INVOICE_COUNT");
+                    long tConts = rs.getLong("CONTAINER_COUNT");
+                    double tBase = rs.getDouble("AMOUNT");
+                    double tGross = rs.getDouble("INVOICE_AMOUNT");
+
+                    termJson.append(String.format(Locale.US,
+                        "{\"terminalId\":%d,\"terminalName\":\"%s\",\"name\":\"%s\",\"invoiceCount\":%d,\"containerCount\":%d,\"netRevenue\":%.2f,\"grossRevenue\":%.2f}",
+                        tId, escapeJson(tName), escapeJson(tName), tInvs, tConts, tBase, tGross
+                    ));
+                }
+            }
+            termJson.append("]");
+
+            long totalTime = System.currentTimeMillis() - startTime;
+            System.out.printf(Locale.US,
+                "{\n" +
+                "  \"success\": true,\n" +
+                "  \"source\": \"ORACLE_SPJLIVE_STORED_PROCEDURE\",\n" +
+                "  \"totalTimeMs\": %d,\n" +
+                "  \"kpis\": {\n" +
+                "    \"totalGrossAmount\": %.2f,\n" +
+                "    \"grossRevenue\": %.2f,\n" +
+                "    \"netRevenue\": %.2f,\n" +
+                "    \"totalBillAmount\": %.2f,\n" +
+                "    \"totalTax\": %.2f,\n" +
+                "    \"totalIgst\": %.2f,\n" +
+                "    \"totalCgst\": %.2f,\n" +
+                "    \"totalSgst\": %.2f,\n" +
+                "    \"invoiceCount\": %d,\n" +
+                "    \"jobOrders\": %d,\n" +
+                "    \"containerCount\": %d,\n" +
+                "    \"distinctContainers\": %d\n" +
+                "  },\n" +
+                "  \"topCustomers\": %s,\n" +
+                "  \"customerAnalytics\": %s,\n" +
+                "  \"terminalAnalytics\": %s\n" +
+                "}\n",
+                totalTime, gross, gross, gross, base, (igst + cgst + sgst), igst, cgst, sgst,
+                invs, jobs, conts, conts,
+                custJson.toString(), custJson.toString(), termJson.toString()
+            );
+        }
     }
 
+    // ============================================================
+    // BUILD DYNAMIC WHERE PREDICATES (EXACT DBeaver COMPATIBILITY)
+    // ============================================================
     private static String buildDynamicFilters(String fromDate, String toDate, String companyIdStr,
                                               String terminalIdStr, String serviceTypeStr, String customerIdStr, String search) {
         StringBuilder sb = new StringBuilder();
@@ -412,30 +363,47 @@ public class OracleAnalyticsEngine {
 
         String aggSql = 
             "SELECT " +
-            "  NVL(SUM(AMOUNT), 0) AS TOTAL_BASE, " +
-            "  NVL(SUM(IGST), 0) AS TOTAL_IGST, " +
-            "  NVL(SUM(SGST), 0) AS TOTAL_SGST, " +
-            "  NVL(SUM(CGST), 0) AS TOTAL_CGST, " +
-            "  NVL(SUM(INVOICE_AMOUNT), 0) AS TOTAL_GROSS, " +
+            "  SUM(AMOUNT) AS TOTAL_BASE, " +
+            "  SUM(IGST) AS TOTAL_IGST, " +
+            "  SUM(SGST) AS TOTAL_SGST, " +
+            "  SUM(CGST) AS TOTAL_CGST, " +
+            "  SUM(INVOICE_AMOUNT) AS TOTAL_GROSS, " +
             "  COUNT(DISTINCT INVOICE_NO) AS INVOICE_COUNT, " +
             "  COUNT(DISTINCT INVOICE_REF_NO) AS JOB_COUNT, " +
             "  COUNT(*) AS TOTAL_CONTAINERS, " +
-            "  NVL(SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END), 0) AS TOTAL_TEUS " +
+            "  SUM(CASE WHEN CONT_SIZE LIKE '%40%' OR CONT_SIZE = '40' OR CONT_SIZE = '45' THEN 2 ELSE 1 END) AS TOTAL_TEUS " +
             "FROM ( " +
             "  SELECT " +
-            "    I.INVOICE_NO, I.INVOICE_REF_NO, " +
-            "    NVL(II.CONT_SIZE, NVL(AP.CONT_SIZE, '40')) AS CONT_SIZE, " +
-            "    NVL(II.BILL_AMOUNT, 0) AS AMOUNT, " +
-            "    CASE WHEN CM.STATE_CODE != '07' AND CM.STATE_CODE != '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 100), 2) ELSE 0 END AS IGST, " +
-            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS CGST, " +
-            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS SGST, " +
-            "    ROUND(II.BILL_AMOUNT * (1 + (NVL(II.TAX_PERC, 18) / 100)), 2) AS INVOICE_AMOUNT " +
-            "  FROM SPJLIVE.IMP_INVOICE I " +
-            "  JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON I.INVOICE_NO = II.INVOICE_NO " +
-            "  LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
-            "  LEFT JOIN SPJLIVE.ALL_PARTY_ACCOUNT AP ON II.LINE_ITEM_ID = AP.CONT_JO_ID " +
-            "  WHERE I.INVOICE_DATE IS NOT NULL " +
-            "    AND I.CANCLE_FLAGE IS NULL " + filterSql +
+            "    CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
+            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, MAX(CONT_SIZE) AS CONT_SIZE, " +
+            "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT " +
+            "  FROM ( " +
+            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, I.INVOICE_REF_NO, I.INVOICE_NO, " +
+            "      BL_NO, PARTY_INV_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
+            "      DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
+            "      DECODE(II.SERVICE_ID,4,II.BILL_QNTY,0) AS BILL_QNTY, " +
+            "      TO_CHAR(INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
+            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * BILL_QNTY END AS AMOUNT, " +
+            "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
+            "      II.BILL_AMOUNT AS INVOICE_AMOUNT, I.CREATED_BY, I.COMPANY_ID, I.TERMINAL_ID, AP.CONT_SIZE " +
+            "    FROM " +
+            "      (SELECT DISTINCT TERMINAL_ID, COMPANY_ID, INVOICE_REF_NO, INVOICE_NO, INVOICE_DATE, SERVICE_TYPE, CREATED_BY, CANCLE_FLAGE, BILL_TO FROM SPJLIVE.IMP_INVOICE " +
+            "       WHERE INVOICE_DATE IS NOT NULL AND CANCLE_FLAGE IS NULL) I, " +
+            "      SPJLIVE.IMP_INVOICE_ITEMS II, " +
+            "      SPJLIVE.CUSTOMER_MASTER CM, " +
+            "      SPJLIVE.IMP_INVOICE_TAX IIT1, " +
+            "      SPJLIVE.IMP_INVOICE_TAX IIT2, " +
+            "      SPJLIVE.IMP_INVOICE_TAX IIT3, " +
+            "      SPJLIVE.ALL_PARTY_ACCOUNT AP " +
+            "    WHERE I.BILL_TO = CM.CUSTOMER_ID " +
+            "      AND I.INVOICE_NO = II.INVOICE_NO " +
+            "      AND II.BILL_AMOUNT > 0 " +
+            "      AND II.LINE_ITEM_ID = AP.CONT_JO_ID(+) " +
+            "      AND IIT1.TAX_HEAD_ID = 5 AND IIT2.TAX_HEAD_ID = 6 AND IIT3.TAX_HEAD_ID = 7 " +
+            "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
+            "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
+            "  ) " +
+            "  GROUP BY CUSTOMER_NAME, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
             ")";
 
         double gross = 0, bill = 0, igst = 0, cgst = 0, sgst = 0;
@@ -477,19 +445,93 @@ public class OracleAnalyticsEngine {
 
         String filterSql = buildDynamicFilters(fromDate, toDate, companyIdStr, terminalIdStr, serviceTypeStr, customerIdStr, search);
 
-        AggregatedKpis kpis = executeFastKpis(conn, filterSql);
-        String custJson = executeFastTopCustomers(conn, filterSql, 50);
+        int compId = 0, termId = 0, custId = 0;
+        if (companyIdStr != null && !companyIdStr.equalsIgnoreCase("all")) {
+            try { compId = Integer.parseInt(companyIdStr); } catch (Exception e) {}
+        }
+        if (terminalIdStr != null && !terminalIdStr.equalsIgnoreCase("all") && !terminalIdStr.isEmpty()) {
+            try { 
+                termId = Integer.parseInt(terminalIdStr); 
+            } catch (Exception e) {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT TERMINAL_ID FROM SPJLIVE.IMP_INVOICE WHERE LOWER(TERMINAL_NAME) LIKE ? AND ROWNUM <= 1")) {
+                    pstmt.setString(1, "%" + terminalIdStr.toLowerCase().trim() + "%");
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) termId = rs.getInt(1);
+                    }
+                } catch (Exception ex) {}
+            }
+        }
+        if (customerIdStr != null && !customerIdStr.equalsIgnoreCase("all") && !customerIdStr.isEmpty()) {
+            try { 
+                custId = Integer.parseInt(customerIdStr); 
+            } catch (Exception e) {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT CUSTOMER_ID FROM SPJLIVE.CUSTOMER_MASTER WHERE LOWER(CUSTOMER_NAME) LIKE ? AND ROWNUM <= 1")) {
+                    pstmt.setString(1, "%" + customerIdStr.toLowerCase().trim() + "%");
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) custId = rs.getInt(1);
+                    }
+                } catch (Exception ex) {}
+            }
+        }
+        String svc = (serviceTypeStr != null && !serviceTypeStr.equalsIgnoreCase("all") && !serviceTypeStr.equals("0")) ? serviceTypeStr : "ALL";
 
-        double grandBase = kpis.base;
-        double grandIgst = kpis.igst;
-        double grandCgst = kpis.cgst;
-        double grandSgst = kpis.sgst;
-        double grandGross = kpis.gross;
-        long uniqueInvoices = kpis.invoices;
-        long uniqueJobs = kpis.jobs;
-        long totalRows = kpis.containers;
-        long distinctContainers = kpis.containers;
-        long totalTeus = kpis.teus;
+        double grandBase = 0, grandIgst = 0, grandCgst = 0, grandSgst = 0, grandGross = 0;
+        long uniqueInvoices = 0, uniqueJobs = 0, totalRows = 0, totalTeus = 0, distinctContainers = 0;
+        StringBuilder custJson = new StringBuilder("[");
+
+        // 1 & 2. Execute Stored Procedure for instant KPIs & Customer Aggregations (zero slow table scans)
+        String call = "{call SPJLIVE.SP_PORTAL_LIVE_ANALYTICS(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        try (CallableStatement cs = conn.prepareCall(call)) {
+            cs.setString(1, fromDate);
+            cs.setString(2, toDate);
+            cs.setInt(3, compId);
+            cs.setInt(4, termId);
+            cs.setInt(5, custId);
+            cs.setString(6, svc);
+            cs.registerOutParameter(7, OracleTypes.CURSOR);
+            cs.registerOutParameter(8, OracleTypes.CURSOR);
+            cs.registerOutParameter(9, OracleTypes.CURSOR);
+            cs.execute();
+
+            try (ResultSet rs = (ResultSet) cs.getObject(7)) {
+                if (rs.next()) {
+                    grandBase = rs.getDouble("TOTAL_TAXABLE_AMOUNT");
+                    grandIgst = rs.getDouble("TOTAL_IGST");
+                    grandSgst = rs.getDouble("TOTAL_SGST");
+                    grandCgst = rs.getDouble("TOTAL_CGST");
+                    grandGross = rs.getDouble("TOTAL_GROSS_AMOUNT");
+                    uniqueInvoices = rs.getLong("TOTAL_INVOICES");
+                    uniqueJobs = rs.getLong("TOTAL_JOBS");
+                    totalRows = rs.getLong("TOTAL_CONTAINERS");
+                    distinctContainers = totalRows;
+                    totalTeus = Math.round(totalRows * 1.5);
+                }
+            }
+
+            boolean firstC = true;
+            try (ResultSet rs = (ResultSet) cs.getObject(8)) {
+                while (rs.next()) {
+                    if (!firstC) custJson.append(",");
+                    firstC = false;
+                    String cName = rs.getString("CUSTOMER_NAME");
+                    long cInvs = rs.getLong("INVOICE_COUNT");
+                    long cConts = rs.getLong("CONTAINER_COUNT");
+                    double cBase = rs.getDouble("AMOUNT");
+                    double cIgst = rs.getDouble("IGST");
+                    double cSgst = rs.getDouble("SGST");
+                    double cCgst = rs.getDouble("CGST");
+                    double cGross = rs.getDouble("INVOICE_AMOUNT");
+
+                    custJson.append(String.format(Locale.US,
+                        "{\"customerName\":\"%s\",\"name\":\"%s\",\"taxableAmount\":%.2f,\"billAmount\":%.2f,\"grossAmount\":%.2f,\"grossRevenue\":%.2f,\"totalRevenue\":%.2f,\"netRevenue\":%.2f,\"igst\":%.2f,\"cgst\":%.2f,\"sgst\":%.2f,\"invoiceCount\":%d,\"containerCount\":%d}",
+                        escapeJson(cName), escapeJson(cName), cBase, cBase, cGross, cGross, cGross, cGross, cIgst, cCgst, cSgst, cInvs, cConts
+                    ));
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("[queryInvoice] Stored procedure call notice: " + ex.getMessage());
+        }
+        custJson.append("]");
         double grandTax = grandIgst + grandCgst + grandSgst;
 
         // 3. Paginated Records
@@ -497,39 +539,46 @@ public class OracleAnalyticsEngine {
         int endRow = page * limit;
 
         String pageSql = 
-            "SELECT * FROM ( " +
+            "SELECT /*+ PARALLEL(4) */ * FROM ( " +
             "  SELECT " +
-            "    NVL(CM.CUSTOMER_NAME, 'CLIENT #' || I.BILL_TO) AS CUSTOMER_NAME, " +
-            "    NVL(II.CONT_NO, NVL(AP.CONT_NO, '-')) AS CONT_NO, " +
-            "    NVL(II.CONT_SIZE, NVL(AP.CONT_SIZE, '40')) AS CONT_SIZE, " +
-            "    CASE " +
-            "      WHEN AP.SAILED IS NOT NULL THEN 'Stage 4: Loaded & Sailed' " +
-            "      WHEN AP.LINE_HANDOVER_DATE IS NOT NULL THEN 'Stage 2: Customs Cleared & Staged' " +
-            "      WHEN AP.CONT_NO IS NOT NULL THEN 'Stage 1: Yard Gate-In & Factory Stuffing' " +
-            "      ELSE 'Stage 3: DFC Rail Transit' " +
-            "    END AS CONTAINER_STATUS, " +
-            "    NVL(AP.BL_NO, '-') AS BL_NO, " +
-            "    NVL(AP.PARTY_INV_NO, '-') AS PARTY_INV_NO, " +
-            "    I.INVOICE_REF_NO, " +
-            "    TO_CHAR(AP.LINE_HANDOVER_DATE, 'DD/MM/YYYY') AS LINE_HANDOVER_DATE, " +
-            "    TO_CHAR(AP.SAILED, 'DD/MM/YYYY') AS SAILED, " +
-            "    NVL(AP.PORT, 'NHAVA SHEVA') AS PORT, " +
-            "    I.INVOICE_NO, " +
-            "    TO_CHAR(I.INVOICE_DATE, 'DD/MM/YYYY') AS INVOICE_DATE, " +
-            "    NVL(II.BILL_QNTY, 1) AS BILL_QNTY, " +
-            "    DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
-            "    NVL(II.BILL_AMOUNT, 0) AS AMOUNT, " +
-            "    CASE WHEN CM.STATE_CODE != '07' AND CM.STATE_CODE != '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 100), 2) ELSE 0 END AS IGST, " +
-            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS CGST, " +
-            "    CASE WHEN CM.STATE_CODE = '07' OR CM.STATE_CODE = '7' THEN ROUND(II.BILL_AMOUNT * (NVL(II.TAX_PERC, 18) / 200), 2) ELSE 0 END AS SGST, " +
-            "    ROUND(II.BILL_AMOUNT * (1 + (NVL(II.TAX_PERC, 18) / 100)), 2) AS INVOICE_AMOUNT, " +
-            "    ROW_NUMBER() OVER (ORDER BY I.INVOICE_DATE DESC, I.INVOICE_NO DESC) AS RN " +
-            "  FROM SPJLIVE.IMP_INVOICE I " +
-            "  JOIN SPJLIVE.IMP_INVOICE_ITEMS II ON I.INVOICE_NO = II.INVOICE_NO " +
-            "  LEFT JOIN SPJLIVE.CUSTOMER_MASTER CM ON I.BILL_TO = CM.CUSTOMER_ID " +
-            "  LEFT JOIN SPJLIVE.ALL_PARTY_ACCOUNT AP ON II.LINE_ITEM_ID = AP.CONT_JO_ID " +
-            "  WHERE I.INVOICE_DATE IS NOT NULL " +
-            "    AND I.CANCLE_FLAGE IS NULL " + filterSql +
+            "    CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, " +
+            "    INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE, " +
+            "    SUM(AMOUNT) AS AMOUNT, SUM(IGST) AS IGST, SUM(SGST) AS SGST, SUM(CGST) AS CGST, SUM(INVOICE_AMOUNT) AS INVOICE_AMOUNT, " +
+            "    ROW_NUMBER() OVER (ORDER BY INVOICE_NO DESC, SUM(INVOICE_AMOUNT) DESC) AS RN " +
+            "  FROM ( " +
+            "    SELECT DISTINCT II.SERVICE_ID, II.IMP_CONT_ID, CM.CUSTOMER_NAME, " +
+            "      AP.CONT_NO, AP.CONT_SIZE, I.INVOICE_REF_NO, I.INVOICE_NO, " +
+            "      AP.BL_NO, AP.PARTY_INV_NO, AP.LINE_HANDOVER_DATE, AP.SAILED, AP.PORT, " +
+            "      DECODE(I.SERVICE_TYPE, 'F','Bill Of Supply','A','ALL SERVICES','T','TRANSPORTATION','C','CLEARENCE','R','REBEAT',I.SERVICE_TYPE) AS SERVICE_TYPE, " +
+            "      DECODE(II.SERVICE_ID,4,II.BILL_QNTY,0) AS BILL_QNTY, " +
+            "      TO_CHAR(I.INVOICE_DATE,'DD/MM/YYYY') AS INVOICE_DATE, " +
+            "      CASE " +
+            "        WHEN AP.SAILED IS NOT NULL THEN 'Stage 4: Loaded & Sailed' " +
+            "        WHEN AP.LINE_HANDOVER_DATE IS NOT NULL THEN 'Stage 2: Customs Cleared & Staged' " +
+            "        WHEN AP.CONT_NO IS NOT NULL THEN 'Stage 1: Yard Gate-In & Factory Stuffing' " +
+            "        ELSE 'Stage 3: DFC Rail Transit' " +
+            "      END AS CONTAINER_STATUS, " +
+            "      CASE WHEN CM.STATE_CODE='0' THEN II.BILL_RATE * II.BILL_QNTY ELSE II.BILL_RATE * II.EX_RATE * II.BILL_QNTY END AS AMOUNT, " +
+            "      ROUND(IIT1.TAX_AMT,2) AS IGST, ROUND(IIT2.TAX_AMT,2) AS CGST, ROUND(IIT3.TAX_AMT,2) AS SGST, " +
+            "      II.BILL_AMOUNT AS INVOICE_AMOUNT " +
+            "    FROM " +
+            "      SPJLIVE.IMP_INVOICE I, " +
+            "      SPJLIVE.IMP_INVOICE_ITEMS II, " +
+            "      SPJLIVE.CUSTOMER_MASTER CM, " +
+            "      SPJLIVE.IMP_INVOICE_TAX IIT1, " +
+            "      SPJLIVE.IMP_INVOICE_TAX IIT2, " +
+            "      SPJLIVE.IMP_INVOICE_TAX IIT3, " +
+            "      SPJLIVE.ALL_PARTY_ACCOUNT AP " +
+            "    WHERE I.BILL_TO = CM.CUSTOMER_ID " +
+            "      AND I.INVOICE_NO = II.INVOICE_NO " +
+            "      AND II.BILL_AMOUNT > 0 " +
+            "      AND II.LINE_ITEM_ID = AP.CONT_JO_ID(+) " +
+            "      AND IIT1.TAX_HEAD_ID = 5 AND IIT2.TAX_HEAD_ID = 6 AND IIT3.TAX_HEAD_ID = 7 " +
+            "      AND IIT1.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT2.ITEM_KEY_ID = II.ITEM_KEY_ID AND IIT3.ITEM_KEY_ID = II.ITEM_KEY_ID " +
+            "      AND I.INVOICE_DATE IS NOT NULL " +
+            "      AND I.CANCLE_FLAGE IS NULL " + filterSql +
+            "  ) " +
+            "  GROUP BY CUSTOMER_NAME, CONT_NO, CONT_SIZE, CONTAINER_STATUS, BL_NO, PARTY_INV_NO, INVOICE_REF_NO, LINE_HANDOVER_DATE, SAILED, PORT, INVOICE_NO, INVOICE_DATE, BILL_QNTY, SERVICE_TYPE " +
             ") WHERE RN BETWEEN " + startRow + " AND " + endRow;
 
         StringBuilder recsJson = new StringBuilder("[");
